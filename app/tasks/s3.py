@@ -41,7 +41,7 @@ def create_responses_zip(brief_id):
     if not responses:
         raise CreateResponsesZipException('There were no respones for brief id {}'.format(brief_id))
 
-    if brief.lot.slug not in ['digital-professionals', 'training', 'rfx', 'atm', 'specialist']:
+    if brief.lot.slug not in ['digital-professionals', 'training', 'rfx', 'training2', 'atm', 'specialist']:
         raise CreateResponsesZipException('Brief id {} is not a compatible lot'.format(brief_id))
 
     print 'Generating zip for brief id: {}'.format(brief_id)

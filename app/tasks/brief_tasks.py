@@ -54,6 +54,7 @@ def create_responses_zip_for_closed_briefs():
                     Lot.slug == 'digital-professionals',
                     Lot.slug == 'training',
                     Lot.slug == 'rfx',
+                    Lot.slug == 'training2',
                     Lot.slug == 'atm',
                     Lot.slug == 'specialist'
                 )

@@ -52,6 +52,7 @@ class AuditTypes(Enum):
     seller_requested_feedback_from_buyer_email = 'seller_requested_feedback_from_buyer_email'
     seller_to_review_pricing_case_study_email = 'seller_to_review_pricing_case_study_email'
     seller_invited_to_rfx_opportunity = 'seller_invited_to_rfx_opportunity'
+    seller_invited_to_training_opportunity = 'seller_invited_to_training_opportunity'
     seller_invited_to_atm_opportunity = 'seller_invited_to_atm_opportunity'
     seller_added_to_rfx_opportunity_admin = 'seller_added_to_rfx_opportunity_admin'
     seller_removed_from_rfx_opportunity_admin = 'seller_removed_from_rfx_opportunity_admin'

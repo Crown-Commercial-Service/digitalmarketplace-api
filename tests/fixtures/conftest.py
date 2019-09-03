@@ -411,6 +411,26 @@ def rfx_brief(client, app, request, buyer_user):
 
 
 @pytest.fixture()
+def training2_brief(client, app, request, buyer_user):
+    params = request.param if hasattr(request, 'param') else {}
+    data = params['data'] if 'data' in params else {'title': 'TRAINING TEST'}
+    with app.app_context():
+        framework = Framework.query.filter(Framework.slug == 'digital-marketplace').first()
+        framework.status = 'live'
+        db.session.add(framework)
+        db.session.commit()
+        db.session.add(Brief(
+            id=1,
+            data=data,
+            framework=Framework.query.filter(Framework.slug == "digital-marketplace").first(),
+            lot=Lot.query.filter(Lot.slug == 'training2').first(),
+            users=[buyer_user]
+        ))
+        db.session.commit()
+        yield Brief.query.get(1)
+
+
+@pytest.fixture()
 def atm_brief(client, app, request, buyer_user):
     params = request.param if hasattr(request, 'param') else {}
     data = params['data'] if 'data' in params else {'title': 'ATM TEST'}

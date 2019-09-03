@@ -148,6 +148,19 @@ def test_csv_rfx(app, briefs, brief_responses):
     assert csvdata.splitlines() == lines
 
 
+@pytest.mark.parametrize('brief_responses', [{'data': brief_response_data_5}], indirect=True)
+@pytest.mark.parametrize('briefs', [{'lot_slug': 'training2', 'framework_slug': 'digital-marketplace'}], indirect=True)
+def test_csv_training2(app, briefs, brief_responses):
+    csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
+    lines = [
+        u'Seller name,Test Supplier1',
+        u'ABN,1',
+        u'Email,test1@email.com',
+        u'Phone number,1234'
+    ]
+    assert csvdata.splitlines() == lines
+
+
 @pytest.mark.parametrize('brief_responses', [{'data': {
     'specialistGivenNames': 'foo',
     'specialistSurname': 'bar',

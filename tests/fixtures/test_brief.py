@@ -642,7 +642,7 @@ def rfx_data():
         'startDate': 'ASAP',
         'contractLength': 'TEST',
         'includeWeightings': True,
-        'evaluationCriteria': [
+        'essentialRequirements': [
             {
                 'criteria': 'TEST',
                 'weighting': '55'
@@ -652,6 +652,7 @@ def rfx_data():
                 'weighting': '45'
             }
         ],
+        'niceToHaveRequirements': [],
         'contactNumber': '0263635544'
     }
 
@@ -1709,7 +1710,7 @@ def test_atm_validate_closed_at():
     assert not valid
 
 
-@pytest.mark.parametrize('opportunity_type', ['atm', 'rfx', 'specialist'])
+@pytest.mark.parametrize('opportunity_type', ['atm', 'rfx', 'training', 'specialist'])
 def test_buyer_can_not_create_draft_opportunity_without_permission(client, buyer_user, opportunity_type,
                                                                    teams, team_members):
     res = client.post('/2/login', data=json.dumps({
@@ -1720,7 +1721,7 @@ def test_buyer_can_not_create_draft_opportunity_without_permission(client, buyer
     assert res.status_code == 403
 
 
-@pytest.mark.parametrize('opportunity_type', ['atm', 'rfx', 'specialist'])
+@pytest.mark.parametrize('opportunity_type', ['atm', 'rfx', 'training', 'specialist'])
 def test_buyer_can_create_draft_opportunity_with_permission(client, buyer_user, opportunity_type, teams, team_members,
                                                             create_drafts_permission):
     res = client.post('/2/login', data=json.dumps({

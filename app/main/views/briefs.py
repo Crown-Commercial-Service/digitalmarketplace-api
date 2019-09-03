@@ -377,6 +377,11 @@ def send_feedback_email(brief_id):
     return jsonify(briefs=brief.serialize(with_users=True)), 200
 
 
+@main.route('/briefs/<int:brief_id>/user/<int:user_id>', methods=['GET'])
+def has_permission(brief_id, user_id):
+    return jsonify(briefs.has_permission_to_brief(user_id, brief_id))
+
+
 @main.route('/briefs/<int:brief_id>', methods=['GET'])
 def get_brief(brief_id):
     brief = (

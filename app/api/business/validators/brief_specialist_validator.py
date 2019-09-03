@@ -143,28 +143,21 @@ class SpecialistDataValidator(object):
         return True if self.data.get('contractLength', '').replace(' ', '') else False
 
     def remove_empty_criteria(self, criteria, includeWeightings):
-        empty_criteria = []
-        i = 0
-        for criterion in criteria:
-            if includeWeightings:
-                if (
-                    not criterion['criteria'].replace(' ', '') and
-                    not criterion['weighting'].replace(' ', '')
-                ):
-                    empty_criteria.append(i)
-            else:
-                if not criterion['criteria'].replace(' ', ''):
-                    empty_criteria.append(i)
-            i += 1
-
-        for ec in empty_criteria:
-            del criteria[ec]
+        if includeWeightings:
+            return [c for c in criteria if (
+                c['criteria'].replace(' ', '') or
+                c.get('weighting', '').replace(' ', '')
+            )]
+        else:
+            return [c for c in criteria if (
+                c['criteria'].replace(' ', '')
+            )]
 
     def validate_evaluation_criteria_essential(self):
         if not self.data.get('essentialRequirements'):
             return False
 
-        self.remove_empty_criteria(
+        self.data['essentialRequirements'] = self.remove_empty_criteria(
             self.data.get('essentialRequirements'),
             self.data.get('includeWeightingsEssential')
         )
@@ -195,7 +188,7 @@ class SpecialistDataValidator(object):
         if not self.data.get('niceToHaveRequirements'):
             return False
 
-        self.remove_empty_criteria(
+        self.data['niceToHaveRequirements'] = self.remove_empty_criteria(
             self.data.get('niceToHaveRequirements'),
             self.data.get('includeWeightingsNiceToHave')
         )

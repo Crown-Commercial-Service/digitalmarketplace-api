@@ -69,7 +69,7 @@ def generate_brief_responses_csv(brief, responses):
         elif brief.lot.slug == 'training':
             answers.update({'Availability date': r.data.get('availability', 'UNKNOWN')})
             answers.update({'Phone number': r.data.get('respondToPhone', '')})
-        elif brief.lot.slug == 'rfx':
+        elif brief.lot.slug in ['rfx', 'training2']:
             answers.update({'Phone number': r.data.get('respondToPhone', '')})
         elif brief.lot.slug == 'atm':
             answers.update({'Availability date': r.data.get('availability', 'UNKNOWN')})

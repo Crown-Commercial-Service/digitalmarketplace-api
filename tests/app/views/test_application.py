@@ -416,7 +416,7 @@ class TestGetApplication(BaseApplicationsTest):
 
         with self.app.app_context():
             db.session.add(
-                Domain(name='test domain', ordering=1, price_minimum=123, price_maximum=1234, criteria_needed=1)
+                Domain(id=18, name='test domain', ordering=1, price_minimum=123, price_maximum=1234, criteria_needed=1)
             )
             db.session.commit()
 

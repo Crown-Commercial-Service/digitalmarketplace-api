@@ -41,7 +41,7 @@ rfx_data = {
     'startDate': 'ASAP',
     'contractLength': 'TEST',
     'includeWeightings': True,
-    'evaluationCriteria': [
+    'essentialRequirements': [
         {
             'criteria': 'TEST',
             'weighting': '55'
@@ -51,6 +51,7 @@ rfx_data = {
             'weighting': '45'
         }
     ],
+    'niceToHaveRequirements': [],
     'contactNumber': '0263635544'
 }
 

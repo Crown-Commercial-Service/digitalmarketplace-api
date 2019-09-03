@@ -3,7 +3,7 @@ import pendulum
 from app.api.services import domain_service, suppliers
 
 
-class RFXDataValidator(object):
+class TrainingDataValidator(object):
     def __init__(self, data):
         self.data = data
 
@@ -51,7 +51,11 @@ class RFXDataValidator(object):
     def validate_seller_category(self):
         if not self.data['sellerCategory'].replace(' ', ''):
             return False
-        domain_ids = [domain.id for domain in domain_service.all()]
+
+        domain_ids = [
+            d.id
+            for d in domain_service.find(name='Training, Learning and Development').all()
+        ]
         return True if int(self.data['sellerCategory']) in domain_ids else False
 
     def validate_sellers(self):
@@ -133,30 +137,6 @@ class RFXDataValidator(object):
                 c['criteria'].replace(' ', '')
             )]
 
-    def validate_evaluation_criteria(self):
-        if not self.data['evaluationCriteria']:
-            return False
-        if not len(self.data['evaluationCriteria']) > 0:
-            return False
-        weightings = 0
-        for criteria in self.data['evaluationCriteria']:
-            if 'criteria' not in criteria:
-                return False
-            if not criteria['criteria'].replace(' ', ''):
-                return False
-            if self.data['includeWeightings']:
-                if 'weighting' not in criteria:
-                    return False
-                if not criteria['weighting'].replace(' ', ''):
-                    return False
-                if int(criteria['weighting']) == 0:
-                    return False
-                weightings += int(criteria['weighting'])
-        if self.data['includeWeightings']:
-            if weightings != 100:
-                return False
-        return True
-
     def validate_evaluation_criteria_essential(self):
         if not self.data.get('essentialRequirements'):
             return False
@@ -189,6 +169,9 @@ class RFXDataValidator(object):
         return True
 
     def validate_evaluation_criteria_nice_to_have(self):
+        if not self.data.get('niceToHaveRequirements'):
+            return False
+
         self.data['niceToHaveRequirements'] = self.remove_empty_criteria(
             self.data.get('niceToHaveRequirements'),
             self.data.get('includeWeightingsNiceToHave')
@@ -245,7 +228,7 @@ class RFXDataValidator(object):
         if not self.validate_response_formats():
             errors.append('You must choose what you would like sellers to provide through the Marketplace')
         if not self.validate_proposal_type():
-            errors.append('You must select at least one proposal type when choosing to receive Written proposals.')
+            errors.append('You must select at least one proposal type when choosing to receive written proposals.')
         if not self.validate_requirements_document():
             errors.append('You must upload a requirements document')
         if not self.validate_response_template():
@@ -254,20 +237,12 @@ class RFXDataValidator(object):
             errors.append('You must add an estimated start date')
         if not self.validate_contract_length():
             errors.append('You must add a contract length')
-
         if not self.validate_evaluation_criteria_essential():
-            if not self.validate_evaluation_criteria():
-                errors.append(
-                    'You must not have any empty criteria, any empty weightings, all weightings must be greater than 0,\
-                    and add up to 100'
-                )
-            else:
-                errors.append(
-                    'You must not have any empty essential criteria, any empty weightings, \
-                    all weightings must be greater than 0, \
-                    and add up to 100'
-                )
-
+            errors.append(
+                'You must not have any empty essential criteria, any empty weightings, \
+                all weightings must be greater than 0, \
+                and add up to 100'
+            )
         if not self.validate_evaluation_criteria_nice_to_have():
             errors.append(
                 'You must not have any empty desirable criteria, any empty weightings, \

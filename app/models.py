@@ -2419,13 +2419,13 @@ class BriefResponse(db.Model):
             pass
 
         # if the UI is sending back the dayRate. remove it from data for some lots
-        if self.brief.lot.slug in ['digital-outcome', 'training', 'rfx', 'atm']:
+        if self.brief.lot.slug in ['digital-outcome', 'training', 'rfx', 'training2', 'atm']:
             self.data = drop_foreign_fields(self.data, [
                 'dayRate'
             ])
 
         # only keep the contact number for some lots
-        if self.brief.lot.slug not in ['training', 'rfx', 'atm']:
+        if self.brief.lot.slug not in ['training', 'rfx', 'training2', 'atm']:
             self.data = drop_foreign_fields(self.data, [
                 'respondToPhone'
             ])
@@ -2437,7 +2437,7 @@ class BriefResponse(db.Model):
             ])
 
         # remove availability for RFX
-        if self.brief.lot.slug == 'rfx':
+        if self.brief.lot.slug in ['rfx', 'training2']:
             self.data = drop_foreign_fields(self.data, [
                 'availability'
             ])
@@ -2458,7 +2458,7 @@ class BriefResponse(db.Model):
                         errs['criteria'] = 'answer_required'
 
         # only perform schema validation on non RFX or ATM responses
-        if (self.brief.lot.slug not in ['rfx', 'atm', 'specialist']):
+        if (self.brief.lot.slug not in ['rfx', 'training2', 'atm', 'specialist']):
             errs = get_validation_errors(
                 'brief-responses-{}-{}'.format(self.brief.framework.slug, self.brief.lot.slug),
                 self.data,
@@ -2476,7 +2476,7 @@ class BriefResponse(db.Model):
                 errs['attachedDocumentURL'] = 'answer_required'
 
         if (
-            self.brief.lot.slug not in ['training', 'rfx', 'atm'] and
+            self.brief.lot.slug not in ['training', 'rfx', 'training2', 'atm'] and
             'essentialRequirements' not in errs and
             len(filter(None, self.data.get('essentialRequirements', []))) !=
             len(self.brief.data['essentialRequirements'])

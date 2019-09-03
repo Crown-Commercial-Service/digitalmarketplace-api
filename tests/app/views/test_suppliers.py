@@ -751,7 +751,8 @@ class TestDomains(BaseApplicationTest):
             'Emerging technology',
             'ICT risk management and audit activities',
             'ICT managed services',
-            'Digital sourcing and ICT procurement'
+            'Digital sourcing and ICT procurement',
+            'Training, Learning and Development'
         ]
 
     @mock.patch('app.tasks.publish_tasks.supplier_domain')
