@@ -27,7 +27,7 @@ from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.expression import cast as sql_cast
 from sqlalchemy.types import String, Date, Integer, Interval
 from sqlalchemy_utils import generic_relationship
-from sqlalchemy.schema import Sequence
+from sqlalchemy.schema import Sequence, CheckConstraint
 from dmutils.data_tools import ValidationError, normalise_acn, parse_money
 from dmapiclient.audit import AuditTypes
 
@@ -87,6 +87,30 @@ class Agency(db.Model):
         name='state_enum'
     ))
     whitelisted = db.Column(db.Boolean, nullable=False, default=True)
+
+
+class ApiKey(db.Model):
+    __tablename__ = 'api_key'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True, nullable=False)
+    key = db.Column(db.String(64), index=True, nullable=False, unique=True)
+    created_at = db.Column(DateTime, index=True, nullable=False, default=utcnow)
+    revoked_at = db.Column(DateTime, index=True, nullable=True)
+
+    user = db.relationship('User', lazy='joined', innerjoin=True)
+
+    __table_args__ = (
+        CheckConstraint('char_length(key) > 63', name='key_min_length'),
+    )
+
+    def revoke(self):
+        self.revoked_at = pendulum.now('UTC')
+
+    @validates('key')
+    def validate_key(self, key, value):
+        if len(value) <= 63:
+            raise ValueError('key is too short')
+        return value
 
 
 class Council(db.Model):

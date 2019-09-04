@@ -6,9 +6,11 @@ from flask import Blueprint, request, current_app
 from flask_login import LoginManager
 from app.models import User
 from app.api.business import supplier_business, team_business
+from app.api.services import api_key_service
 from base64 import b64decode
 from app import encryption
 from app.api.helpers import abort
+from app.authentication import get_api_key_from_request
 
 api = Blueprint('api', __name__)
 login_manager = LoginManager()
@@ -53,11 +55,18 @@ def get_teams(user):
 @api.before_request
 def check_csrf_token():
     if request.method in ('POST', 'PATCH', 'PUT', 'DELETE'):
-        new_csrf_valid = check_valid_csrf()
+        '''
+        Only check CSRF tokens if there is no valid API key in the request. The API key comes via a header which will
+        not be forwarded by browsers automatically in authenticated requests, so the presence of a valid API key in the
+        request proves authenticity like a CSRF token.
+        '''
+        api_key = get_api_key_from_request(request)
+        if not api_key or not api_key_service.get_key(api_key):
+            new_csrf_valid = check_valid_csrf()
 
-        if not (new_csrf_valid):
-            rollbar.report_message('csrf.invalid_token: Aborting request check_csrf_token()', 'error', request)
-            abort('Invalid CSRF token. Please try again.')
+            if not (new_csrf_valid):
+                rollbar.report_message('csrf.invalid_token: Aborting request check_csrf_token()', 'error', request)
+                abort('Invalid CSRF token. Please try again.')
 
 
 @api.after_request

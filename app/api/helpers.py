@@ -6,14 +6,50 @@ import rollbar
 from os import urandom
 from binascii import hexlify
 from flask import abort as flask_abort
-from flask import current_app, jsonify, make_response, render_template_string
-from flask_login import current_user
+from flask import current_app, jsonify, make_response, render_template_string, request
+from flask_login import current_user, login_user
 from werkzeug.exceptions import HTTPException
 
 from app.models import Agency, BriefUser, User, db
 from app.tasks.email import send_email
+from app.authentication import get_api_key_from_request
 from dmutils.csrf import get_csrf_token
 from dmutils.email import ONE_DAY_IN_SECONDS, EmailError, parse_fernet_timestamp
+
+
+def allow_api_key_auth(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        request_key = get_api_key_from_request(request)
+        if request_key:
+            from app.api import load_user
+            from app.api.services import api_key_service
+            key = api_key_service.get_key(request_key)
+            if not key:
+                return flask_abort(403, 'Invalid API key - revoked or non existent')
+            user = load_user(key.user_id)
+            login_user(user)
+            current_app.logger.info('login.api_key.success: {user}', extra={'user': key.user.name})
+        return func(*args, **kwargs)
+    return decorated_view
+
+
+def require_api_key_auth(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        request_key = get_api_key_from_request(request)
+        if request_key:
+            from app.api import load_user
+            from app.api.services import api_key_service
+            key = api_key_service.get_key(request_key)
+            if not key:
+                return flask_abort(403, 'Invalid API key - revoked or non existent')
+            user = load_user(key.user_id)
+            login_user(user)
+            current_app.logger.info('login.api_key.success: {user}', extra={'user': key.user.name})
+            return func(*args, **kwargs)
+        return flask_abort(403, 'Must authenticate using API key authentication')
+    return decorated_view
 
 
 def exception_logger(func):

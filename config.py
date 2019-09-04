@@ -68,6 +68,8 @@ class Config:
     DM_DOWNSTREAM_REQUEST_ID_HEADER = 'X-Vcap-Request-Id'
     DM_API_ADMIN_USERNAME = 'admin'
     DM_API_ADMIN_PASSWORD = None
+    # API key auth
+    DM_API_KEY_HEADER = 'X-Api-Key'
 
     # Feature Flags
     RAISE_ERROR_ON_MISSING_FEATURES = True

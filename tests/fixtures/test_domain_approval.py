@@ -31,10 +31,11 @@ evidence_data = {
     }
 ], indirect=True)
 def test_domain_approval_approve_success(publish_task, domains, evidence, suppliers, admin_users):
+    admin_user_id = admin_users[0].id
     for e in evidence:
         domain_approval = DomainApproval(
             evidence_id=e.id,
-            actioned_by=7
+            actioned_by=admin_user_id
         )
 
         supplier = suppliers[0]
@@ -54,10 +55,11 @@ def test_domain_approval_approve_success(publish_task, domains, evidence, suppli
     }
 ], indirect=True)
 def test_domain_approval_reject_success(publish_task, domains, evidence, suppliers, admin_users):
+    admin_user_id = admin_users[0].id
     for e in evidence:
         domain_approval = DomainApproval(
             evidence_id=e.id,
-            actioned_by=7
+            actioned_by=admin_user_id
         )
 
         supplier = suppliers[0]

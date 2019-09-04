@@ -1,14 +1,12 @@
 from flask import current_app, jsonify
-from flask_login import login_required
 from app.api import api
-from app.api.helpers import role_required
+from app.api.helpers import require_api_key_auth
 from app.api.services.reports import suppliers_service
 from itertools import groupby
 
 
 @api.route('/reports/supplier/unassessed', methods=['GET'])
-@login_required
-@role_required('admin')
+@require_api_key_auth
 def get_unassessed():
     """Unassessed Suppliers
     ---
@@ -62,8 +60,7 @@ def get_unassessed():
 
 
 @api.route('/reports/supplier/all', methods=['GET'])
-@login_required
-@role_required('admin')
+@require_api_key_auth
 def get_all_suppliers():
     """All Suppliers
     ---

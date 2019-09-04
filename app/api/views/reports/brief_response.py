@@ -1,13 +1,11 @@
 from flask import jsonify
-from flask_login import login_required
 from app.api import api
-from app.api.helpers import role_required
+from app.api.helpers import require_api_key_auth
 from app.api.services.reports import brief_responses_service
 
 
 @api.route('/reports/brief_response/submitted', methods=['GET'])
-@login_required
-@role_required('admin')
+@require_api_key_auth
 def get_submitted_brief_responses():
     """Submitted Brief Responses
     ---

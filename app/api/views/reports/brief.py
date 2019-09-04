@@ -1,13 +1,11 @@
 from flask import jsonify
-from flask_login import login_required
 from app.api import api
-from app.api.helpers import role_required
+from app.api.helpers import require_api_key_auth
 from app.api.services.reports import briefs_service
 
 
 @api.route('/reports/brief/published', methods=['GET'])
-@login_required
-@role_required('admin')
+@require_api_key_auth
 def get_published_briefs():
     """Published Brief
     ---
