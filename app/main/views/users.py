@@ -7,6 +7,7 @@ from sqlalchemy.exc import DataError, IntegrityError
 from flask import abort, current_app, jsonify, request
 
 from dmutils.config import convert_to_boolean
+from dmutils.email.helpers import hash_string
 
 from .. import main
 from ... import db, encryption
@@ -236,6 +237,15 @@ def update_user(user_id):
         user.password_changed_at = datetime.utcnow()
         user.failed_login_count = 0
         user_update['password'] = 'updated'
+        if user.role in ('admin-manager',):
+            current_app.logger.warning(
+                "{code}: Password reset requested for {user_role} user '{email_hash}'",
+                extra={
+                    "code": "update_user.password.role_warning",
+                    "email_hash": hash_string(user.email_address),
+                    "user_role": user.role,
+                }
+            )
     if 'active' in user_update:
         user.active = user_update['active']
     if 'name' in user_update:
