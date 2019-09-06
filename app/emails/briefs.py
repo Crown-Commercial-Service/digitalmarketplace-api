@@ -87,13 +87,14 @@ def send_specialist_brief_response_received_email(supplier, brief, brief_respons
     if brief_response.data.get('niceToHaveRequirements', None):
         i = 0
         for req in brief.data['niceToHaveRequirements']:
-            nth += "**{}. {}**\n\n{}\n\n".format(
-                i + 1,
-                req['criteria'],
-                escape_markdown(brief_response.data.get('niceToHaveRequirements', [])[req['criteria']])
-                if i < len(brief_response.data.get('niceToHaveRequirements', [])) else ''
-            )
-            i += 1
+            nth_reqs = brief_response.data.get('niceToHaveRequirements', [])
+            if req['criteria'] in nth_reqs:
+                nth += "**{}. {}**\n\n{}\n\n".format(
+                    i + 1,
+                    req['criteria'],
+                    escape_markdown(nth_reqs[req['criteria']])
+                )
+                i += 1
         if nth:
             nth = '####Desirable criteria:  \n\n  ' + nth
 
