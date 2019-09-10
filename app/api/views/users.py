@@ -208,7 +208,7 @@ def signup():
         'created'
     )
 
-    if employment_status == 'contractor':
+    if user_type == 'buyer' and employment_status == 'contractor':
         try:
             send_account_activation_manager_email(
                 token=claim.token,
