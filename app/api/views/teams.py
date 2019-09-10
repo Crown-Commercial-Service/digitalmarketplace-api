@@ -8,7 +8,6 @@ from app.api.business.errors import NotFoundError, TeamError, ValidationError, U
 from app.api.helpers import (
     abort,
     forbidden,
-    get_email_domain,
     role_required,
     not_found,
     exception_logger
@@ -49,8 +48,6 @@ def create_team():
         return not_found(e.message)
     except UnauthorisedError as e:
         return forbidden(e.message)
-    except Exception as e:
-        rollbar.report_exc_info()
 
     return jsonify(team)
 
@@ -100,7 +97,7 @@ def find_team_members():
     if keywords:
         results = team_business.search_team_members(
             current_user,
-            get_email_domain(current_user.email_address),
+            current_user.agency_id,
             keywords=keywords,
             exclude=exclude.split(',')
         )

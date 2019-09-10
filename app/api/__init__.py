@@ -32,7 +32,7 @@ def load_user(userid):
         teams = get_teams(user)
         user = LoginUser(user.id, user.email_address, user.supplier_code, None, user.locked,
                          user.active, user.name, user.role, user.terms_accepted_at, user.application_id,
-                         user.frameworks, notification_count, teams)
+                         user.frameworks, notification_count, teams, user.agency_id)
 
     return user
 
@@ -95,7 +95,7 @@ def load_user_from_request(request):
             notification_count = get_notification_count(user)
             user = LoginUser(user.id, user.email_address, user.supplier_code, None, user.locked,
                              user.active, user.name, user.role, user.terms_accepted_at, user.application_id,
-                             user.frameworks, notification_count)
+                             user.frameworks, notification_count, user.agency_id)
             return user
 
 
@@ -109,7 +109,6 @@ from app.api.views import (briefs,  # noqa
                            seller_dashboard,
                            seller_edit,
                            tasks,
-                           dashboards,
                            opportunities,
                            questions,
                            key_values,

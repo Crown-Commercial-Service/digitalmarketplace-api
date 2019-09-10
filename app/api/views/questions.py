@@ -6,7 +6,6 @@ from app.api.helpers import (
     abort,
     forbidden,
     not_found,
-    get_email_domain,
     role_required,
     permissions_required,
     exception_logger

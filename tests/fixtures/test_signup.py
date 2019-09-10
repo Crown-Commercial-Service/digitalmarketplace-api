@@ -2,7 +2,7 @@ import json
 import pytest
 import mock
 
-from app.models import db, Agency
+from app.models import db, Agency, AgencyDomain
 from app.api.services import user_claims_service
 from nose.tools import assert_equal
 
@@ -46,7 +46,11 @@ def agencies(app, request):
             domain='adventure.gov.au',
             category='Commonwealth',
             state='ACT',
-            whitelisted=True
+            whitelisted=True,
+            domains=[AgencyDomain(
+                domain='adventure.gov.au',
+                active=True
+            )]
         ))
 
         db.session.add(Agency(
@@ -55,7 +59,11 @@ def agencies(app, request):
             domain='falcon.net.au',
             category='Commonwealth',
             state='NSW',
-            whitelisted=True
+            whitelisted=True,
+            domains=[AgencyDomain(
+                domain='falcon.net.au',
+                active=True
+            )]
         ))
 
         db.session.add(Agency(
@@ -64,7 +72,11 @@ def agencies(app, request):
             domain='jedi.edu.au',
             category='State',
             state='NSW',
-            whitelisted=False
+            whitelisted=False,
+            domains=[AgencyDomain(
+                domain='jedi.edu.au',
+                active=True
+            )]
         ))
 
         db.session.commit()

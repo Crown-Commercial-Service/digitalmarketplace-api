@@ -1,10 +1,11 @@
+import traceback
+from binascii import hexlify
 from functools import wraps
+from os import urandom
 
 import pendulum
 import requests
 import rollbar
-from os import urandom
-from binascii import hexlify
 from flask import abort as flask_abort
 from flask import current_app, jsonify, make_response, render_template_string, request
 from flask_login import current_user, login_user
@@ -14,7 +15,8 @@ from app.models import Agency, BriefUser, User, db
 from app.tasks.email import send_email
 from app.authentication import get_api_key_from_request
 from dmutils.csrf import get_csrf_token
-from dmutils.email import ONE_DAY_IN_SECONDS, EmailError, parse_fernet_timestamp
+from dmutils.email import (ONE_DAY_IN_SECONDS, EmailError,
+                           parse_fernet_timestamp)
 
 
 def allow_api_key_auth(func):
@@ -61,7 +63,9 @@ def exception_logger(func):
             return e.get_response()
         except Exception as e:
             rollbar.report_exc_info()
-            print '\033[1;31;40m ERROR: {}\033[0;37;40m'.format(e)
+            print '\033[38;5;196m ERROR: {}'.format(e)
+            traceback.print_exc()
+            print '\033[0m'
             return flask_abort(500)
     return decorated_view
 
@@ -129,42 +133,8 @@ def generate_random_token(length=32):
     return hexlify(urandom(length))
 
 
-_GOV_EMAIL_DOMAINS = [
-    'gov.au',
-    'abc.net.au',
-    'melbournewater.com.au',
-    'tourism.australia.com',
-    'victrack.com.au',
-    'auspost.com.au',
-    'mav.asn.au',
-    'healthdirect.org.au',
-    'unitywater.com'
-]
-
-_GOV_EMAILS = [
-    'itprocurement@unsw.edu.au',
-    'bill.simpson-young@data61.csiro.au'
-]
-
-
-def is_government_email(email_address):
-    domain = email_address.split('@')[-1]
-    return any(email_address in _GOV_EMAILS or domain == d or domain.endswith('.' + d) for d in _GOV_EMAIL_DOMAINS)
-
-
-def slack_escape(text):
-    """
-    Escapes special characters for Slack API.
-
-    https://api.slack.com/docs/message-formatting#how_to_escape_characters
-    """
-    text = text.replace('&', '&amp;')
-    text = text.replace('<', '&lt;')
-    text = text.replace('>', '&gt;')
-    return text
-
-
 def user_info(user):
+    from app.api.services import agency_service
     try:
         user_type = current_user.role
     except AttributeError:
@@ -210,6 +180,13 @@ def user_info(user):
     except AttributeError:
         is_team_lead = False
 
+    domains = None
+    try:
+        agency_id = current_user.agency_id
+        domains = agency_service.get_agency_domains(agency_id)
+    except AttributeError:
+        agency_id = None
+
     return {
         "isAuthenticated": is_authenticated,
         "userType": user_type,
@@ -220,7 +197,9 @@ def user_info(user):
         "notificationCount": notification_count,
         "teams": teams,
         "isPartOfTeam": is_part_of_team,
-        "isTeamLead": is_team_lead
+        "isTeamLead": is_team_lead,
+        "agencyId": agency_id,
+        "agencyDomains": domains
     }
 
 
@@ -233,26 +212,6 @@ def notify_team(subject, body, more_info_url=None):
     # ensure strings can be encoded as ascii only
     body = body.encode("ascii", "ignore").decode('ascii')
     subject = subject.encode("ascii", "ignore").decode('ascii')
-
-    if current_app.config.get('DM_TEAM_SLACK_WEBHOOK', None):
-        slack_body = slack_escape(body)
-        if more_info_url:
-            slack_body += '\n' + more_info_url
-        data = {
-            'attachments': [{
-                'title': subject,
-                'text': slack_body,
-                'fallback': '{} - {} {}'.format(subject, body, more_info_url),
-            }],
-            'username': 'Marketplace Notifications',
-        }
-        response = requests.post(
-            current_app.config['DM_TEAM_SLACK_WEBHOOK'],
-            json=data
-        )
-        if response.status_code != 200:
-            msg = 'Failed to send notification to Slack channel: {} - {}'.format(response.status_code, response.text)
-            current_app.logger.error(msg)
 
     if current_app.config.get('DM_TEAM_EMAIL', None):
         email_body = render_template_string(
@@ -303,6 +262,10 @@ def parse_date(dt):
 
 def get_email_domain(email_address):
     return email_address.split('@')[-1]
+
+
+def is_valid_email(email_address):
+    return '@' in email_address and email_address.count('@') == 1
 
 
 def prepare_specialist_responses(brief, responses):

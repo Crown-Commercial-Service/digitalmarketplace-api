@@ -11,7 +11,7 @@ class TestTeamCreatorValidation(BaseApplicationTest):
 
     def test_team_fails_validation_with_no_team_lead(self, users, user, teams, team, team_members):
         team_members[0].is_team_lead = False
-        result = TeamValidator(team, user).validate_all()
+        result = TeamValidator(team, user, ['teamtest.gov.au']).validate_all()
 
         assert len(result.errors) == 2
         assert any(error['id'] == 'TM002' for error in result.errors)

@@ -5,8 +5,7 @@ from flask_login import current_user
 from app.api.business.errors import (NotFoundError, TeamError,
                                      UnauthorisedError, ValidationError)
 from app.api.business.validators import TeamValidator
-from app.api.helpers import get_email_domain
-from app.api.services import (audit_service, audit_types,
+from app.api.services import (agency_service, audit_service, audit_types,
                               team_member_permission_service,
                               team_member_service, team_service, users)
 from app.emails.teams import (send_removed_team_member_notification_emails,
@@ -62,12 +61,11 @@ def get_teams_overview():
     teams_overview = {}
     user = users.get(current_user.id)
     completed_teams = team_service.get_teams_for_user(user.id)
-    email_domain = get_email_domain(user.email_address)
 
-    overview = team_service.get_teams_overview(user.id, email_domain)
+    overview = team_service.get_teams_overview(user.id, user.agency_id)
     teams_overview.update(overview=overview)
 
-    organisation = users.get_user_organisation(email_domain)
+    organisation = agency_service.get_agency_name(user.agency_id)
     teams_overview.update(organisation=organisation)
 
     completed_teams_count = len(completed_teams)
@@ -80,12 +78,11 @@ def get_people_overview():
     people_overview = {}
     user = users.get(current_user.id)
     completed_teams = team_service.get_teams_for_user(user.id)
-    domain = get_email_domain(user.email_address)
 
-    people = users.get_buyer_team_members(domain)
+    people = users.get_buyer_team_members(user.agency_id)
     people_overview.update(users=people)
 
-    organisation = users.get_user_organisation(domain)
+    organisation = agency_service.get_agency_name(user.agency_id)
     people_overview.update(organisation=organisation)
 
     completed_teams_count = len(completed_teams)
@@ -108,8 +105,6 @@ def get_team(team_id):
     if not team_member:
         raise UnauthorisedError('Only team leads can edit a team')
 
-    domain = get_email_domain(current_user.email_address)
-
     if team['teamMembers'] is not None:
         for user_id, team_member in team['teamMembers'].iteritems():
             missing_permissions = [permission for permission in permission_types
@@ -117,8 +112,6 @@ def get_team(team_id):
 
             for permission in missing_permissions:
                 team_member['permissions'][permission] = False
-
-    team.update(domain=domain)
 
     return team
 
@@ -136,9 +129,11 @@ def update_team(team_id, data):
     update_permissions(team, data)
 
     create_team = data.get('createTeam', False)
+
+    agency_domains = agency_service.get_agency_domains(current_user.agency_id)
     saved = False
     if create_team:
-        validation_result = TeamValidator(team, current_user).validate_all()
+        validation_result = TeamValidator(team, current_user, agency_domains).validate_all()
         if len([e for e in validation_result.errors]) > 0:
             raise ValidationError([e for e in validation_result.errors])
 
@@ -149,7 +144,7 @@ def update_team(team_id, data):
         send_team_lead_notification_emails(team_id)
         send_team_member_notification_emails(team_id)
     elif team.status == 'completed':
-        validation_result = TeamValidator(team, current_user).validate_all()
+        validation_result = TeamValidator(team, current_user, agency_domains).validate_all()
         if len([e for e in validation_result.errors]) > 0:
             raise ValidationError([e for e in validation_result.errors])
 
@@ -166,7 +161,7 @@ def update_team(team_id, data):
         if len(removed_team_members) > 0:
             send_removed_team_member_notification_emails(team_id, removed_team_members)
     elif team.status == 'created':
-        validation_result = TeamValidator(team, current_user).validate_all()
+        validation_result = TeamValidator(team, current_user, agency_domains).validate_all()
         team_member_errors = [e for e in validation_result.errors if str(e.get('id')).startswith('TM')]
         if team_member_errors:
             raise ValidationError(team_member_errors)
@@ -300,5 +295,5 @@ def request_access(data):
     send_request_access_email(permission)
 
 
-def search_team_members(current_user, email_domain, keywords=None, exclude=None):
-    return team_service.search_team_members(current_user, email_domain, keywords, exclude)
+def search_team_members(current_user, agency_id, keywords=None, exclude=None):
+    return team_service.search_team_members(current_user, agency_id, keywords, exclude)

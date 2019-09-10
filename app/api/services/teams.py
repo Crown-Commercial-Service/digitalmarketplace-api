@@ -133,7 +133,7 @@ class TeamService(Service):
         )
         return [r._asdict() for r in result]
 
-    def get_teams_overview(self, user_id, email_domain):
+    def get_teams_overview(self, user_id, agency_id):
         teams_led_by_user = (
             db
             .session
@@ -157,7 +157,7 @@ class TeamService(Service):
             .join(User)
             .filter(
                 TeamMember.is_team_lead.is_(True),
-                User.email_address.like('%@{}'.format(email_domain)),
+                User.agency_id == agency_id,
                 User.role == 'buyer'
             )
             .group_by(TeamMember.team_id)
@@ -174,7 +174,7 @@ class TeamService(Service):
             .join(User)
             .filter(
                 TeamMember.is_team_lead.is_(False),
-                User.email_address.like('%@{}'.format(email_domain)),
+                User.agency_id == agency_id,
                 User.role == 'buyer'
             )
             .group_by(TeamMember.team_id)
@@ -204,7 +204,7 @@ class TeamService(Service):
 
         return [r._asdict() for r in result]
 
-    def search_team_members(self, current_user, email_domain, keywords=None, exclude=None):
+    def search_team_members(self, current_user, agency_id, keywords=None, exclude=None):
         exclude = exclude if exclude else []
 
         subquery = (
@@ -215,7 +215,7 @@ class TeamService(Service):
             )
             .join(Team, User)
             .filter(Team.status == 'completed')
-            .filter(User.email_address.like('%@{}'.format(email_domain)))
+            .filter(User.agency_id == agency_id)
             .subquery()
         )
 
@@ -230,7 +230,7 @@ class TeamService(Service):
             .filter(
                 User.id != current_user.id,
                 User.active.is_(True),
-                User.email_address.like('%@{}'.format(email_domain))
+                User.agency_id == agency_id
             )
             .filter(User.role == current_user.role)
             .filter(User.id.notin_(exclude))

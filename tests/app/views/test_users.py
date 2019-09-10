@@ -1313,21 +1313,6 @@ class TestTeamsGet(BaseUserTest):
         self.u_id = u.id
         self.setup_dummy_briefs(2, user_id=u.id, title='brieftitle')
 
-    def test_teammembers(self):
-        response = self.client.get('teammembers/begavalley.nsw.gov.au')
-        assert response.status_code == 200
-
-        data = response.get_data(as_text=True)
-        jdata = json.loads(data)
-
-        assert jdata['teammembers'][0] == {
-            'email_address': 'j@begavalley.nsw.gov.au',
-            'id': self.u_id,
-            'name': 'John Buyer'
-        }
-
-        assert jdata['teamname'] == 'Unknown'
-
 
 class TestUsersExport(BaseUserTest):
     framework_slug = None

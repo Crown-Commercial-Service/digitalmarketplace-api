@@ -3,6 +3,7 @@ import pendulum
 import re
 from flask import current_app
 from app.api.services import evidence_service
+from app.api.helpers import is_valid_email
 
 
 class SupplierValidator(object):
@@ -272,7 +273,7 @@ class SupplierValidator(object):
                 'step': step,
                 'id': 'S013-email'
             })
-        elif '@' not in email or email.count('@') > 1:
+        elif not is_valid_email(email):
             errors.append({
                 'message': 'Authorised representative email is not valid',
                 'severity': 'error',

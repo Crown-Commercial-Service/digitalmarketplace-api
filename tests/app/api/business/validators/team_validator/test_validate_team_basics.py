@@ -36,7 +36,7 @@ class TestTeamBasicsValidation(BaseApplicationTest):
             email_address=email_address
         )
 
-        errors = TeamValidator(team, user).validate_basics()
+        errors = TeamValidator(team, user, ['teamtest.gov.au']).validate_basics()
 
         assert len(errors) >= 1
         assert any(error['id'] == 'T002' for error in errors)
@@ -47,17 +47,17 @@ class TestTeamBasicsValidation(BaseApplicationTest):
             email_address='marketplace@digital.gov.au'
         )
 
-        errors = TeamValidator(team, user).validate_basics()
+        errors = TeamValidator(team, user, ['teamtest.gov.au']).validate_basics()
 
         assert len(errors) == 1
         assert any(error['id'] == 'T003' for error in errors)
 
     def test_team_passes_validation_with_name_and_email(self, users, user):
         team = Team(
-            email_address='marketplace@dta.gov.au',
+            email_address='marketplace@teamtest.gov.au',
             name='Marketplace'
         )
 
-        errors = TeamValidator(team, user).validate_basics()
+        errors = TeamValidator(team, user, ['teamtest.gov.au']).validate_basics()
 
         assert len(errors) == 0

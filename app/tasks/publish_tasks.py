@@ -5,6 +5,22 @@ from . import celery
 
 
 @celery.task
+def agency(agency, event_type, **kwargs):
+    publish.agency(agency, event_type, **kwargs)
+
+
+def compress_agency(agency):
+    return {
+        'id': agency.id,
+        'name': agency.name,
+        'category': agency.category,
+        'state': agency.state,
+        'whitelisted': agency.whitelisted,
+        'domains': ', '.join([d.domain for d in agency.domains])
+    }
+
+
+@celery.task
 def application(application, event_type, **kwargs):
     publish.application(application, event_type, **kwargs)
 

@@ -1,13 +1,19 @@
-from app import db, encryption
-from app.models import Application, AuditEvent, AuditTypes, User, Framework, UserFramework
 from datetime import datetime
-from flask import current_app, request, jsonify
-from sqlalchemy.exc import DataError, InvalidRequestError, IntegrityError
+
+from flask import current_app, jsonify, request
+from sqlalchemy.exc import DataError, IntegrityError, InvalidRequestError
 from sqlalchemy.orm import noload
-from app.emails.users import send_existing_application_notification, send_existing_seller_notification
+
+from app import db, encryption
 from app.api.applications import create_application
-from app.emails.users import send_new_user_onboarding_email
+from app.api.services import agency_service
+from app.emails.users import (send_existing_application_notification,
+                              send_existing_seller_notification,
+                              send_new_user_onboarding_email)
+from app.models import (Application, AuditEvent, AuditTypes, Framework, User,
+                        UserFramework)
 from app.tasks import publish_tasks
+from app.api.helpers import get_email_domain
 
 
 def add_user(data):
@@ -69,6 +75,10 @@ def add_user(data):
         raise ValueError(
             "'application_id' is only valid for users with applicant' or 'supplier' role, not '{}'".format(user.role))
 
+    if user.role == 'buyer':
+        agency = agency_service.get_or_add_agency(get_email_domain(email_address))
+        user.agency_id = agency.id
+
     db.session.add(user)
     db.session.flush()
 
@@ -95,7 +105,7 @@ def add_user(data):
 
 
 def is_duplicate_user(email_address):
-    domain = email_address.split('@')[-1]
+    domain = get_email_domain(email_address)
     if domain in current_app.config['GENERIC_EMAIL_DOMAINS']:
         return False
 

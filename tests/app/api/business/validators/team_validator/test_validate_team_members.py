@@ -39,7 +39,7 @@ class TestTeamMemberValidation(BaseApplicationTest):
 
     def test_team_fails_validation_when_member_has_different_email_domain(self, users, user, teams, team, team_members):
         buyer = users.pop()
-        buyer.email_address = 'buyer@cloud.gov.au'
+        buyer.agency_id = 11
         errors = TeamValidator(team, user).validate_team_members()
 
         assert len(errors) == 1

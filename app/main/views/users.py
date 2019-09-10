@@ -24,6 +24,7 @@ from app.api.business import (
     supplier_business,
     team_business
 )
+from app.api.helpers import get_email_domain, is_valid_email
 from app.api.services import user_claims_service, users as user_service
 from app.tasks import publish_tasks
 
@@ -95,6 +96,7 @@ def get_user_by_id(user_id):
                User.supplier_code,
                User.terms_accepted_at,
                User.updated_at,
+               User.agency_id,
                Supplier.name.label('supplier_name'))
         .outerjoin(Supplier)
         .filter(User.id == user_id)
@@ -135,37 +137,12 @@ def get_user_by_id(user_id):
         'passwordChangedAt': user.password_changed_at,
         'loggedInAt': user.logged_in_at if user.logged_in_at else None,
         'termsAcceptedAt': user.terms_accepted_at,
-        'failedLoginCount': user.failed_login_count
+        'failedLoginCount': user.failed_login_count,
+        'agencyId': user.agency_id
     }
     result.update(legacy)
 
     return jsonify(users=result)
-
-
-@main.route('/teammembers/<string:domain>', methods=['GET'])
-def get_teammembers(domain):
-    query = db.session.execute("""
-        select email_address, id, name from "vuser"
-        where email_domain = :domain and active = true and not email_address ~ '\+'
-        order by name
-    """, {'domain': domain})
-
-    teammembers = [{'email_address': email_address, 'id': id, 'name': name}
-                   for (email_address, id, name) in list(query)]
-
-    query = db.session.execute("""
-        select name from govdomains
-        where domain = :domain
-    """, {'domain': domain})
-
-    results = list(query)
-
-    try:
-        name = results[0].name
-    except IndexError:
-        name = 'Unknown'
-
-    return jsonify(teammembers=teammembers, teamname=name)
 
 
 @main.route('/users', methods=['GET'])
@@ -350,7 +327,7 @@ def create_user():
 
         if user.role == 'buyer':
             notification_message = 'Domain: {}'.format(
-                email_address.split('@')[-1]
+                get_email_domain(email_address)
             )
 
             notification_text = 'A new buyer has signed up'
@@ -582,51 +559,6 @@ def get_buyers_stats():
     }
 
     return jsonify(buyers=buyers)
-
-
-@main.route('/users/checkduplicates', methods=['POST'])
-def get_duplicate_users():
-    json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ["email_address"])
-    email_address = json_payload["email_address"]
-    domain = email_address.split('@')[-1]
-
-    if domain in current_app.config['GENERIC_EMAIL_DOMAINS']:
-        return jsonify(duplicate=None)
-
-    supplier_code = db.session.execute("""
-        select distinct(supplier_code) from vuser
-        where email_domain = :domain
-    """, {'domain': domain}).fetchone()
-
-    if (supplier_code and supplier_code[0]):
-        send_existing_seller_notification(email_address, supplier_code[0])
-        duplicate_audit_event(email_address, {'supplier_code': supplier_code[0]})
-        return jsonify(duplicate={"supplier_code": supplier_code[0]})
-
-    application_id = db.session.execute("""
-        select distinct(application_id) from vuser
-        where email_domain = :domain
-    """, {'domain': domain}).fetchone()
-
-    if (application_id and application_id[0]):
-        send_existing_application_notification(email_address, application_id[0])
-        duplicate_audit_event(email_address, {'application_id': application_id[0]})
-        return jsonify(duplicate={"application_id": application_id[0]})
-
-    return jsonify(duplicate=None)
-
-
-def duplicate_audit_event(email_address, data):
-    audit = AuditEvent(
-        audit_type=AuditTypes.duplicate_supplier,
-        user=email_address,
-        data=data,
-        db_object=None
-    )
-
-    db.session.add(audit)
-    db.session.commit()
 
 
 def check_supplier_role(role, supplier_code):

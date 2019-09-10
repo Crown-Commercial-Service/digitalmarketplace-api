@@ -2,41 +2,14 @@ from flask import jsonify
 from flask_login import login_required, current_user
 from app.api import api
 from app.api.services import suppliers, users, supplier_domain_service, domain_service, evidence_service, assessments
-from app.api.business import supplier_business
-from app.api.helpers import get_email_domain, role_required
+from app.api.business import supplier_business, seller_dashboard_business
+from app.api.helpers import role_required, exception_logger
 
 
 @api.route('/supplier/dashboard', methods=['GET'])
 @login_required
 @role_required('supplier')
 def supplier_dashboard():
-    """Seller dashboard (role=supplier)
-    ---
-    tags:
-      - dashboard
-    definitions:
-      SellerDashboard:
-        type: object
-        properties:
-            supplier:
-              type: object
-              properties:
-                code:
-                  type: string
-                name:
-                  type: string
-            messages:
-              type: object
-              properties:
-                items:
-                  $ref: '#/definitions/SellerDashboardMessageItem'
-    responses:
-      200:
-        description: Supplier dashboard info
-        schema:
-          $ref: '#/definitions/SellerDashboard'
-
-    """
     supplier = suppliers.first(code=current_user.supplier_code)
     messages = supplier_business.get_supplier_messages(current_user.supplier_code, False)
     items = messages.warnings + messages.errors
@@ -57,31 +30,6 @@ def supplier_dashboard():
 @login_required
 @role_required('supplier')
 def get_messages():
-    """Supplier dashboard (Messages) (role=supplier)
-    ---
-    tags:
-      - dashboard
-    definitions:
-      SellerDashboardMessageItems:
-        type: object
-        properties:
-            messages:
-              type: array
-              items:
-                $ref: '#/definitions/SellerDashboardMessageItem'
-      SellerDashboardMessageItem:
-        type: object
-        properties:
-          message:
-            type: string
-          severity:
-            type: string
-    responses:
-      200:
-        description: Seller dashboard data for the 'Notifications' tab
-        schema:
-          $ref: '#/definitions/SellerDashboardMessageItems'
-    """
     messages = supplier_business.get_supplier_messages(current_user.supplier_code, False)
     items = messages.warnings + messages.errors
 
@@ -100,36 +48,11 @@ def get_messages():
 
 
 @api.route('/supplier/dashboard/team', methods=['GET'])
+@exception_logger
 @login_required
 @role_required('supplier')
 def get_team_members():
-    """Supplier dashboard (Team) (role=supplier)
-    ---
-    tags:
-      - dashboard
-    definitions:
-      SellerDashboardTeamItems:
-        type: object
-        properties:
-            teams:
-              type: array
-              items:
-                $ref: '#/definitions/SellerDashboardTeamItem'
-      SellerDashboardTeamItem:
-        type: object
-        properties:
-          email:
-            type: string
-          name:
-            type: string
-    responses:
-      200:
-        description: Seller dashboard data for the 'Team' tab
-        schema:
-          $ref: '#/definitions/SellerDashboardTeamItems'
-    """
-    team_members = users.get_team_members(current_user.get_id(), get_email_domain(current_user.email_address))
-
+    team_members = seller_dashboard_business.get_team_members(current_user.supplier_code)
     return jsonify(
         teams={
             'items': team_members
@@ -141,37 +64,6 @@ def get_team_members():
 @login_required
 @role_required('supplier')
 def get_categories():
-    """Supplier dashboard (Categories) (role=supplier)
-    ---
-    tags:
-      - dashboard
-    definitions:
-      SellerDashboardCategoryItems:
-        type: object
-        properties:
-            categories:
-              type: array
-              items:
-                $ref: '#/definitions/SellerDashboardCategoryItem'
-      SellerDashboardCategoryItem:
-        type: object
-        properties:
-          id:
-            type: number
-          name:
-            type: string
-          status:
-            type: string
-          is_approved:
-            type: boolean
-          evidence_id:
-            type: number
-    responses:
-      200:
-        description: Seller dashboard data for the 'Categories' tab
-        schema:
-          $ref: '#/definitions/SellerDashboardCategoryItems'
-    """
     categories = []
     supplier = suppliers.get_supplier_by_code(current_user.supplier_code)
     for domain in domain_service.get_active_domains():

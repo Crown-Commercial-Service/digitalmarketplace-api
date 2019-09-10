@@ -8,7 +8,7 @@ from faker import Faker
 from sqlbag import temporary_database
 
 from app import create_app, encryption
-from app.models import (Agency, Application, Assessment, Brief, BriefResponse,
+from app.models import (Agency, AgencyDomain, Application, Assessment, Brief, BriefResponse,
                         BriefUser, CaseStudy, Contact, Domain, Evidence,
                         Framework, FrameworkLot, Lot, Supplier, SupplierDomain,
                         SupplierFramework, Team, TeamMember, ApiKey,
@@ -64,7 +64,11 @@ def agencies(app, request):
             name='Digital Transformation Agency',
             domain='digital.gov.au',
             category='Commonwealth',
-            whitelisted=True
+            whitelisted=True,
+            domains=[AgencyDomain(
+                domain='digital.gov.au',
+                active=True
+            )]
         ))
 
         db.session.add(Agency(
@@ -72,7 +76,11 @@ def agencies(app, request):
             name='Test Agency',
             domain='test.gov.au',
             category='Commonwealth',
-            whitelisted=True
+            whitelisted=True,
+            domains=[AgencyDomain(
+                domain='test.gov.au',
+                active=True
+            )]
         ))
 
         db.session.add(Agency(
@@ -80,7 +88,11 @@ def agencies(app, request):
             name='Another Test Agency',
             domain='asdf.com.au',
             category='Commonwealth',
-            whitelisted=True
+            whitelisted=True,
+            domains=[AgencyDomain(
+                domain='asdf.com.au',
+                active=True
+            )]
         ))
 
         db.session.commit()
@@ -169,7 +181,7 @@ def applications(app, request):
 
 
 @pytest.fixture()
-def users(app, request):
+def users(app, request, agencies):
     params = request.param if hasattr(request, 'param') else {}
     user_role = params['user_role'] if 'user_role' in params else 'buyer'
     email_domain = params['email_domain'] if 'email_domain' in params else 'digital.gov.au'
@@ -200,7 +212,8 @@ def users(app, request):
                 password=encryption.hashpw('testpassword'),
                 active=True,
                 role='buyer',
-                password_changed_at=utcnow()
+                password_changed_at=utcnow(),
+                agency_id=1
             ))
             db.session.flush()
             db.session.add(UserFramework(user_id=7, framework_id=framework.id))

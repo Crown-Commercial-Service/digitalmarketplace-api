@@ -401,24 +401,6 @@ def get_brief(brief_id):
     return jsonify(briefs=brief.serialize(with_users=True))
 
 
-@main.route('/briefs/teammembers/<string:email_domain>', methods=['GET'])
-def get_team_briefs(email_domain):
-    query = db.session.execute("""
-            SELECT array_agg(c)
-            FROM (SELECT unnest(brief_ids) c FROM vuser_users_with_briefs
-                        INNER JOIN vuser ON vuser.id = vuser_users_with_briefs.id
-                        where vuser.active = :active AND vuser_users_with_briefs.email_domain = :domain) dt(c)
-        """, {'active': 'true', 'domain': email_domain}).fetchone()
-
-    brief_id_list = query[0]
-
-    briefs = Brief.query.options(joinedload(Brief.clarification_questions))\
-        .options(joinedload(Brief.users)).options(joinedload(Brief.work_order)).filter(
-        Brief.id.in_(brief_id_list)).all()
-
-    return jsonify([brief.serialize() for brief in briefs])
-
-
 @main.route('/briefs', methods=['GET'])
 def list_briefs():
     if request.args.get('human'):

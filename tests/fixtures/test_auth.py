@@ -15,7 +15,8 @@ def test_anonymous(client):
 
 def test_authenticated(client, users):
     client.post('/2/login', data=json.dumps({
-        'emailAddress': 'test@digital.gov.au', 'password': 'testpassword'
+        'emailAddress': 'test@digital.gov.au',
+        'password': 'testpassword'
     }), content_type='application/json')
 
     res = client.get('/2/ping')

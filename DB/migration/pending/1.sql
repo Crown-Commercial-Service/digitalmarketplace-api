@@ -1,26 +1,69 @@
-create sequence if not exists "public"."api_key_id_seq";
+create sequence if not exists "public"."agency_domain_id_seq";
 
-create table "public"."api_key" (
-    "id" integer not null default nextval('api_key_id_seq'::regclass),
-    "user_id" integer not null,
-    "key" character varying(64) not null,
-    "created_at" timestamp without time zone not null,
-    "revoked_at" timestamp without time zone
+create table if not exists "public"."agency_domain" (
+    "id" integer not null default nextval('agency_domain_id_seq'::regclass),
+    "agency_id" integer not null,
+    "domain" character varying not null,
+    "active" boolean not null,
+    constraint "agency_domain_pkey" PRIMARY KEY (id),
+    constraint "agency_domain_agency_id_fkey" FOREIGN KEY (agency_id) 
+        REFERENCES public.agency(id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
 );
 
 
-CREATE UNIQUE INDEX api_key_pkey ON api_key USING btree (id);
+CREATE UNIQUE INDEX if not exists agency_domain_pkey ON public.agency_domain USING btree (id);
 
-CREATE UNIQUE INDEX ix_api_key_key ON api_key USING btree (key);
+CREATE UNIQUE INDEX if not exists ix_agency_domain_domain ON public.agency_domain USING btree (domain);
 
-CREATE INDEX ix_api_key_created_at ON api_key USING btree (created_at);
+insert into agency_domain (agency_id, domain, active)
+select a.id "agency_id", a.domain, true
+from agency a
+left join agency_domain ad on ad.agency_id != a.id
+where ad.domain is null;
 
-CREATE INDEX ix_api_key_revoked_at ON api_key USING btree (revoked_at);
 
-CREATE INDEX ix_api_key_user_id ON api_key USING btree (user_id);
+drop view if exists "public"."vuser" cascade;
 
-alter table "public"."api_key" add constraint "api_key_pkey" PRIMARY KEY using index "api_key_pkey";
+alter table "public"."user" add column if not exists "agency_id" bigint;
 
-alter table "public"."api_key" add constraint "api_key_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id);
+create view "public"."vuser" as  SELECT u.id,
+    u.name,
+    u.email_address,
+    u.phone_number,
+    u.password,
+    u.active,
+    u.created_at,
+    u.updated_at,
+    u.password_changed_at,
+    u.logged_in_at,
+    u.terms_accepted_at,
+    u.failed_login_count,
+    u.role,
+    u.supplier_code,
+    u.application_id,
+    u.agency_id,
+    split_part((u.email_address)::text, '@'::text, 2) AS email_domain
+   FROM "user" u;
 
-alter table "public"."api_key" add constraint "key_min_length" CHECK ((char_length((key)::text) > 63));
+
+CREATE INDEX if not exists ix_user_agency_id ON public."user" USING btree (agency_id);
+
+ALTER TABLE "public"."user" DROP CONSTRAINT IF EXISTS "user_agency_id_fkey";
+alter table "public"."user" add constraint "user_agency_id_fkey" FOREIGN KEY (agency_id) REFERENCES agency(id);
+
+update "user" u
+set agency_id = a.id
+from (
+    select u.id "user_id", split_part((u.email_address)::text, '@'::text, 2) "domain"
+    from "user" u
+    where u.role = 'buyer'
+) r
+inner join agency a on a.domain = r.domain
+where r.user_id = u.id
+and u.agency_id is null;
+
+drop view if exists govdomains;
+
+drop view if exists vuser_users_with_briefs;

@@ -1,6 +1,38 @@
 import pytest
 
-from app.models import Team, TeamMember, User, db, utcnow
+from app.models import Agency, AgencyDomain, Team, TeamMember, User, db, utcnow
+
+
+@pytest.fixture()
+def agencies(app):
+    with app.app_context():
+        if not db.session.query(Agency).filter(Agency.id == 10).one_or_none():
+            db.session.add(Agency(
+                id=10,
+                name='Team Test Agency',
+                domain='teamtest.gov.au',
+                category='Commonwealth',
+                whitelisted=True,
+                domains=[AgencyDomain(
+                    domain='teamtest.gov.au',
+                    active=True
+                )]
+            ))
+
+            db.session.add(Agency(
+                id=11,
+                name='Team Test Agency 2',
+                domain='teamtest2.gov.au',
+                category='Commonwealth',
+                whitelisted=True,
+                domains=[AgencyDomain(
+                    domain='teamtest2.gov.au',
+                    active=True
+                )]
+            ))
+
+            db.session.commit()
+        yield Agency.query.all()
 
 
 @pytest.fixture()
@@ -15,7 +47,7 @@ def teams(app):
             Team(
                 id=1,
                 name='Marketplace',
-                email_address='me@dta.gov.au',
+                email_address='me@teamtest.gov.au',
                 status='completed'
             )
         )
@@ -24,7 +56,7 @@ def teams(app):
             Team(
                 id=2,
                 name='Cloud',
-                email_address='cloud@dta.gov.au',
+                email_address='cloud@teamtest.gov.au',
                 status='completed'
             )
         )
@@ -64,7 +96,7 @@ def user(app):
 
 
 @pytest.fixture()
-def users(app):
+def users(app, agencies):
     with app.app_context():
         db.session.add(
             User(
@@ -74,7 +106,8 @@ def users(app):
                 password='muumuu',
                 active=True,
                 password_changed_at=utcnow(),
-                role='buyer'
+                role='buyer',
+                agency_id=10
             )
         )
 
@@ -86,7 +119,8 @@ def users(app):
                 password='moomoo',
                 active=True,
                 password_changed_at=utcnow(),
-                role='buyer'
+                role='buyer',
+                agency_id=10
             )
         )
 

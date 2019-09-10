@@ -1,16 +1,18 @@
 import collections
-import pendulum
 import re
+
+import pendulum
 from flask import current_app
+
+from app.api.helpers import get_email_domain, is_valid_email
 from app.api.services import team_service
-from app.api.helpers import get_email_domain
 
 
 class TeamValidator(object):
-    def __init__(self, team, current_user):
+    def __init__(self, team, current_user, agency_domains=None):
         self.team = team
         self.current_user = current_user
-        self.domain = get_email_domain(current_user.email_address)
+        self.agency_domains = agency_domains
 
     def validate_all(self):
         result = (
@@ -33,7 +35,7 @@ class TeamValidator(object):
             })
 
         if self.team.email_address:
-            if '@' not in self.team.email_address or self.team.email_address.count('@') > 1:
+            if not is_valid_email(self.team.email_address):
                 errors.append({
                     'message': 'Please add a valid email address.',
                     'severity': 'error',
@@ -41,9 +43,9 @@ class TeamValidator(object):
                     'id': 'T002'
                 })
 
-            if get_email_domain(self.team.email_address) != self.domain:
+            if get_email_domain(self.team.email_address) not in self.agency_domains:
                 errors.append({
-                    'message': 'You must use an email address ending in @{}.'.format(self.domain),
+                    'message': 'You must use an email address ending in @{}.'.format(', @'.join(self.agency_domains)),
                     'severity': 'error',
                     'step': 'about',
                     'id': 'T003'
@@ -105,9 +107,7 @@ class TeamValidator(object):
                     'id': 'TM005'
                 })
 
-            tm_email_domain = tm.user.email_address[tm.user.email_address.index('@'):]
-            current_user_email_domain = self.current_user.email_address[self.current_user.email_address.index('@'):]
-            if tm_email_domain != current_user_email_domain:
+            if tm.user.agency_id != self.current_user.agency_id:
                 errors.append({
                     'message': 'unable to add user id "{}" because they are from another agency.'.format(tm.user.id),
                     'severity': 'error',

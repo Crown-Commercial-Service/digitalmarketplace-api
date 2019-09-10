@@ -32,6 +32,7 @@ from app.api.helpers import (
     role_required,
     is_current_user_in_brief,
     permissions_required,
+    get_email_domain,
     exception_logger
 )
 from app.api.services import (agency_service,
@@ -103,11 +104,8 @@ def _can_do_brief_response(brief_id):
     if len(validation_result.errors) > 0:
         abort(validation_result.errors)
 
-    def domain(email):
-        return email.split('@')[-1]
-
-    current_user_domain = domain(current_user.email_address) \
-        if domain(current_user.email_address) not in current_app.config.get('GENERIC_EMAIL_DOMAINS') \
+    current_user_domain = get_email_domain(current_user.email_address) \
+        if get_email_domain(current_user.email_address) not in current_app.config.get('GENERIC_EMAIL_DOMAINS') \
         else None
 
     lots = lots_service.all()
@@ -151,13 +149,18 @@ def _can_do_brief_response(brief_id):
         if not seller_selector or seller_selector == 'allSellers':
             is_selected = True
         elif seller_selector == 'someSellers':
-            seller_domain_list = [domain(x).lower() for x in brief.data['sellerEmailList']]
+            seller_domain_list = [get_email_domain(x).lower() for x in brief.data['sellerEmailList']]
             if current_user.email_address in brief.data['sellerEmailList'] \
                or (current_user_domain and current_user_domain.lower() in seller_domain_list):
                 is_selected = True
         elif seller_selector == 'oneSeller':
-            if current_user.email_address.lower() == brief.data['sellerEmail'].lower() \
-               or (current_user_domain and current_user_domain.lower() == domain(brief.data['sellerEmail'].lower())):
+            if (
+                current_user.email_address.lower() == brief.data['sellerEmail'].lower() or
+                (
+                    current_user_domain and
+                    current_user_domain.lower() == get_email_domain(brief.data['sellerEmail'].lower())
+                )
+            ):
                 is_selected = True
     if not is_selected:
         forbidden("Supplier not selected for this brief")
@@ -375,9 +378,7 @@ def create_specialist_brief():
         user = users.get(current_user.id)
         agency_name = ''
         try:
-            domain = user.email_address.split('@')[1]
-            agency = agency_service.find(domain=domain).one_or_none()
-            agency_name = agency.name
+            agency_name = agency_service.get_agency_name(current_user.agency_id)
         except Exception as e:
             pass
         brief = briefs.create_brief(user, current_user.get_team(), framework, lot, data={

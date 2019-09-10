@@ -62,7 +62,17 @@ def has_whitelisted_email_domain(email_domain):
     if email_domain.endswith('.gov.au'):
         return True
     else:
-        agency = Agency.query.filter(Agency.domain == email_domain).first()
+        agency = (
+            db
+            .session
+            .query(Agency)
+            .join(AgencyDomain)
+            .filter(
+                AgencyDomain.domain == email_domain,
+                AgencyDomain.active.is_(True)
+            )
+            .one_or_none()
+        )
         return agency.whitelisted if agency else False
 
 
@@ -87,6 +97,16 @@ class Agency(db.Model):
         name='state_enum'
     ))
     whitelisted = db.Column(db.Boolean, nullable=False, default=True)
+    domains = db.relationship('AgencyDomain')
+
+
+class AgencyDomain(db.Model):
+    __tablename__ = 'agency_domain'
+
+    id = db.Column(db.Integer, primary_key=True)
+    agency_id = db.Column(db.Integer, db.ForeignKey('agency.id'), nullable=False)
+    domain = db.Column(db.String, nullable=False, unique=True, index=True)
+    active = db.Column(db.Boolean, index=False, unique=False, nullable=False)
 
 
 class ApiKey(db.Model):
@@ -1377,16 +1397,29 @@ class User(db.Model):
     application = db.relationship('Application', lazy='joined', innerjoin=False)
     frameworks = relationship("UserFramework")
 
+    agency_id = db.Column(db.BigInteger,
+                          db.ForeignKey('agency.id'),
+                          index=True, unique=False, nullable=True)
+
     @validates('email_address')
     def validate_email_address(self, key, value):
-        if value and self.role == 'buyer' and not has_whitelisted_email_domain(value.split('@')[-1]):
+        from app.api.helpers import get_email_domain
+        if (
+            value and
+            self.role == 'buyer' and
+            not has_whitelisted_email_domain(get_email_domain(value))
+        ):
             raise ValidationError("invalid_buyer_domain")
         return value
 
     @validates('role')
     def validate_role(self, key, value):
-        if self.email_address and value == 'buyer'\
-                and not has_whitelisted_email_domain(self.email_address.split('@')[-1]):
+        from app.api.helpers import get_email_domain
+        if (
+            self.email_address and
+            value == 'buyer' and
+            not has_whitelisted_email_domain(get_email_domain(self.email_address))
+        ):
             raise ValidationError("invalid_buyer_domain")
         return value
 
