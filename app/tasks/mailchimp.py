@@ -49,7 +49,7 @@ def create_campaign(client, recipients, settings=None):
 
     settings.update({
         'from_name': 'The Marketplace team',
-        'reply_to': current_app.config.get('DM_GENERIC_NOREPLY_EMAIL')
+        'reply_to': current_app.config.get('DM_MAILCHIMP_NOREPLY_EMAIL')
     })
 
     try:

@@ -146,6 +146,7 @@ class Config:
 
     GENERIC_CONTACT_EMAIL = 'marketplace@digital.gov.au'
     DM_GENERIC_NOREPLY_EMAIL = 'no-reply@marketplace.digital.gov.au'
+    DM_MAILCHIMP_NOREPLY_EMAIL = 'no-reply@digital.gov.au'
     DM_GENERIC_ADMIN_NAME = 'Digital Marketplace Admin'
     DM_GENERIC_SUPPORT_NAME = 'Digital Marketplace'
 
