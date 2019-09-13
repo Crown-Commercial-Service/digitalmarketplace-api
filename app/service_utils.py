@@ -152,7 +152,7 @@ def index_service(service, wait_for_response=True):
         )
 
 
-def delete_service_from_index(service):
+def delete_service_from_index(service, wait_for_response: bool = True):
     if (
         service.framework.status == 'live' and
         service.framework.framework == 'g-cloud'
@@ -160,11 +160,12 @@ def delete_service_from_index(service):
         try:
             search_api_client.delete(
                 index=service.framework.slug,
-                service_id=service.service_id
+                service_id=service.service_id,
+                client_wait_for_response=wait_for_response,
             )
         except dmapiclient.HTTPError as e:
             current_app.logger.warning(
-                'Failed to remove {} to search index: {}'.format(
+                'Failed to remove {} from search index: {}'.format(
                     service.service_id, e.message))
     else:
         current_app.logger.warning(
