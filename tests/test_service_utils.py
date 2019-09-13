@@ -63,17 +63,33 @@ class TestIndexServices(BaseApplicationTest):
 @mock.patch('app.service_utils.search_api_client', autospec=True)
 class TestDeleteServiceFromIndex(BaseApplicationTest):
 
-    def test_live_g_cloud_8_published_service_is_deleted(self, search_api_client, live_g8_framework):
+    @pytest.mark.parametrize("wait_for_response,expected_client_wait_for_response", (
+        (None, True),
+        (True, True),
+        (False, False),
+    ))
+    def test_live_g_cloud_8_published_service_is_deleted(
+        self,
+        search_api_client,
+        live_g8_framework,
+        wait_for_response,
+        expected_client_wait_for_response,
+    ):
         g8 = Framework.query.filter(Framework.slug == 'g-cloud-8').first()
 
         with mock.patch.object(Service, "serialize", return_value={'serialized': 'object'}):
             service = Service(status='published', framework=g8)
-            delete_service_from_index(service)
+            delete_service_from_index(service, **({} if wait_for_response is None else {
+                "wait_for_response": wait_for_response,
+            }))
 
-        search_api_client.delete.assert_called_once_with(
-            index='g-cloud-8',
-            service_id=None
-        )
+        search_api_client.delete.mock_calls == [
+            mock.call(
+                index='g-cloud-8',
+                service_id=None,
+                client_wait_for_response=expected_client_wait_for_response,
+            )
+        ]
 
     def test_live_dos_service_is_not_deleted(self, search_api_client, live_dos_framework):
         dos = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()

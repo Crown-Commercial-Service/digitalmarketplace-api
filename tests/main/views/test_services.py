@@ -461,12 +461,12 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             **self.payload_g4
         )
 
-    def _post_service_update(self, service_data, service_id=None, user_role=None, wait_for_response=None):
+    def _post_service_update(self, service_data, service_id=None, user_role=None, wait_for_index=None):
         return self.client.post(
             '/services/{}?{}{}'.format(
                 service_id or self.service_id,
                 f"user-role={user_role}" if user_role else "",
-                f"&wait-for-index={wait_for_response}" if wait_for_response is not None else "",
+                f"&wait-for-index={wait_for_index}" if wait_for_index is not None else "",
             ),
             data=json.dumps({
                 'updated_by': 'joeblogs',
@@ -538,7 +538,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert b'Invalid JSON' in response.get_data()
         assert index_service.called is False
 
-    @pytest.mark.parametrize("wait_for_response_req_arg,wait_for_response_call_arg", (
+    @pytest.mark.parametrize("wait_for_index_req_arg,wait_for_response_call_arg", (
         (None, True),
         ("true", True),
         ("false", False),
@@ -547,12 +547,12 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def test_can_post_a_valid_service_update(
         self,
         index_object,
-        wait_for_response_req_arg,
+        wait_for_index_req_arg,
         wait_for_response_call_arg,
     ):
         response = self._post_service_update(
             {'serviceName': 'new service name'},
-            wait_for_response=wait_for_response_req_arg,
+            wait_for_index=wait_for_index_req_arg,
         )
         assert response.status_code == 200
 
@@ -894,16 +894,24 @@ class TestUpdateServiceStatus(BaseApplicationTest, FixtureMixin):
         return Service.query.filter(
             Service.service_id == service_id).first()
 
-    def _post_update_status(self, old_status, new_status,
-                            service_is_indexed, service_is_deleted,
-                            expected_status_code):
+    def _post_update_status(
+        self,
+        old_status,
+        new_status,
+        service_is_indexed,
+        service_is_deleted,
+        expected_status_code,
+        wait_for_index=None,
+        expect_wait_for_index=True,
+    ):
 
         with mock.patch('app.service_utils.index_object') as index_object:
             with mock.patch('app.service_utils.search_api_client') as service_utils_search_api_client:
                 response = self.client.post(
-                    '/services/{0}/status/{1}'.format(
+                    '/services/{0}/status/{1}?{2}'.format(
                         self.services[old_status]['id'],
-                        new_status
+                        new_status,
+                        f"&wait-for-index={wait_for_index}" if wait_for_index is not None else "",
                     ),
                     data=json.dumps(
                         {'updated_by': 'joeblogs'}),
@@ -922,19 +930,32 @@ class TestUpdateServiceStatus(BaseApplicationTest, FixtureMixin):
 
                 # Check that service in database has been updated
                 assert new_status == service.status
+
                 # Check that search_api_client is doing the right thing
-                if service_is_indexed:
-                    assert index_object.called is True
-                else:
-                    assert index_object.called is False
+                assert index_object.mock_calls == ([] if not service_is_indexed else [
+                    mock.call(
+                        doc_type="services",
+                        framework=service.framework.slug,
+                        object_id=service.service_id,
+                        serialized_object=mock.ANY,
+                        wait_for_response=expect_wait_for_index,
+                    )
+                ])
 
-                if service_is_deleted:
-                    service_utils_search_api_client.delete.assert_called_with(index=service.framework.slug,
-                                                                              service_id=service.service_id)
-                else:
-                    assert not service_utils_search_api_client.delete.called
+                assert service_utils_search_api_client.delete.mock_calls == ([] if not service_is_deleted else [
+                    mock.call(
+                        index=service.framework.slug,
+                        service_id=service.service_id,
+                        client_wait_for_response=expect_wait_for_index,
+                    )
+                ])
 
-    def test_should_index_on_service_status_changed_to_published(self):
+    @pytest.mark.parametrize("wait_for_index,expect_wait_for_index", (
+        ("false", False),
+        ("true", True),
+        (None, True),
+    ))
+    def test_should_index_on_service_status_changed_to_published(self, wait_for_index, expect_wait_for_index):
 
         self._post_update_status(
             old_status='enabled',
@@ -942,6 +963,8 @@ class TestUpdateServiceStatus(BaseApplicationTest, FixtureMixin):
             service_is_indexed=True,
             service_is_deleted=False,
             expected_status_code=200,
+            wait_for_index=wait_for_index,
+            expect_wait_for_index=expect_wait_for_index,
         )
 
     def test_should_not_index_on_service_status_was_already_published(self):
@@ -954,7 +977,12 @@ class TestUpdateServiceStatus(BaseApplicationTest, FixtureMixin):
             expected_status_code=200,
         )
 
-    def test_should_delete_on_update_service_status_to_not_published(self):
+    @pytest.mark.parametrize("wait_for_index,expect_wait_for_index", (
+        ("false", False),
+        ("true", True),
+        (None, True),
+    ))
+    def test_should_delete_on_update_service_status_to_not_published(self, wait_for_index, expect_wait_for_index):
 
         self._post_update_status(
             old_status='published',
@@ -962,6 +990,8 @@ class TestUpdateServiceStatus(BaseApplicationTest, FixtureMixin):
             service_is_indexed=False,
             service_is_deleted=True,
             expected_status_code=200,
+            wait_for_index=wait_for_index,
+            expect_wait_for_index=expect_wait_for_index,
         )
 
     def test_should_not_delete_on_service_status_was_never_published(self):

@@ -335,12 +335,13 @@ def update_service_status(service_id, status):
                                            'new_status': status})
 
     if prior_status != status:
-        # If it's being unpublished, delete it from the search api.
+        wait_for_response = convert_to_boolean(request.args.get("wait-for-index", "true"))
         if prior_status == 'published':
-            delete_service_from_index(service)
+            # If it's being unpublished, delete it from the search api.
+            delete_service_from_index(service, wait_for_response=wait_for_response)
         else:
             # If it's being published, index in the search api.
-            index_service(service)
+            index_service(service, wait_for_response=wait_for_response)
 
     return single_result_response(RESOURCE_NAME, service), 200
 

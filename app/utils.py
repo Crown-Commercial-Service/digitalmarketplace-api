@@ -210,7 +210,7 @@ def get_request_page_questions():
     return json_payload.get('page_questions', [])
 
 
-def index_object(framework, doc_type, object_id, serialized_object, wait_for_response=True):
+def index_object(framework, doc_type, object_id, serialized_object, wait_for_response: bool = True):
     try:
         index_name = current_app.config['DM_FRAMEWORK_TO_ES_INDEX'][framework][doc_type]
 
