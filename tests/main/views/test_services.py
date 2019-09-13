@@ -461,12 +461,12 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             **self.payload_g4
         )
 
-    def _post_service_update(self, service_data, service_id=None, user_role=None, wait_for_response=None):
+    def _post_service_update(self, service_data, service_id=None, user_role=None, wait_for_index=None):
         return self.client.post(
             '/services/{}?{}{}'.format(
                 service_id or self.service_id,
                 f"user-role={user_role}" if user_role else "",
-                f"&wait-for-index={wait_for_response}" if wait_for_response is not None else "",
+                f"&wait-for-index={wait_for_index}" if wait_for_index is not None else "",
             ),
             data=json.dumps({
                 'updated_by': 'joeblogs',
@@ -538,7 +538,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert b'Invalid JSON' in response.get_data()
         assert index_service.called is False
 
-    @pytest.mark.parametrize("wait_for_response_req_arg,wait_for_response_call_arg", (
+    @pytest.mark.parametrize("wait_for_index_req_arg,wait_for_response_call_arg", (
         (None, True),
         ("true", True),
         ("false", False),
@@ -547,12 +547,12 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def test_can_post_a_valid_service_update(
         self,
         index_object,
-        wait_for_response_req_arg,
+        wait_for_index_req_arg,
         wait_for_response_call_arg,
     ):
         response = self._post_service_update(
             {'serviceName': 'new service name'},
-            wait_for_response=wait_for_response_req_arg,
+            wait_for_index=wait_for_index_req_arg,
         )
         assert response.status_code == 200
 
