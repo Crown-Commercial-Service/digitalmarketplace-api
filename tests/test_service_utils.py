@@ -1,5 +1,7 @@
 import mock
 
+import pytest
+
 from tests.bases import BaseApplicationTest
 from app.service_utils import index_service, delete_service_from_index
 from app.models import Service, Framework
@@ -8,21 +10,25 @@ from app.models import Service, Framework
 @mock.patch('app.service_utils.index_object', autospec=True)
 class TestIndexServices(BaseApplicationTest):
 
+    @pytest.mark.parametrize("wait_for_response", (False, True,))
     def test_live_g_cloud_8_published_service_is_indexed(
-            self, index_object, live_g8_framework
+            self, index_object, live_g8_framework, wait_for_response,
     ):
         g8 = Framework.query.filter(Framework.slug == 'g-cloud-8').first()
 
         with mock.patch.object(Service, "serialize", return_value={'serialized': 'object'}):
             service = Service(status='published', framework=g8)
-            index_service(service)
+            index_service(service, wait_for_response=wait_for_response)
 
-        index_object.assert_called_once_with(
-            framework='g-cloud-8',
-            doc_type='services',
-            object_id=None,
-            serialized_object={'serialized': 'object'},
-        )
+        assert index_object.mock_calls == [
+            mock.call(
+                framework='g-cloud-8',
+                doc_type='services',
+                object_id=None,
+                serialized_object={'serialized': 'object'},
+                wait_for_response=wait_for_response,
+            ),
+        ]
 
     def test_live_g_cloud_8_enabled_service_is_not_indexed(
             self, index_object, live_g8_framework

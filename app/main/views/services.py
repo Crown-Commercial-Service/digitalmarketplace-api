@@ -2,6 +2,7 @@ from dmapiclient.audit import AuditTypes
 from flask import jsonify, abort, request, current_app
 from sqlalchemy import asc
 
+from dmutils.config import convert_to_boolean
 from dmutils.errors.api import ValidationError
 
 from .. import main
@@ -156,7 +157,7 @@ def update_service(service_id):
     )
 
     commit_and_archive_service(updated_service, update_details, audit_type)
-    index_service(updated_service)
+    index_service(updated_service, wait_for_response=convert_to_boolean(request.args.get("wait-for-index", "true")))
 
     return jsonify(message="done"), 200
 

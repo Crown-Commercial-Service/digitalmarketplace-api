@@ -461,10 +461,12 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             **self.payload_g4
         )
 
-    def _post_service_update(self, service_data, service_id=None, user_role=None):
+    def _post_service_update(self, service_data, service_id=None, user_role=None, wait_for_response=None):
         return self.client.post(
-            '/services/{}{}'.format(
-                service_id or self.service_id, '?user-role={}'.format(user_role) if user_role else ''
+            '/services/{}?{}{}'.format(
+                service_id or self.service_id,
+                f"user-role={user_role}" if user_role else "",
+                f"&wait-for-index={wait_for_response}" if wait_for_response is not None else "",
             ),
             data=json.dumps({
                 'updated_by': 'joeblogs',
@@ -536,20 +538,36 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert b'Invalid JSON' in response.get_data()
         assert index_service.called is False
 
+    @pytest.mark.parametrize("wait_for_response_req_arg,wait_for_response_call_arg", (
+        (None, True),
+        ("true", True),
+        ("false", False),
+    ))
     @mock.patch('app.service_utils.index_object', autospec=True)
-    def test_can_post_a_valid_service_update(self, index_object):
-        response = self._post_service_update({'serviceName': 'new service name'})
+    def test_can_post_a_valid_service_update(
+        self,
+        index_object,
+        wait_for_response_req_arg,
+        wait_for_response_call_arg,
+    ):
+        response = self._post_service_update(
+            {'serviceName': 'new service name'},
+            wait_for_response=wait_for_response_req_arg,
+        )
         assert response.status_code == 200
 
         service = Service.query.filter(
             Service.service_id == self.service_id
         ).one()
-        index_object.assert_called_once_with(
-            doc_type='services',
-            framework=service.framework.slug,
-            object_id=service.service_id,
-            serialized_object=service.serialize()
-        )
+        assert index_object.mock_calls == [
+            mock.call(
+                doc_type='services',
+                framework=service.framework.slug,
+                object_id=service.service_id,
+                serialized_object=service.serialize(),
+                wait_for_response=wait_for_response_call_arg,
+            )
+        ]
 
         response = self.client.get('/services/{}'.format(self.service_id))
         data = json.loads(response.get_data())
@@ -1029,12 +1047,15 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             if status in ('disabled', 'enabled'):
                 assert index_object.called is False
             else:
-                index_object.assert_called_once_with(
-                    doc_type='services',
-                    framework=service.framework.slug,
-                    object_id=service.service_id,
-                    serialized_object=service.serialize()
-                )
+                assert index_object.mock_calls == [
+                    mock.call(
+                        doc_type='services',
+                        framework=service.framework.slug,
+                        object_id=service.service_id,
+                        serialized_object=service.serialize(),
+                        wait_for_response=True,
+                    )
+                ]
 
     @mock.patch('app.main.views.services.index_service', autospec=True)
     def test_update_service_status_creates_audit_event(self, index_service):
@@ -1394,12 +1415,15 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             Service.service_id == '1234567890123456'
         ).one()
 
-        index_object.assert_called_once_with(
-            doc_type='services',
-            framework=service.framework.slug,
-            object_id=service.service_id,
-            serialized_object=service.serialize()
-        )
+        assert index_object.mock_calls == [
+            mock.call(
+                doc_type='services',
+                framework=service.framework.slug,
+                object_id=service.service_id,
+                serialized_object=service.serialize(),
+                wait_for_response=True,
+            )
+        ]
 
     @mock.patch('app.utils.search_api_client')
     def test_should_ignore_index_error_on_service_put(self, search_api_client):
@@ -1778,9 +1802,12 @@ class TestRevertServiceHappyPath(TestRevertServiceBase):
             ("papli@example.com", self.archived_service_ids[1],),
         )
         assert ArchivedService.query.count() == 5
-        index_object.assert_called_once_with(
-            doc_type='services',
-            framework=service.framework.slug,
-            object_id=service.service_id,
-            serialized_object=service.serialize()
-        )
+        assert index_object.mock_calls == [
+            mock.call(
+                doc_type='services',
+                framework=service.framework.slug,
+                object_id=service.service_id,
+                serialized_object=service.serialize(),
+                wait_for_response=True
+            )
+        ]
