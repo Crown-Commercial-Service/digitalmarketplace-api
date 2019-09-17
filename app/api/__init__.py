@@ -102,6 +102,7 @@ def load_user_from_request(request):
 from app.api.views import (briefs,  # noqa
                            brief_responses,
                            buyer_dashboard,
+                           download_reports,
                            users,
                            feedback,
                            messages,

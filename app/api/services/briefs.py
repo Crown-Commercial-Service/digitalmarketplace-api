@@ -1,26 +1,28 @@
-from sqlalchemy import and_, case, func, or_, desc, union
+import pendulum
+from sqlalchemy import and_, case, desc, func, or_, union
+from sqlalchemy.orm import joinedload, noload
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.functions import concat
-from sqlalchemy.types import Numeric
-from sqlalchemy.orm import joinedload, noload
-import pendulum
-from app.api.helpers import Service
+from sqlalchemy.types import Numeric, Integer
+
 from app import db
+from app.api.helpers import Service
 from app.models import (
+    AuditEvent,
     Brief,
+    BriefAssessor,
+    BriefClarificationQuestion,
+    BriefQuestion,
     BriefResponse,
     BriefUser,
-    BriefQuestion,
-    BriefClarificationQuestion,
-    AuditEvent,
     Framework,
     Lot,
-    User,
-    WorkOrder,
-    BriefAssessor,
+    Supplier,
+    Team,
     TeamBrief,
     TeamMember,
-    Team
+    User,
+    WorkOrder
 )
 from dmutils.filters import timesince
 
@@ -510,3 +512,122 @@ class BriefsService(Service):
             return contacts
 
         return None
+
+    def get_all_user_seller_responses_within_date_range(self, current_user_id, start_date, end_date):
+        subquery = self.accessible_briefs(current_user_id)
+        result = (
+            db
+            .session
+            .query(
+                BriefResponse.id.label('brief_response_id'),
+                BriefResponse.data['specialistGivenNames'].astext.label('specialistGivenNames'),
+                BriefResponse.data['specialistSurname'].astext.label('specialistSurname'),
+                BriefResponse.data['specialistName'].astext.label('specialistName'),
+                BriefResponse.data['availability'].astext.label('availability'),
+                BriefResponse.data['dayRate'].astext.label('dayRate'),
+                BriefResponse.data['hourRate'].astext.label('hourRate'),
+                BriefResponse.data['visaStatus'].astext.label('visaStatus'),
+                BriefResponse.data['securityClearance'].astext.label('securityClearance'),
+                BriefResponse.data['previouslyWorked'].astext.label('previouslyWorked'),
+                BriefResponse.data['essentialRequirements'].label('essentialRequirements'),
+                BriefResponse.data['niceToHaveRequirements'].label('niceToHaveRequirements'),
+                BriefResponse.data['criteria'].label('criteria'),
+                BriefResponse.data['respondToEmailAddress'].astext.label('respondToEmailAddress'),
+                BriefResponse.data['respondToPhone'].astext.label('respondToPhone'),
+                BriefResponse.created_at,
+                Brief.id.label('brief_id'),
+                Brief.data['preferredFormatForRates'].astext.label('preferredFormatForRates'),
+                Brief.data['essentialRequirements'].label('essentialRequirementsCriteria'),
+                Brief.data['niceToHaveRequirements'].label('niceToHaveRequirementsCriteria'),
+                Lot.slug.label('slug'),
+                Supplier.name.label('supplier_name'),
+                Supplier.abn.label('supplier_abn')
+            )
+            .join(Brief, Brief.id == BriefResponse.brief_id)
+            .join(Lot)
+            .join(Supplier, Supplier.code == BriefResponse.supplier_code)
+            .join(subquery, subquery.c.brief_id == BriefResponse.brief_id)
+            .filter(Brief.created_at >= pendulum.parse(start_date, tz='Australia/Canberra'))
+            .filter(Brief.created_at <= pendulum.parse(end_date, tz='Australia/Canberra'))
+            .filter(Brief.published_at.isnot(None))
+            .filter(Lot.slug != 'training')
+            .order_by(Brief.id)
+        )
+
+        return [r._asdict() for r in result.all()]
+
+    def get_oppportunities_for_download(self, current_user_id, start_date, end_date, lot_slugs):
+        subquery = self.accessible_briefs(current_user_id)
+        brief_subquery = (
+            db
+            .session
+            .query(
+                Brief.id.label('brief_id'),
+                func.json_object_keys(Brief.data['sellers']).label('supplier_code')
+            )
+            .subquery()
+        )
+        supplier_subquery = (
+            db
+            .session
+            .query(
+                func.json_agg(
+                    func.json_build_object(
+                        'abn', Supplier.abn,
+                        'name', Supplier.name
+                    )
+                ).label('sellers'),
+                brief_subquery.c.brief_id
+            )
+            .join(brief_subquery, brief_subquery.c.supplier_code.cast(Integer) == Supplier.code)
+            .group_by(brief_subquery.c.brief_id)
+            .subquery()
+        )
+        result = (
+            db
+            .session
+            .query(
+                Brief.id,
+                Brief.data['title'].astext.label('title'),
+                Brief.data['internalReference'].label('internalReference'),
+                Brief.data['organisation'].astext.label('organisation'),
+                Brief.data['summary'].astext.label('summary'),
+                Brief.data['location'].label('location'),
+                Brief.data['areaOfExpertise'].astext.label('areaOfExpertise'),
+                Brief.data['openTo'].astext.label('openTo'),
+                Brief.data['startDate'].astext.label('startDate'),
+                Brief.data['evaluationType'].label('evaluationType'),
+                Brief.data['evaluationCriteria'].label('evaluationCriteria'),
+                supplier_subquery.columns.sellers.label('sellers'),
+                Brief.data['essentialRequirements'].label('essentialRequirements'),
+                Brief.data['niceToHaveRequirements'].label('niceToHaveRequirements'),
+                Brief.created_at.label('created_at'),
+                Brief.published_at.label('published_at'),
+                Brief.closed_at.label('closed_at'),
+                Lot.slug.label('slug'),
+                User.email_address,
+                Supplier.name.label('awarded_to'),
+                WorkOrder.created_at.label('time_awarded'),
+                Brief.data['numberOfSuppliers'].astext.label('numberOfSuppliers'),
+                Brief.data['preferredFormatForRates'].astext.label('preferredFormatForRates'),
+                Brief.data['maxRate'].astext.label('maxRate'),
+                Brief.data['securityClearance'].astext.label('securityClearance'),
+                Brief.data['contractLength'].astext.label('contractLength'),
+                Brief.data['contractExtensions'].astext.label('contractExtensions'),
+                Brief.data['workingArrangements'].astext.label('workingArrangements'),
+                Brief.data['proposalType'].label('proposalType')
+            )
+            .join(Lot)
+            .join(subquery, subquery.c.brief_id == Brief.id)
+            .join(User, User.id == subquery.c.user_id)
+            .outerjoin(WorkOrder)
+            .outerjoin(Supplier, Supplier.code == WorkOrder.supplier_code)
+            .outerjoin(supplier_subquery, supplier_subquery.columns.brief_id == Brief.id)
+            .filter(Lot.slug.in_(lot_slugs))
+            .filter(Brief.created_at >= pendulum.parse(start_date, tz='Australia/Canberra'))
+            .filter(Brief.created_at <= pendulum.parse(end_date, tz='Australia/Canberra'))
+            .filter(Brief.published_at.isnot(None))
+            .all()
+        )
+
+        return [r._asdict() for r in result]

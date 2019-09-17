@@ -263,3 +263,31 @@ class SuppliersService(Service):
 
     def save_supplier(self, supplier, do_commit=True):
         return self.save(supplier, do_commit)
+
+    def get_approved_suppliers(self):
+        results = (
+            db
+            .session
+            .query(
+                Supplier.name,
+                Supplier.abn,
+                Supplier.creation_time,
+                Supplier.data['contact_email'].astext.label('contact_email'),
+                Supplier.data['recruiter'].astext.label('recruiter_status'),
+                Supplier.data['seller_type'].label('seller_type'),
+                Supplier.data['number_of_employees'].label('number_of_employees'),
+                func.string_agg(Domain.name, ',').label('domains')
+            )
+            .join(SupplierDomain, Domain)
+            .filter(
+                Supplier.status != 'deleted',
+                Supplier.data['recruiter'].astext.in_(['no', 'both']),
+                SupplierDomain.status == 'assessed',
+                SupplierDomain.price_status == 'approved'
+            )
+            .group_by(Supplier.id, Supplier.name, Supplier.abn)
+            .order_by(Supplier.name)
+            .all()
+        )
+
+        return [r._asdict() for r in results]

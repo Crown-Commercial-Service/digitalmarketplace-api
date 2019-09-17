@@ -3167,6 +3167,7 @@ permission_types = [
     'publish_opportunities',
     'answer_seller_questions',
     'download_responses',
+    'download_reports',
     'create_work_orders'
 ]
 
