@@ -38,9 +38,9 @@ def format_criteria(criteria):
         criterion = i.get('criteria')
         if criterion:
             if weighting:
-                result.append('{}%: {}'.format(weighting, criterion))
+                result.append(weighting + '%: ' + criterion)
             else:
-                result.append('{}'.format(criterion))
+                result.append(criterion)
     return ', '.join(result)
 
 
