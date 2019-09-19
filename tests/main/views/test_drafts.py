@@ -1515,51 +1515,6 @@ class TestDraftServices(DraftsHelpersMixin):
         # service should not be indexed as G-Cloud 7 is not live
         assert not search_api_client.index.called
 
-    def create_draft_service(self):
-        res = self.client.post(
-            '/draft-services',
-            data=json.dumps(self.create_draft_json),
-            content_type='application/json')
-        assert res.status_code == 201
-        draft = json.loads(res.get_data())['services']
-
-        g7_complete = load_example_listing("G7-SCS").copy()
-        g7_complete.pop('id')
-        draft_update_json = {'services': g7_complete,
-                             'updated_by': 'joeblogs'}
-        res2 = self.client.post(
-            '/draft-services/{}'.format(draft['id']),
-            data=json.dumps(draft_update_json),
-            content_type='application/json')
-        assert res2.status_code == 200
-        draft = json.loads(res2.get_data())['services']
-
-        return draft
-
-    def complete_draft_service(self, draft_id):
-        return self.client.post(
-            '/draft-services/{}/complete'.format(draft_id),
-            data=json.dumps({'updated_by': 'joeblogs'}),
-            content_type='application/json')
-
-    def publish_draft_service(self, draft_id):
-        return self.client.post(
-            '/draft-services/{}/publish'.format(draft_id),
-            data=json.dumps({
-                'updated_by': 'joeblogs'
-            }),
-            content_type='application/json')
-
-    def publish_new_draft_service(self):
-        draft = self.create_draft_service()
-        res = self.complete_draft_service(draft['id'])
-        assert res.status_code == 200
-
-        res = self.publish_draft_service(draft['id'])
-        assert res.status_code == 200
-
-        return res
-
     def test_submitted_drafts_are_not_deleted_when_published(self):
         draft = self.create_draft_service()
         self.complete_draft_service(draft['id'])
