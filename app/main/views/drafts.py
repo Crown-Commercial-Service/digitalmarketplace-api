@@ -418,10 +418,8 @@ def publish_draft_service(draft_id):
         db.session.rollback()
         action = 'update' if draft.status == 'submitted' else 'delete'
         current_app.logger.warning(
-            'Failed to {action} draft {draft_id} after publishing service {service_id}: {error}'.format(
-                extra=dict(
-                    action=action, draft_id=draft_id, service_id=service_from_draft.service_id, error=e.message)))
-
+            f'Failed to {action} draft {draft_id} after publishing service {service_from_draft.service_id}: {e}'
+        )
     index_service(service_from_draft)
 
     return single_result_response(RESOURCE_NAME, service_from_draft), 200
