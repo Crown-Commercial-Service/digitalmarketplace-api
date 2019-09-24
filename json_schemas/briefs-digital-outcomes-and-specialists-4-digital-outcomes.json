@@ -9,7 +9,7 @@
     },
     "backgroundInformation": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "budgetRange": {
@@ -44,7 +44,7 @@
     },
     "endUsers": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "essentialRequirements": {
@@ -115,7 +115,7 @@
     },
     "outcome": {
       "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
       "type": "string"
     },
     "phase": {
