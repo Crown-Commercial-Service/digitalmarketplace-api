@@ -281,7 +281,6 @@ class SuppliersService(Service):
             .join(SupplierDomain, Domain)
             .filter(
                 Supplier.status != 'deleted',
-                Supplier.data['recruiter'].astext.in_(['no', 'both']),
                 SupplierDomain.status == 'assessed',
                 SupplierDomain.price_status == 'approved'
             )
