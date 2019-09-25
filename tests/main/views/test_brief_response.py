@@ -110,7 +110,7 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
     def get_brief_response(self, brief_response_id):
         return self.client.get('/brief-responses/{}'.format(brief_response_id))
 
-    def list_brief_responses(self, **parameters):
+    def list_brief_responses(self, parameters={}):
         return self.client.get('/brief-responses', query_string=parameters)
 
     def _update_brief_response(self, brief_response_id, brief_response_data):
@@ -713,7 +713,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert len(data['briefResponses']) == 5
         assert 'next' in data['links']
 
-        res = self.list_brief_responses(page=2)
+        res = self.list_brief_responses(dict(page=2))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
@@ -725,7 +725,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
             self.setup_dummy_brief_response(supplier_id=0)
             self.setup_dummy_brief_response(supplier_id=1)
 
-        res = self.list_brief_responses(supplier_id=1)
+        res = self.list_brief_responses(dict(supplier_id=1))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
@@ -746,7 +746,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
             self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_id=0)
             self.setup_dummy_brief_response(brief_id=another_brief_id, supplier_id=0)
 
-        res = self.list_brief_responses(brief_id=another_brief_id)
+        res = self.list_brief_responses(dict(brief_id=another_brief_id))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
@@ -769,7 +769,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
             self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_id=0)
             self.setup_dummy_brief_response(brief_id=dos2_brief_id, supplier_id=0)
 
-        res = self.list_brief_responses(framework='digital-outcomes-and-specialists-2')
+        res = self.list_brief_responses(dict(framework='digital-outcomes-and-specialists-2'))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
@@ -795,9 +795,9 @@ class TestListBriefResponses(BaseBriefResponseTest):
             self.setup_dummy_brief_response(brief_id=self.brief_id, supplier_id=0)
             self.setup_dummy_brief_response(brief_id=dos2_brief_id, supplier_id=0)
 
-        res = self.list_brief_responses(
+        res = self.list_brief_responses(dict(
             framework='digital-outcomes-and-specialists, digital-outcomes-and-specialists-2'
-        )
+        ))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
@@ -813,14 +813,14 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert len(dos1_br) == len(dos2_br) == 2
 
     def test_cannot_list_brief_responses_for_non_integer_brief_id(self):
-        res = self.list_brief_responses(brief_id="not-valid")
+        res = self.list_brief_responses(dict(brief_id="not-valid"))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
         assert data['error'] == 'Invalid brief_id: not-valid'
 
     def test_cannot_list_brief_responses_for_non_integer_supplier_id(self):
-        res = self.list_brief_responses(supplier_id="not-valid")
+        res = self.list_brief_responses(dict(supplier_id="not-valid"))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
@@ -844,7 +844,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
         self.setup_dummy_brief_response()
         expected_brief_id = self.setup_dummy_brief_response(submitted_at=None)
 
-        res = self.list_brief_responses(status='draft')
+        res = self.list_brief_responses(dict(status='draft'))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
@@ -855,7 +855,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
         expected_brief_id = self.setup_dummy_brief_response()
         self.setup_dummy_brief_response(submitted_at=None)
 
-        res = self.list_brief_responses(status='submitted')
+        res = self.list_brief_responses(dict(status='submitted'))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
@@ -868,7 +868,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
         self.setup_dummy_brief_response(award_details={"pending": True})
         self.setup_dummy_awarded_brief_response(brief_id=111)
 
-        res = self.list_brief_responses(status='draft,submitted,awarded,pending-awarded')
+        res = self.list_brief_responses(dict(status='draft,submitted,awarded,pending-awarded'))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
@@ -881,7 +881,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
         self.setup_dummy_awarded_brief_response(brief_id=222, awarded_at=yesterday - timedelta(days=5))
         self.setup_dummy_brief_response(award_details={"pending": True})
 
-        res = self.list_brief_responses(awarded_at=yesterday.strftime(DATE_FORMAT))
+        res = self.list_brief_responses(dict(awarded_at=yesterday.strftime(DATE_FORMAT)))
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
