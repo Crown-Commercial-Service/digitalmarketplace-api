@@ -691,16 +691,19 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert data['briefResponses'] == []
         assert 'self' in data['links'], data
 
-    def test_list_brief_responses(self):
+    @pytest.mark.parametrize("without_data", (False, True))
+    def test_list_brief_responses(self, without_data):
         for i in range(3):
             self.setup_dummy_brief_response()
 
-        res = self.list_brief_responses()
+        res = self.list_brief_responses({"with-data": "false"} if without_data else {})
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
         assert len(data['briefResponses']) == 3
         assert 'self' in data['links']
+        assert all("essentialRequirementsMet" in br for br in data['briefResponses'])
+        assert all(("essentialRequirements" in br) == (not without_data) for br in data['briefResponses'])
 
     def test_list_brief_responses_pagination(self):
         for i in range(8):
@@ -720,17 +723,20 @@ class TestListBriefResponses(BaseBriefResponseTest):
         assert len(data['briefResponses']) == 3
         assert 'prev' in data['links']
 
-    def test_list_brief_responses_for_supplier_id(self):
+    @pytest.mark.parametrize("without_data", (False, True))
+    def test_list_brief_responses_for_supplier_id(self, without_data):
         for i in range(8):
             self.setup_dummy_brief_response(supplier_id=0)
             self.setup_dummy_brief_response(supplier_id=1)
 
-        res = self.list_brief_responses(dict(supplier_id=1))
+        res = self.list_brief_responses({"supplier_id": 1, **({"with-data": "false"} if without_data else {})})
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 200
         assert len(data['briefResponses']) == 8
         assert all(br['supplierId'] == 1 for br in data['briefResponses'])
+        assert all("essentialRequirementsMet" in br for br in data['briefResponses'])
+        assert all(("essentialRequirements" in br) == (not without_data) for br in data['briefResponses'])
 
     def test_list_brief_responses_for_brief_id(self):
         brief = Brief(
