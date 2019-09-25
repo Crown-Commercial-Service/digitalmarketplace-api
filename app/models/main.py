@@ -1847,8 +1847,8 @@ class BriefResponse(db.Model):
         if errs:
             raise ValidationError(errs)
 
-    def serialize(self):
-        data = self.data.copy()
+    def serialize(self, with_data: bool = True):
+        data = {k: v for k, v in self.data.items() if with_data or k == "essentialRequirementsMet"}
         parent_brief = self.brief.serialize()
         parent_brief_fields = ['id', 'title', 'status', 'applicationsClosedAt', 'framework']
         data.update({
