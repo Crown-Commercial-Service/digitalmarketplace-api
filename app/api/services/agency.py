@@ -10,6 +10,7 @@ class AgencyService(Service):
 
     def get_or_add_agency(self, domain):
         from app.tasks import publish_tasks
+        domain = domain.lower()
         agency = self.get_agency_by_domain(domain)
         if not agency:
             agency = self.save(Agency(
