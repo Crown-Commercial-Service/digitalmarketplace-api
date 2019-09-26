@@ -202,7 +202,8 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
             'briefResponseJson': {
                 'briefId': self.brief_id,
                 'supplierId': 0,
-            }
+            },
+            'supplierId': 0,
         }
 
     def test_cannot_create_brief_response_with_empty_json(self, live_dos_framework):
@@ -405,7 +406,8 @@ class TestUpdateBriefResponse(BaseBriefResponseTest):
         assert len(audit_events) == 1
         assert audit_events[0].data == {
             'briefResponseId': self.brief_response_id,
-            'briefResponseData': {'essentialRequirementsMet': True}
+            'briefResponseData': {'essentialRequirementsMet': True},
+            'supplierId': 0,
         }
 
     def test_update_brief_response_with_expired_framework(self, expired_dos_framework):
@@ -556,7 +558,8 @@ class TestSubmitBriefResponse(BaseBriefResponseTest):
 
         assert len(audit_events) == 1
         assert audit_events[0].data == {
-            'briefResponseId': self.brief_response_id
+            'briefResponseId': self.brief_response_id,
+            'supplierId': 0,
         }
 
     def test_submit_brief_response_that_doesnt_exist_will_404(self):

@@ -85,6 +85,7 @@ def create_brief_response():
         data={
             'briefResponseId': brief_response.id,
             'briefResponseJson': brief_response_json,
+            'supplierId': supplier.supplier_id,
         },
         db_object=brief_response,
     )
@@ -132,7 +133,8 @@ def update_brief_response(brief_response_id):
         user=updater_json['updated_by'],
         data={
             'briefResponseId': brief_response.id,
-            'briefResponseData': brief_response_json
+            'briefResponseData': brief_response_json,
+            'supplierId': supplier.supplier_id,
         },
         db_object=brief_response,
     )
@@ -180,7 +182,8 @@ def submit_brief_response(brief_response_id):
         audit_type=AuditTypes.submit_brief_response,
         user=updater_json['updated_by'],
         data={
-            'briefResponseId': brief_response.id
+            'briefResponseId': brief_response.id,
+            'supplierId': supplier.supplier_id,
         },
         db_object=brief_response,
     )
