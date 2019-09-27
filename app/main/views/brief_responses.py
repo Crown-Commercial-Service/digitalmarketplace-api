@@ -6,6 +6,8 @@ from sqlalchemy.exc import IntegrityError, DataError
 
 from dmapiclient.audit import AuditTypes
 
+from dmutils.config import convert_to_boolean
+
 from .. import main
 from ...models import db, Brief, BriefResponse, AuditEvent, Framework
 from ...utils import (
@@ -215,6 +217,7 @@ def list_brief_responses():
     brief_id = get_int_or_400(request.args, 'brief_id')
     supplier_id = get_int_or_400(request.args, 'supplier_id')
     awarded_at = request.args.get('awarded_at')
+    with_data = convert_to_boolean(request.args.get("with-data", "true"))
 
     if request.args.get('status'):
         statuses = request.args['status'].split(',')
@@ -248,12 +251,15 @@ def list_brief_responses():
             ))
         )
 
+    serialize_kwargs = {"with_data": with_data}
+
     if brief_id or supplier_id:
-        return list_result_response(RESOURCE_NAME, brief_responses), 200
+        return list_result_response(RESOURCE_NAME, brief_responses, serialize_kwargs=serialize_kwargs), 200
 
     return paginated_result_response(
         result_name=RESOURCE_NAME,
         results_query=brief_responses,
+        serialize_kwargs=serialize_kwargs,
         page=page,
         per_page=current_app.config['DM_API_BRIEF_RESPONSES_PAGE_SIZE'],
         endpoint='.list_brief_responses',

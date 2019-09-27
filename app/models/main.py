@@ -1847,8 +1847,15 @@ class BriefResponse(db.Model):
         if errs:
             raise ValidationError(errs)
 
-    def serialize(self):
-        data = self.data.copy()
+    def serialize(self, with_data: bool = True):
+        """
+            :param with_data: allows serialization to be produced while omitting the majority of the content
+            that comes from the `data` field. This tends to constitute the bulk of the volume of the serialized
+            result, so this is useful in cases where response size is becoming an issue. the
+            `essentialRequirementsMet` key (present in DOS2 BRs onwards)is pragmatically included anyway because it
+            is referenced in some important listing views.
+        """
+        data = {k: v for k, v in self.data.items() if with_data or k == "essentialRequirementsMet"}
         parent_brief = self.brief.serialize()
         parent_brief_fields = ['id', 'title', 'status', 'applicationsClosedAt', 'framework']
         data.update({

@@ -63,6 +63,7 @@ _brief_response_availability = text(min_size=1, max_size=100, alphabet=_descript
 
 def brief_response_data(essential_count=5, nice_to_have_count=5):
     return fixed_dictionaries({
+        "essentialRequirementsMet": booleans(),
         "essentialRequirements": requirements_list(essential_count, answers=True),
         "niceToHaveRequirements": requirements_list(nice_to_have_count, answers=True),
         "availability": _brief_response_availability,
@@ -72,6 +73,7 @@ def brief_response_data(essential_count=5, nice_to_have_count=5):
 
 def specialists_brief_response_data(min_day_rate=1, max_day_rate=1000):
     return fixed_dictionaries({
+        "essentialRequirementsMet": booleans(),
         "essentialRequirements": requirements_list(5, answers=True),
         "niceToHaveRequirements": requirements_list(5, answers=True),
         "respondToEmailAddress": just("supplier@email.com"),

@@ -1381,6 +1381,50 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
                 }
             }
 
+    def test_brief_response_can_be_serialized_with_data_false(self):
+        brief_response = BriefResponse(
+            data={
+                'foo': 'bar',
+                'essentialRequirementsMet': 'true',
+            },
+            brief=self.brief,
+            supplier=self.supplier,
+            submitted_at=datetime(2016, 9, 28),
+        )
+        db.session.add(brief_response)
+        db.session.commit()
+
+        with mock.patch('app.models.main.url_for') as url_for:
+            url_for.side_effect = lambda *args, **kwargs: (args, kwargs)
+            assert brief_response.serialize(with_data=False) == {
+                'id': brief_response.id,
+                'brief': {
+                    'applicationsClosedAt': '2016-03-10T23:59:59.000000Z',
+                    'id': self.brief.id,
+                    'status': self.brief.status,
+                    'title': self.brief_title,
+                    'framework': {
+                        'family': 'digital-outcomes-and-specialists',
+                        'name': 'Digital Outcomes and Specialists',
+                        'slug': 'digital-outcomes-and-specialists',
+                        'status': self.brief.framework.status
+                    }
+                },
+                'briefId': self.brief.id,
+                'supplierId': 0,
+                'supplierName': 'Supplier 0',
+                'supplierOrganisationSize': 'small',
+                'createdAt': mock.ANY,
+                'submittedAt': '2016-09-28T00:00:00.000000Z',
+                'status': 'submitted',
+                'essentialRequirementsMet': 'true',
+                'links': {
+                    'self': (('main.get_brief_response',), {'brief_response_id': brief_response.id}),
+                    'brief': (('main.get_brief',), {'brief_id': self.brief.id}),
+                    'supplier': (('main.get_supplier',), {'supplier_id': 0}),
+                }
+            }
+
     def test_brief_response_can_be_serialized_with_no_submitted_at_time(self):
         brief_response = BriefResponse(
             data={'foo': 'bar'}, brief=self.brief, supplier=self.supplier
