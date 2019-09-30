@@ -90,7 +90,7 @@ class TestListServicesOrdering(BaseApplicationTest, FixtureMixin):
 
 
 class TestListServices(BaseApplicationTest, FixtureMixin):
-    def setup_services(self):
+    def setup_services(self, extra_data={}):
         self.setup_dummy_suppliers(1)
         self.set_framework_status('digital-outcomes-and-specialists', 'live')
         self.setup_dummy_service(
@@ -98,23 +98,21 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
             supplier_id=0,
             framework_id=5,  # Digital Outcomes and Specialists
             lot_id=5,  # digital-outcomes
-            data={"locations": [
-                "London", "Offsite", "Scotland", "Wales"
-            ]
-            })
+            data={"locations": ["London", "Offsite", "Scotland", "Wales"], **extra_data},
+        )
         self.setup_dummy_service(
             service_id='10000000002',
             supplier_id=0,
             framework_id=5,  # Digital Outcomes and Specialists
             lot_id=6,  # digital-specialists
-            data={"agileCoachLocations": ["London", "Offsite", "Scotland", "Wales"]}
+            data={"agileCoachLocations": ["London", "Offsite", "Scotland", "Wales"], **extra_data},
         )
         self.setup_dummy_service(
             service_id='10000000003',
             supplier_id=0,
             framework_id=5,  # Digital Outcomes and Specialists
             lot_id=6,  # digital-specialists
-            data={"agileCoachLocations": ["Wales"]}
+            data={"agileCoachLocations": ["Wales"], **extra_data},
         )
 
     def test_list_services_with_no_services(self):
@@ -429,6 +427,56 @@ class TestListServices(BaseApplicationTest, FixtureMixin):
         data = json.loads(response.get_data())
         assert response.status_code == 400
         assert data['error'] == 'Role must be specified for Digital Specialists'
+
+    @pytest.mark.parametrize("fw_further_competition,fw_family,inc_other_fw,expect_compression", (
+        (False, "g-cloud", False, True),
+        (True, "digital-outcomes-and-specialists", False, False),
+        (False, "g-cloud", True, False),
+        (True, "digital-outcomes-and-specialists", True, False),
+    ))
+    def test_conditional_compression(
+        self,
+        fw_further_competition,
+        fw_family,
+        inc_other_fw,
+        expect_compression,
+    ):
+        framework_id = self.setup_dummy_framework(
+            "q-framework-123",
+            fw_family,
+            id=585858,
+            has_direct_award=True,
+            has_further_competition=fw_further_competition,
+        )
+        lot_id = db.session.query(Lot.id).filter(Lot.frameworks.any(Framework.id == framework_id)).first()[0]
+        self.setup_dummy_services_including_unpublished(
+            20,
+            framework_id=framework_id,
+            lot_id=lot_id,
+            data={"foo": "bar" * 500},
+        )
+
+        if inc_other_fw:
+            # we create another framework with the opposite value of has_further_competition to allow us to
+            # test two frameworks being included
+            self.setup_dummy_framework(
+                "other-framework-321",
+                "g-cloud",
+                id=474747,
+                has_direct_award=True,
+                has_further_competition=not fw_further_competition,
+            )
+
+        response = self.client.get(
+            '/services?framework=q-framework-123' + (",other-framework-321" if inc_other_fw else ""),
+            headers={"Accept-Encoding": "gzip"},
+        )
+
+        assert response.status_code == 200
+        assert (response.headers.get("Content-Encoding") == "gzip") == expect_compression
+        if not expect_compression:
+            # otherwise it's not a useful test and should be fixed
+            assert len(response.get_data()) > 9000
 
 
 class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):

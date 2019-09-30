@@ -244,18 +244,26 @@ class FixtureMixin(object):
                 data=data,
             )
 
-    def setup_dummy_services_including_unpublished(self, n):
+    def setup_dummy_services_including_unpublished(self, n, framework_id=1, lot_id=1, data=None):
         self.setup_dummy_suppliers(TEST_SUPPLIERS_COUNT)
-        self.setup_dummy_services(n)
+        self.setup_dummy_services(n, framework_id=framework_id, lot_id=lot_id, data=data)
         # Add extra 'enabled' and 'disabled' services
         self.setup_dummy_service(
             service_id=str(n + 2000000001),
             supplier_id=n % TEST_SUPPLIERS_COUNT,
-            status='disabled')
+            status='disabled',
+            framework_id=framework_id,
+            lot_id=lot_id,
+            data=data,
+        )
         self.setup_dummy_service(
             service_id=str(n + 2000000002),
             supplier_id=n % TEST_SUPPLIERS_COUNT,
-            status='enabled')
+            status='enabled',
+            framework_id=framework_id,
+            lot_id=lot_id,
+            data=data,
+        )
         # Add an extra supplier that will have no services
         db.session.add(
             Supplier(supplier_id=TEST_SUPPLIERS_COUNT, name=u'Supplier {}'
