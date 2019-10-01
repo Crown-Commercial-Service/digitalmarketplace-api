@@ -16,9 +16,16 @@ class SellerDashboardService(object):
     def get_team_members(self, supplier_code):
         user_type = (
             case(
-                whens=[(Supplier.data['email'].isnot(None), literal('ar'))]
+                whens=[(
+                    and_(
+                        Supplier.data['email'].isnot(None),
+                        Supplier.data['email'].astext == User.email_address
+                    ), literal('ar')
+                )],
+                else_=literal('member')
             ).label('type')
         )
+
         results = (
             db
             .session
@@ -38,4 +45,5 @@ class SellerDashboardService(object):
             )
             .order_by(user_type, func.lower(User.name))
         )
+
         return [r._asdict() for r in results]

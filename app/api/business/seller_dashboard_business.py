@@ -3,5 +3,5 @@ from app.api.services import (
 )
 
 
-def get_team_members(user_id):
-    return seller_dashboard_service.get_team_members(user_id)
+def get_team_members(supplier_code):
+    return seller_dashboard_service.get_team_members(supplier_code)
