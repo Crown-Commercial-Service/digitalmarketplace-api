@@ -33,6 +33,24 @@ def db_migration(request):
 
     with app.app_context():
         upgrade(config, 'head')
+        db.engine.execute("""DO
+            $$
+            DECLARE
+                r RECORD;
+            BEGIN
+                FOR i IN 1..5 LOOP
+                    FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+                        BEGIN
+                            EXECUTE 'ALTER TABLE ' || quote_ident(r.tablename) || ' SET UNLOGGED';
+                        EXCEPTION
+                            WHEN invalid_table_definition THEN
+                                RAISE WARNING 'SET UNLOGGED failed on %%, i=%%', r.tablename, i;
+                        END;
+                    END LOOP;
+                END LOOP;
+            END;
+            $$
+        """)
 
     print("Done db setup")
 
