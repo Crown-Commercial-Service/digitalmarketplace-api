@@ -6,7 +6,7 @@ from dmutils.config import convert_to_boolean
 from dmutils.errors.api import ValidationError
 
 from .. import main
-from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework
+from ...models import ArchivedService, Service, Supplier, AuditEvent, Framework, db
 from ...validation import is_valid_service_id_or_400
 from ...utils import (
     display_list,
@@ -54,8 +54,16 @@ def list_services():
 
     supplier_id = get_int_or_400(request.args, 'supplier_id')
 
+    response_headers = {"X-Compression-Safe": "0"}
+
     if request.args.get('framework'):
         frameworks = [slug.strip() for slug in request.args['framework'].split(',')]
+        if not db.session.query(Framework.query.filter(
+            Framework.slug.in_(frameworks),
+            Framework.has_further_competition.is_(True),
+        ).exists()).scalar():
+            # we don't have any "further competition" services, so all returned data should be fairly public anyway
+            response_headers["X-Compression-Safe"] = "1"
     else:
         frameworks = None
 
@@ -92,7 +100,7 @@ def list_services():
         per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
         endpoint='.list_services',
         request_args=request.args
-    ), 200
+    ), 200, response_headers
 
 
 @main.route('/archived-services', methods=['GET'])

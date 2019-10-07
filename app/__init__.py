@@ -6,6 +6,7 @@ from sqlalchemy import MetaData
 
 import dmapiclient
 from dmutils.flask_init import init_app, api_error_handlers
+from dmutils.flask import DMGzipMiddleware
 
 from config import configs
 
@@ -50,6 +51,8 @@ def create_app(config_name):
     application.register_blueprint(status_blueprint)
 
     gds_metrics.init_app(application)
+
+    DMGzipMiddleware(application, compress_by_default=False)
 
     return application
 
