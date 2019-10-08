@@ -91,19 +91,20 @@ def get_people_overview():
     return people_overview
 
 
-def get_team(team_id):
+def get_team(team_id, allow_anyone=None):
     team = team_service.get_team(team_id)
     if not team:
         raise NotFoundError('Team {} does not exist'.format(team_id))
 
-    team_member = team_member_service.find(
-        is_team_lead=True,
-        team_id=team_id,
-        user_id=current_user.id
-    ).one_or_none()
+    if allow_anyone is None:
+        team_member = team_member_service.find(
+            is_team_lead=True,
+            team_id=team_id,
+            user_id=current_user.id
+        ).one_or_none()
 
-    if not team_member:
-        raise UnauthorisedError('Only team leads can edit a team')
+        if not team_member:
+            raise UnauthorisedError('Only team leads can edit a team')
 
     if team['teamMembers'] is not None:
         for user_id, team_member in team['teamMembers'].iteritems():
@@ -297,3 +298,11 @@ def request_access(data):
 
 def search_team_members(current_user, agency_id, keywords=None, exclude=None):
     return team_service.search_team_members(current_user, agency_id, keywords, exclude)
+
+
+def get_team_briefs(team_id):
+    return team_service.get_team_briefs(team_id)
+
+
+def is_brief_id_in_teams(brief_id):
+    return team_service.is_brief_id_in_teams(brief_id)

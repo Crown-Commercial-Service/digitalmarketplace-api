@@ -3,7 +3,7 @@ from sqlalchemy.types import TEXT
 from sqlalchemy.orm import joinedload, raiseload
 from sqlalchemy.dialects.postgresql import aggregate_order_by
 from app.api.helpers import Service
-from app.models import Team, TeamMember, TeamMemberPermission, User, db
+from app.models import Team, TeamBrief, TeamMember, TeamMemberPermission, User, db
 
 
 class TeamService(Service):
@@ -247,3 +247,37 @@ class TeamService(Service):
 
         results = results.order_by(func.lower(User.name))
         return [r._asdict() for r in results]
+
+    def get_team_briefs(self, team_id):
+        result = (
+            db
+            .session
+            .query(
+                TeamBrief.brief_id,
+                TeamBrief.user_id,
+                User.name
+            )
+            .join(User)
+            .filter(
+                TeamBrief.team_id == team_id
+            )
+        )
+
+        return [r._asdict() for r in result]
+
+    def get_teams_by_brief_id(self, brief_id):
+        result = (
+            db
+            .session
+            .query(
+                TeamBrief.team_id,
+                TeamBrief.user_id,
+                User.name,
+                User.email_address
+            )
+            .join(User)
+            .filter(TeamBrief.brief_id == brief_id)
+            .all()
+        )
+
+        return [r._asdict() for r in result]
