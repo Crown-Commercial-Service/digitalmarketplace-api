@@ -1,8 +1,9 @@
-from app.api.helpers import Service
-from app.models import Brief, BriefUser, User, Lot
-from sqlalchemy import func
+from sqlalchemy import func, union
 from sqlalchemy.sql import text
+
 from app import db
+from app.api.helpers import Service
+from app.models import Brief, BriefUser, Lot, Team, TeamBrief, User
 
 
 class BriefsService(Service):
@@ -12,17 +13,31 @@ class BriefsService(Service):
         super(BriefsService, self).__init__(*args, **kwargs)
 
     def get_published_briefs(self):
-        subquery = (
+        team_brief_query = (
             db
             .session
             .query(
-                BriefUser.brief_id,
+                TeamBrief.brief_id.label('brief_id'),
+                func.array_agg(func.substring(User.email_address, '@(.*)')).label('domain')
+            )
+            .join(Team)
+            .join(User)
+            .filter(Team.status == 'completed')
+            .group_by(TeamBrief.brief_id)
+        )
+
+        brief_user_query = (
+            db
+            .session
+            .query(
+                BriefUser.brief_id.label('brief_id'),
                 func.array_agg(func.substring(User.email_address, '@(.*)')).label('domain')
             )
             .join(User)
             .group_by(BriefUser.brief_id)
-            .subquery()
         )
+        subquery = union(team_brief_query, brief_user_query).alias('result')
+
         result = (
             db
             .session
