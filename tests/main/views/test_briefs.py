@@ -796,6 +796,25 @@ class TestListBrief(FrameworkSetupAndTeardown):
         assert res.status_code == 200
         assert len(data['briefs']) == expected_count
 
+    @pytest.mark.parametrize("querystr,expect_compression", (
+        ("status=live", True),
+        ("status=live,unsuccessful,awarded&with_clarification_questions=true", True),
+        ("status=live,withdrawn", False),
+        ("status=live&with_users=true", False),
+        ("status=draft", False),
+        ("", False),
+    ))
+    def test_compress_when_appropriate(self, querystr, expect_compression):
+        self.setup_dummy_briefs(10, status='live', title="U. P. up " * 50, add_clarification_question=True)
+        self.setup_dummy_briefs(2, status='unsuccessful', brief_start=20)
+        self.setup_dummy_briefs(2, status='draft', data={"jink": "a jink " * 600}, brief_start=30)
+
+        res = self.client.get(f'/briefs?{querystr}', headers={"Accept-Encoding": "gzip"})
+        assert (res.headers.get("Content-Encoding") == "gzip") is expect_compression
+        if not expect_compression:
+            # otherwise it's not been a useful test because it just didn't reach the minimum compressable size
+            assert len(res.get_data()) > 8000
+
 
 @mock.patch('app.main.views.briefs.index_brief', autospec=True)
 class TestUpdateBriefStatus(FrameworkSetupAndTeardown):
