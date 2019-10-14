@@ -1665,7 +1665,7 @@ class Brief(db.Model):
         data.update({
             'id': self.id,
             'status': self.status,
-            # TODO: remove top-level 'frameworkFoo' fields (use 'framework'git ad sub-dict instead)
+            # TODO: remove top-level 'frameworkFoo' fields (use 'framework' sub-dict instead)
             'frameworkSlug': self.framework.slug,
             'frameworkFramework': self.framework.framework,
             'frameworkName': self.framework.name,
