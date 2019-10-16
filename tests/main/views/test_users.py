@@ -100,18 +100,29 @@ class TestUsersAuth(BaseUserTest):
         data = json.loads(response.get_data())['users']
         assert data['emailAddress'] == 'joeblogs@digital.cabinet-office.gov.uk'
 
-    def test_should_return_404_for_no_user(self):
+    @mock.patch('app.encryption.authenticate_user')
+    def test_should_return_404_for_no_user(self, authenticate_user):
+        # Set up an inactive user for the throwaway authentication
+        self.create_user()
+        user = User.query.filter(User.email_address == 'joeblogs@digital.cabinet-office.gov.uk').first()
+        user.active = False
+        user.failed_login_count = 0
+        db.session.add(user)
+        db.session.commit()
+
         response = self.client.post(
             '/users/auth',
             data=json.dumps({
                 'authUsers': {
-                    'emailAddress': 'joeblogs@digital.cabinet-office.gov.uk',
-                    'password': '1234567890'}}),
+                    'emailAddress': 'not-a-user@example.com',
+                    'password': 'could be anything'}}),
             content_type='application/json')
 
         assert response.status_code == 404
         data = json.loads(response.get_data())
         assert data['authorization'] is False
+        # Check the throwaway authentication helper has been called
+        assert authenticate_user.call_args_list == [mock.call('not a real password', mock.ANY)]
 
     def test_should_return_403_for_bad_password(self):
         self.create_user()
@@ -171,7 +182,8 @@ class TestUsersAuth(BaseUserTest):
         self.assert_failed_login_audit_is_created()
         assert user.locked is True
 
-    def test_all_login_attempts_fail_for_locked_users(self):
+    @mock.patch('app.encryption.checkpw')
+    def test_all_login_attempts_fail_for_locked_users(self, checkpw):
         self.create_user()
 
         self.app.config['DM_FAILED_LOGIN_LIMIT'] = 1
@@ -183,6 +195,8 @@ class TestUsersAuth(BaseUserTest):
         db.session.commit()
         self._return_post_login(status_code=403)
         self.assert_failed_login_audit_is_created(failed_login_count=2)
+        # Check the throwaway password hash has been done
+        assert checkpw.call_args_list == [mock.call('not a real password', mock.ANY)]
 
     @pytest.mark.parametrize('http_x_real_ip, expected_audit_client_ip',
                              (
