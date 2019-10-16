@@ -74,6 +74,10 @@ def auth_user():
         return single_result_response(RESOURCE_NAME, user), 200
 
     else:
+        if user.locked:
+            # Hash the locked user's password and ignore the result, to mitigate against timing attacks
+            encryption.checkpw("not a real password", user.password)
+
         user.failed_login_count += 1
         db.session.add(user)
         db.session.flush()
@@ -94,10 +98,6 @@ def auth_user():
 
         db.session.add(audit)
         db.session.commit()
-
-        if user.locked:
-            # Hash the locked user's password and ignore the result, to mitigate against timing attacks
-            encryption.checkpw("not a real password", user.password)
 
         return jsonify(authorization=False), 403
 
