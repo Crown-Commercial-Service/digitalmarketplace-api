@@ -37,7 +37,12 @@ def get_all_evidence_submitted():
 @main.route('/evidence/all', methods=['GET'])
 def view_all_evidence():
     supplier_code = request.args.get('supplier_code', None)
+    simple = request.args.get('simple', False)
     evidence = get_all_evidence(supplier_code)
+    if simple:
+        for e in evidence:
+            if 'data' in e:
+                del e['data']
     return jsonify(evidence=evidence), 200
 
 
