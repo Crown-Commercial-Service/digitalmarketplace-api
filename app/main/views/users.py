@@ -4,6 +4,7 @@ from dmapiclient.audit import AuditTypes
 from sqlalchemy import func
 from sqlalchemy.orm import lazyload
 from sqlalchemy.exc import DataError, IntegrityError
+from sqlalchemy.sql.expression import false as sql_false, and_ as sql_and
 from flask import abort, current_app, jsonify, request
 
 from dmutils.config import convert_to_boolean
@@ -52,6 +53,16 @@ def auth_user():
     ).with_for_update(of=User).first()
 
     if user is None:
+        # 'Authenticate' an inactive, unlocked user and ignore the result, to mitigate against timing attacks.
+        # The extra DB query provides us with roughly the correct timing, which avoids us having to serialize and return
+        # a dummy User in the response.
+        user = User.query.filter(
+            sql_and(
+                User.active == sql_false(),
+                User.failed_login_count <= current_app.config['DM_FAILED_LOGIN_LIMIT']
+            )
+        ).first()
+        encryption.authenticate_user("not a real password", user)
         return jsonify(authorization=False), 404
 
     elif encryption.authenticate_user(json_payload['password'], user) and user.active:
