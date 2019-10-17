@@ -195,8 +195,8 @@ class TestUsersAuth(BaseUserTest):
         db.session.commit()
         self._return_post_login(status_code=403)
         self.assert_failed_login_audit_is_created(failed_login_count=2)
-        # Check the throwaway password hash has been done
-        assert checkpw.call_args_list == [mock.call('not a real password', mock.ANY)]
+        # Check that the password hash has been done regardless of locked status
+        assert checkpw.call_args_list == [mock.call('1234567890', mock.ANY)]
 
     @pytest.mark.parametrize('http_x_real_ip, expected_audit_client_ip',
                              (

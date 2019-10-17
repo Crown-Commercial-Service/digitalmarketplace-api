@@ -1,4 +1,15 @@
-from app.encryption import checkpw, hashpw
+import mock
+import pytest
+from app.encryption import checkpw, hashpw, authenticate_user
+
+
+@pytest.mark.parametrize('user_is_locked, expected_auth_result', [(True, False), (False, True)])
+def test_authenticate_user(user_is_locked, expected_auth_result):
+    password = "mypassword"
+    password_hash = hashpw(password)
+    mock_user = mock.Mock(password=password_hash, locked=user_is_locked)
+
+    assert authenticate_user(password, mock_user) == expected_auth_result
 
 
 def test_should_hash_password():

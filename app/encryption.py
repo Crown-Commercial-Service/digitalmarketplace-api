@@ -2,7 +2,7 @@ from flask_bcrypt import generate_password_hash, check_password_hash
 
 
 def authenticate_user(password, user):
-    return not user.locked and checkpw(password, user.password)
+    return checkpw(password, user.password) and not user.locked
 
 
 def hashpw(password):
