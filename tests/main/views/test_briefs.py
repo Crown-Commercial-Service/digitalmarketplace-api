@@ -717,7 +717,7 @@ class TestListBrief(FrameworkSetupAndTeardown):
 
     @pytest.mark.parametrize('date_arg', ['published_on', 'withdrawn_on', 'cancelled_on', 'unsuccessful_on'])
     def test_list_briefs_filter_by_single_day(self, date_arg):
-        for i, brief_status in enumerate(["draft", "withdrawn", "published", "cancelled", "unsuccessful"]):
+        for i, brief_status in enumerate(["draft", "withdrawn", "live", "cancelled", "unsuccessful"]):
             with freeze_time('2017-01-01 00:00:00'):
                 self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 1)
             with freeze_time('2017-01-01 23:59:59.999999'):
@@ -740,7 +740,7 @@ class TestListBrief(FrameworkSetupAndTeardown):
         [('published_before', 5), ('withdrawn_before', 1), ('cancelled_before', 1), ('unsuccessful_before', 1)]
     )
     def test_list_briefs_filter_before_date(self, date_arg, expected_count):
-        for i, brief_status in enumerate(["draft", "withdrawn", "published", "cancelled", "unsuccessful"]):
+        for i, brief_status in enumerate(["draft", "withdrawn", "live", "cancelled", "unsuccessful"]):
             with freeze_time('2016-12-31 23:59:59.999999'):
                 self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 1)
             # The following briefs should be filtered out ('before' is not inclusive)
@@ -759,7 +759,7 @@ class TestListBrief(FrameworkSetupAndTeardown):
         'date_arg', ['published_after', 'withdrawn_after', 'cancelled_after', 'unsuccessful_after']
     )
     def test_list_briefs_filter_after_date(self, date_arg):
-        for i, brief_status in enumerate(["draft", "withdrawn", "published", "cancelled", "unsuccessful"]):
+        for i, brief_status in enumerate(["draft", "withdrawn", "live", "cancelled", "unsuccessful"]):
             with freeze_time('2017-01-02 00:00:00'):
                 self.setup_dummy_briefs(1, lot='digital-outcomes', status=brief_status, brief_start=i + 1)
             # The following briefs should be filtered out ('after' is not inclusive)
@@ -795,6 +795,25 @@ class TestListBrief(FrameworkSetupAndTeardown):
 
         assert res.status_code == 200
         assert len(data['briefs']) == expected_count
+
+    @pytest.mark.parametrize("querystr,expect_compression", (
+        ("status=live", True),
+        ("status=live,unsuccessful,awarded&with_clarification_questions=true", True),
+        ("status=live,withdrawn", False),
+        ("status=live&with_users=true", False),
+        ("status=draft", False),
+        ("", False),
+    ))
+    def test_compress_when_appropriate(self, querystr, expect_compression):
+        self.setup_dummy_briefs(10, status='live', title="U. P. up " * 50, add_clarification_question=True)
+        self.setup_dummy_briefs(2, status='unsuccessful', brief_start=20)
+        self.setup_dummy_briefs(2, status='draft', data={"jink": "a jink " * 600}, brief_start=30)
+
+        res = self.client.get(f'/briefs?{querystr}', headers={"Accept-Encoding": "gzip"})
+        assert (res.headers.get("Content-Encoding") == "gzip") is expect_compression
+        if not expect_compression:
+            # otherwise it's not been a useful test because it just didn't reach the minimum compressable size
+            assert len(res.get_data()) > 8000
 
 
 @mock.patch('app.main.views.briefs.index_brief', autospec=True)

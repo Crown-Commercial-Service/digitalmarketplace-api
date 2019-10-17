@@ -154,10 +154,14 @@ def list_briefs():
             Lot.slug.in_(lot_slug.strip() for lot_slug in request.args["lot"].split(","))
         ))
 
+    response_headers = {"X-Compression-Safe": "0"}
     if request.args.get('status'):
-        briefs = briefs.has_statuses(
-            *(status.strip() for status in request.args['status'].split(','))
-        )
+        statuses = frozenset(status.strip() for status in request.args['status'].split(','))
+        briefs = briefs.has_statuses(*statuses)
+
+        if frozenset(("draft", "withdrawn",)).isdisjoint(statuses) and not with_users:
+            # then all data we're returning is fairly public anyway
+            response_headers["X-Compression-Safe"] = "1"
 
     status_filters = ['created', 'published', 'withdrawn', 'cancelled', 'unsuccessful', 'closed']
     temporal_filters = ['on', 'before', 'after']
@@ -183,7 +187,7 @@ def list_briefs():
             RESOURCE_NAME,
             briefs,
             serialize_kwargs={"with_users": with_users, "with_clarification_questions": with_clarification_questions}
-        ), 200
+        ), 200, response_headers
     else:
         return paginated_result_response(
             result_name=RESOURCE_NAME,
@@ -193,7 +197,7 @@ def list_briefs():
             endpoint='.list_briefs',
             request_args=request.args,
             serialize_kwargs={"with_users": with_users, "with_clarification_questions": with_clarification_questions}
-        ), 200
+        ), 200, response_headers
 
 
 @main.route('/briefs/<int:brief_id>/<any(publish, withdraw, cancel, unsuccessful):action>', methods=['POST'])
