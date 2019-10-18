@@ -263,7 +263,7 @@ class SpecialistDataValidator(object):
             return False
         if (
             int(self.data.get('numberOfSuppliers')) <= 0 or
-            int(self.data.get('numberOfSuppliers')) > 6
+            int(self.data.get('numberOfSuppliers')) > 100
         ):
             return False
         return True
