@@ -404,74 +404,6 @@ def create_specialist_brief():
 
 @api.route('/brief/<int:brief_id>', methods=["GET"])
 def get_brief(brief_id):
-    """Get brief
-    ---
-    tags:
-        - brief
-    parameters:
-      - name: brief_id
-        in: path
-        type: number
-        required: true
-    responses:
-        200:
-            description: Brief retrieved successfully.
-            schema:
-                type: object
-                properties:
-                    brief:
-                        type: object
-                    brief_response_count:
-                        type: number
-                    invited_seller_count:
-                        type: number
-                    can_respond:
-                        type: boolean
-                    open_to_all:
-                        type: boolean
-                    is_brief_owner:
-                        type: boolean
-                    is_buyer:
-                        type: boolean
-                    has_responded:
-                        type: boolean
-                    has_evidence_in_draft_for_category:
-                        type: boolean
-                    is_assessed_for_category:
-                        type: boolean
-                    is_assessed_in_any_category:
-                        type: boolean
-                    is_approved_seller:
-                        type: boolean
-                    is_awaiting_application_assessment:
-                        type: boolean
-                    is_awaiting_domain_assessment:
-                        type: boolean
-                    has_been_assessed_for_brief:
-                        type: boolean
-                    open_to_category:
-                        type: boolean
-                    is_applicant:
-                        type: boolean
-                    is_recruiter:
-                        type: boolean
-                    is_invited:
-                        type: boolean
-                    has_supplier_errors:
-                        type: boolean
-                    has_signed_current_agreement:
-                        type: boolean
-                    domains:
-                        type: array
-                        items:
-                            type: object
-        403:
-            description: Unauthorised to view brief.
-        404:
-            description: Brief not found.
-        500:
-            description: Unexpected error.
-    """
     brief = briefs.find(id=brief_id).one_or_none()
     if not brief:
         not_found("No brief for id '%s' found" % (brief_id))
@@ -563,7 +495,12 @@ def get_brief(brief_id):
             'name': domain.name
         })
 
-    return jsonify(brief=brief.serialize(with_users=False, with_author=is_brief_owner),
+    brief_serialized = brief.serialize(with_users=False, with_author=is_brief_owner)
+    if not is_buyer:
+        if not is_invited:
+            brief_serialized['clarificationQuestions'] = []
+
+    return jsonify(brief=brief_serialized,
                    brief_response_count=brief_response_count,
                    invited_seller_count=invited_seller_count,
                    has_chosen_brief_category=has_chosen_brief_category,

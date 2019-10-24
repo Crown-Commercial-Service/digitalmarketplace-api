@@ -32,6 +32,15 @@ def get_counts(brief_id, questions=None, answers=None):
     }
 
 
+def is_open_to_all(brief):
+    if brief.lot.slug == 'atm' or (
+        brief.lot.slug == 'specialist' and brief.data.get('openTo') == 'all'
+    ):
+        return True
+
+    return False
+
+
 def get_question(current_user, brief_id, question_id):
     brief = briefs.find(id=brief_id).one_or_none()
     if not brief:
@@ -55,7 +64,8 @@ def get_question(current_user, brief_id, question_id):
             "id": brief.id,
             "questionsCloseAt": brief.questions_closed_at,
             "closedAt": brief.closed_at,
-            "internalReference": brief.data.get('internalReference')
+            "internalReference": brief.data.get('internalReference'),
+            "isOpenToAll": is_open_to_all(brief)
         }
     }
 
@@ -76,7 +86,8 @@ def get_questions(current_user, brief_id):
             "title": brief.data.get('title'),
             "id": brief.id,
             "closedAt": brief.closed_at,
-            "internalReference": brief.data.get('internalReference')
+            "internalReference": brief.data.get('internalReference'),
+            "isOpenToAll": is_open_to_all(brief)
         },
         "questionCount": get_counts(brief_id, questions=questions)
     }
@@ -95,7 +106,8 @@ def get_answers(brief_id):
             "title": brief.data.get('title'),
             "id": brief.id,
             "closedAt": brief.closed_at,
-            "internalReference": brief.data.get('internalReference')
+            "internalReference": brief.data.get('internalReference'),
+            "isOpenToAll": is_open_to_all(brief)
         },
         "questionCount": get_counts(brief_id, answers=answers)
     }
