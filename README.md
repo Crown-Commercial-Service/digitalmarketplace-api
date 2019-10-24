@@ -105,8 +105,8 @@ make freeze-requirements
 ## Creating a new database migration
 
 After editing `models.py` to add/edit/remove models for the database, you'll need to generate a new migration script.
-The easiest way to do this is to run `python application.py db migrate --rev-id <revision_id> -m '<description'>`. Our
-revision IDs increment by 10 each time; check the output of `python application.py db show` to find the current
+The easiest way to do this is to run `flask db migrate --rev-id <revision_id> -m '<description'>`. Our
+revision IDs increment by 10 each time; check the output of `flask db show` to find the current
 revision. Until you run the migration to update the database state, you can delete the generated revision and
 re-generate it as you need to.
 
@@ -119,7 +119,7 @@ list of migration versions
 
 ### Getting a list of application URLs
 
-`python application.py list_routes` prints a full list of registered application URLs with supported HTTP methods
+`flask routes` prints a full list of registered application URLs with supported HTTP methods
 
 
 ## Model schemas
