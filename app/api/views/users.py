@@ -173,6 +173,9 @@ def signup():
     user = User.query.filter(
         User.email_address == email_address.lower()).first()
 
+    if '<' in email_address or '>' in email_address or email_address.count('@') > 1:
+        return jsonify(message='Invalid email address format'), 400
+
     if user is not None:
         send_user_existing_password_reset_email(user.name, email_address)
         return jsonify(
