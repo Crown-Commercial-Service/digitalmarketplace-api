@@ -27,6 +27,7 @@ from .brief_clarification_question import BriefClarificationQuestionService
 from .brief_response_download import BriefResponseDownloadService
 from .seller_dashboard import SellerDashboardService
 from .api_key import ApiKeyService
+from .insight import InsightService
 
 agency_service = AgencyService()
 agreement_service = AgreementService()
@@ -58,3 +59,4 @@ brief_clarification_question_service = BriefClarificationQuestionService()
 brief_response_download_service = BriefResponseDownloadService()
 seller_dashboard_service = SellerDashboardService()
 api_key_service = ApiKeyService()
+insight_service = InsightService()

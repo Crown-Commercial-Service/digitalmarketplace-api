@@ -3220,3 +3220,12 @@ def filter_null_value_fields(obj):
 def generate_new_service_id(framework_slug):
     # FIXME framework_slug parameter ignored??
     return str(random.randint(10 ** 14, 10 ** 15 - 1))
+
+
+class Insight(db.Model):
+    __tablename__ = 'insight'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict)
+    published_at = db.Column(DateTime, index=False, nullable=False, default=localnow)
+    active = db.Column(db.Boolean, nullable=False, default=True)

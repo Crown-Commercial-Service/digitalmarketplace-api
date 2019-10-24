@@ -13,3 +13,4 @@ import app.api.business.evidence_business
 import app.api.business.seller_dashboard_business
 import app.api.business.brief_training_business
 import app.api.business.download_report_business
+import app.api.business.insight_business

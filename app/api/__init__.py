@@ -113,6 +113,7 @@ from app.api.views import (briefs,  # noqa
                            opportunities,
                            questions,
                            key_values,
+                           insight,
                            teams,
                            domains,
                            evidence,
