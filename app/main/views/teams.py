@@ -16,6 +16,12 @@ from ...models import (
 )
 
 
+@main.route('/admin/team', methods=['GET'])
+def get_teams():
+    teams = team_business.get_list_of_teams()
+    return jsonify(teams=teams)
+
+
 @main.route('/admin/team/<int:team_id>', methods=['GET'])
 def get_team(team_id):
     team = team_business.get_team(team_id, True)

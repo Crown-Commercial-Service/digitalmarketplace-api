@@ -306,3 +306,11 @@ def get_team_briefs(team_id):
 
 def get_teams_by_brief_id(brief_id):
     return team_service.get_teams_by_brief_id(brief_id)
+
+
+def get_list_of_teams():
+    return team_service.get_list_of_teams()
+
+
+def get_teams_by_agency(agency_id, team_id):
+    return team_service.agency_list()
