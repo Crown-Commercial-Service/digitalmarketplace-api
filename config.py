@@ -37,7 +37,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # If you are changing failed login limit, remember to update NO_ACCOUNT_MESSAGE in user-frontend
-    DM_FAILED_LOGIN_LIMIT = 10
+    DM_FAILED_LOGIN_LIMIT = 5
 
     VCAP_SERVICES = None
 
