@@ -970,7 +970,8 @@ class TestRemoveContactInformationPersonalData(BaseApplicationTest):
         db.session.add_all([self.supplier, self.contact_information])
         db.session.commit()
 
-    def test_remove_contact_information_personal_data(self):
+    @mock.patch('app.models.main.uuid4', return_value='111')
+    def test_remove_contact_information_personal_data(self, uuid_mock):
         url = '/suppliers/{}/contact-information/{}/remove-personal-data'.format(
             self.supplier.supplier_id,
             self.contact_information.id
@@ -987,7 +988,7 @@ class TestRemoveContactInformationPersonalData(BaseApplicationTest):
         assert data['contactInformation']['address1'] == '<removed>'
         assert data['contactInformation']['city'] == '<removed>'
         assert data['contactInformation']['contactName'] == '<removed>'
-        assert data['contactInformation']['email'] == '<removed>'
+        assert data['contactInformation']['email'] == '<removed>@111.com'
         assert data['contactInformation']['phoneNumber'] == '<removed>'
         assert data['contactInformation']['postcode'] == '<removed>'
 
