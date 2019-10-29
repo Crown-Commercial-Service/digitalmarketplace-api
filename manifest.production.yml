@@ -8,6 +8,7 @@ services:
 - pgdb-96-prod
 - ups-dm-common
 - ups-dm-api
+- marketplace-redis-sessions
 routes:
 - route: dm-api.apps.b.cld.gov.au
 - route: dm-api.apps.b.cld.gov.au/api

@@ -12,6 +12,7 @@ applications:
   - marketplace-dm-pc-shared
   - ups-dm-pc-common
   - ups-dm-pc-api
+  - marketplace-y-redis-sessions
   routes:
   - route: dm-pc.apps.y.cld.gov.au/api
   - route: dm-pc-api.apps.y.cld.gov.au

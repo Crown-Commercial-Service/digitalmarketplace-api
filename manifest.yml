@@ -8,6 +8,7 @@ services:
 - marketplace-dev-shared
 - ups-dm-dev-common
 - ups-dm-dev-api
+- marketplace-y-redis-sessions
 routes:
 - route: dm-dev-api.apps.y.cld.gov.au
 - route: dm-dev.apps.y.cld.gov.au/api

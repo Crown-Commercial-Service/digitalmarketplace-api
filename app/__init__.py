@@ -15,6 +15,10 @@ from app.swagger import swag
 from nplusone.ext.flask_sqlalchemy import NPlusOne
 from sqltap.wsgi import SQLTapMiddleware
 
+import redis
+from flask_kvsession import KVSessionExtension
+from simplekv.memory.redisstore import RedisStore
+
 
 db = SQLAlchemy()
 
@@ -31,6 +35,25 @@ def create_app(config_name):
         db=db,
         search_api_client=search_api_client
     )
+
+    if application.config['REDIS_SESSIONS']:
+        vcap_services = parse_vcap_services()
+        redis_opts = {
+            'ssl': application.config['REDIS_SSL'],
+            'ssl_ca_certs': application.config['REDIS_SSL_CA_CERTS'],
+            'ssl_cert_reqs': application.config['REDIS_SSL_HOST_REQ']
+        }
+        if vcap_services and 'redis' in vcap_services:
+            redis_opts['host'] = vcap_services['redis'][0]['credentials']['hostname']
+            redis_opts['port'] = vcap_services['redis'][0]['credentials']['port']
+            redis_opts['password'] = vcap_services['redis'][0]['credentials']['password']
+        else:
+            redis_opts['host'] = application.config['REDIS_SERVER_HOST']
+            redis_opts['port'] = application.config['REDIS_SERVER_PORT']
+            redis_opts['password'] = application.config['REDIS_SERVER_PASSWORD']
+
+        session_store = RedisStore(redis.StrictRedis(**redis_opts))
+        KVSessionExtension(session_store, application)
 
     if not application.config['DM_API_AUTH_TOKENS']:
         raise Exception("No DM_API_AUTH_TOKENS provided")
@@ -88,3 +111,15 @@ def isolation_level(level):
             return view(*args, **kwargs)
         return view_wrapper
     return decorator
+
+
+def parse_vcap_services():
+    import os
+    import json
+    vcap = None
+    if 'VCAP_SERVICES' in os.environ:
+        try:
+            vcap = json.loads(os.environ['VCAP_SERVICES'].decode('utf-8'))
+        except ValueError:
+            pass
+    return vcap
