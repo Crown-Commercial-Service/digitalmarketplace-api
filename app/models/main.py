@@ -353,7 +353,7 @@ class ContactInformation(db.Model, RemovePersonalDataModelMixin):
 
         self.contact_name = '<removed>'
         self.phone_number = '<removed>'
-        self.email = '<removed>'
+        self.email = '<removed>@{uuid}.com'.format(uuid=str(uuid4()))
         self.address1 = '<removed>'
         self.city = '<removed>'
         self.postcode = '<removed>'
