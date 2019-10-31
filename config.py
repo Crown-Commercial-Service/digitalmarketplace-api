@@ -91,7 +91,7 @@ class Development(Config):
     DM_API_AUTH_TOKENS = 'myToken'
     DM_API_CALLBACK_AUTH_TOKENS = 'myToken'
     DM_SEARCH_API_AUTH_TOKEN = 'myToken'
-    DM_SEARCH_API_URL = 'http://localhost:5001'
+    DM_SEARCH_API_URL = f"http://localhost:{os.getenv('DM_SEARCH_API_PORT', 5001)}"
 
 
 class Live(Config):

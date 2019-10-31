@@ -75,18 +75,25 @@ To just run the application use the `run-app` target.
 
 ## Using the API locally
 
-By default the API runs on port 5000. Calls to the API require a valid bearer 
-token. Tokens to be accepted can be set using the DM_AUTH_TOKENS environment
-variable (a colon-separated list), e.g.:
+Calls to the API require a valid bearer token. Tokens to be accepted can be set
+using the `DM_AUTH_TOKENS` environment variable (a colon-separated list), e.g.:
 
 ```export DM_API_AUTH_TOKENS=myToken1:myToken2```
 
-If ``DM_API_AUTH_TOKENS`` is not explicitly set then the run script sets
-it to ``myToken``. You should include a valid token in your request headers, 
+If `DM_API_AUTH_TOKENS` is not explicitly set then the run script sets
+it to `myToken`. You should include a valid token in your request headers, 
 e.g.:
 
 ```
 curl -i -H "Authorization: Bearer myToken" 127.0.0.1:5000/services
+```
+
+When running the API locally it listens on port 5000 by default. This can be
+changed by setting the `DM_API_PORT` environment variable, e.g. to set the api
+port number to 9000:
+
+```
+export DM_API_PORT=9000
 ```
 
 ## Updating application dependencies
