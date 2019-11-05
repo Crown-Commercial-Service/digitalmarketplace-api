@@ -96,8 +96,20 @@ class Agency(db.Model):
         ],
         name='state_enum'
     ))
+    body_type = db.Column(db.Enum(
+        *[
+            'ncce',
+            'cce',
+            'cc',
+            'local',
+            'state',
+            'other'
+        ],
+        name='body_type_enum'
+    ), nullable=False, default='other')
     whitelisted = db.Column(db.Boolean, nullable=False, default=True)
-    domains = db.relationship('AgencyDomain')
+    reports = db.Column(db.Boolean, nullable=False, default=True)
+    domains = db.relationship('AgencyDomain', cascade="all, delete-orphan")
 
 
 class AgencyDomain(db.Model):

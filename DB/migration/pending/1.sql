@@ -1,13 +1,24 @@
-create sequence if not exists "public"."insight_id_seq";
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'body_type_enum') THEN
 
-create table if not exists "public"."insight" (
-    "id" integer not null default nextval('insight_id_seq'::regclass),
-    "data" json,
-    "published_at" timestamp without time zone not null,
-    "active" boolean not null,
-    constraint "insight_pkey" PRIMARY KEY (id)
-);
+        create type "public"."body_type_enum" as enum ('ncce', 'cce', 'cc', 'local', 'state', 'other');
 
-alter table "public"."insight" drop constraint "insight_pkey";
-CREATE UNIQUE INDEX if not exists insight_pkey ON public.insight USING btree (id);
-alter table "public"."insight" add constraint "insight_pkey" PRIMARY KEY using index "insight_pkey";
+    END IF;
+END$$;
+
+alter table "public"."agency" add column if not exists "body_type" body_type_enum null;
+
+update agency
+set body_type = 'other'
+where body_type is null;
+
+alter table "public"."agency" alter column "body_type" set not null;
+
+alter table "public"."agency" add column if not exists "reports" boolean null;
+
+update agency
+set reports = true
+where reports is null;
+
+alter table "public"."agency" alter column "reports" set not null;

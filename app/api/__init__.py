@@ -120,6 +120,7 @@ from app.api.views import (briefs,  # noqa
                            redirects)
 
 from app.api.views.reports import (  # noqa
+    agency,
     brief,
     brief_response,
     suppliers

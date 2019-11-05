@@ -8,37 +8,6 @@ from itertools import groupby
 @api.route('/reports/supplier/unassessed', methods=['GET'])
 @require_api_key_auth
 def get_unassessed():
-    """Unassessed Suppliers
-    ---
-    tags:
-      - reports
-    definitions:
-      UnassessedSuppliers:
-        type: object
-        properties:
-          case_study_urls:
-            type: array
-          domain_id:
-            type: integer
-          domain_name:
-            type: string
-          supplier_code:
-            type: integer
-          supplier_id:
-            type: integer
-          supplier_last_logged_in:
-            type: string
-          supplier_name:
-            type: integer
-          supplier_price:
-            type: string
-    responses:
-      200:
-        description: Unassessed Suppliers
-        schema:
-          $ref: '#/definitions/UnassessedSuppliers'
-
-    """
     unassessed = suppliers_service.get_unassessed()
     result = []
     frontend_address = current_app.config['FRONTEND_ADDRESS']
@@ -62,35 +31,6 @@ def get_unassessed():
 @api.route('/reports/supplier/all', methods=['GET'])
 @require_api_key_auth
 def get_all_suppliers():
-    """All Suppliers
-    ---
-    tags:
-      - reports
-    definitions:
-      Suppliers:
-        type: object
-        properties:
-          code:
-            type: number
-          name:
-            type: string
-          abn:
-            type: string
-          status:
-            type: string
-          creation_time:
-            type: string
-          sme:
-            type: boolean
-          categories:
-            type: array
-    responses:
-      200:
-        description: All Suppliers
-        schema:
-          $ref: '#/definitions/Suppliers'
-
-    """
     result = suppliers_service.get_suppliers()
     return jsonify({
         'items': result,

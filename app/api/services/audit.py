@@ -79,3 +79,4 @@ class AuditTypes(Enum):
     sent_brief_question_to_seller = 'sent_brief_question_to_seller'
     sent_request_access = 'sent_request_access'
     evidence_draft_deleted = 'evidence_draft_deleted'
+    agency_updated = 'agency_updated'
