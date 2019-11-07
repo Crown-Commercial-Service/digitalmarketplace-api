@@ -1,0 +1,7 @@
+DM_API_PORT=5000
+DM_SEARCH_API_PORT=5009
+
+FLASK_APP=application:application
+FLASK_ENV=development
+FLASK_RUN_EXTRA_FILES=json_schemas/
+FLASK_RUN_PORT=${DM_API_PORT}

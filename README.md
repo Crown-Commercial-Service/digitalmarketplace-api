@@ -75,18 +75,25 @@ To just run the application use the `run-app` target.
 
 ## Using the API locally
 
-By default the API runs on port 5000. Calls to the API require a valid bearer 
-token. Tokens to be accepted can be set using the DM_AUTH_TOKENS environment
-variable (a colon-separated list), e.g.:
+Calls to the API require a valid bearer token. Tokens to be accepted can be set
+using the `DM_AUTH_TOKENS` environment variable (a colon-separated list), e.g.:
 
 ```export DM_API_AUTH_TOKENS=myToken1:myToken2```
 
-If ``DM_API_AUTH_TOKENS`` is not explicitly set then the run script sets
-it to ``myToken``. You should include a valid token in your request headers, 
+If `DM_API_AUTH_TOKENS` is not explicitly set then the run script sets
+it to `myToken`. You should include a valid token in your request headers, 
 e.g.:
 
 ```
 curl -i -H "Authorization: Bearer myToken" 127.0.0.1:5000/services
+```
+
+When running the API locally it listens on port 5000 by default. This can be
+changed by setting the `DM_API_PORT` environment variable, e.g. to set the api
+port number to 9000:
+
+```
+export DM_API_PORT=9000
 ```
 
 ## Updating application dependencies
@@ -105,8 +112,8 @@ make freeze-requirements
 ## Creating a new database migration
 
 After editing `models.py` to add/edit/remove models for the database, you'll need to generate a new migration script.
-The easiest way to do this is to run `python application.py db migrate --rev-id <revision_id> -m '<description'>`. Our
-revision IDs increment by 10 each time; check the output of `python application.py db show` to find the current
+The easiest way to do this is to run `flask db migrate --rev-id <revision_id> -m '<description'>`. Our
+revision IDs increment by 10 each time; check the output of `flask db show` to find the current
 revision. Until you run the migration to update the database state, you can delete the generated revision and
 re-generate it as you need to.
 
@@ -119,7 +126,7 @@ list of migration versions
 
 ### Getting a list of application URLs
 
-`python application.py list_routes` prints a full list of registered application URLs with supported HTTP methods
+`flask routes` prints a full list of registered application URLs with supported HTTP methods
 
 
 ## Model schemas
