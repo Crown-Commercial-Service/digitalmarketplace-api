@@ -36,13 +36,6 @@ SELECT pg_catalog.setval('address_id_seq', 1, false);
 
 
 --
--- Name: agreement_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('agreement_id_seq', 1, false);
-
-
---
 -- Data for Name: supplier; Type: TABLE DATA; Schema: public; Owner: -
 --
 

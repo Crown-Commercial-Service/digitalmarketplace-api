@@ -1,36 +1,35 @@
 from .agency import AgencyService
-from .agreement import AgreementService
-from .signed_agreement import SignedAgreementService
+from .api_key import ApiKeyService
 from .application import ApplicationService
-from .audit import AuditService, AuditTypes
 from .assessments import AssessmentsService
+from .audit import AuditService, AuditTypes
+from .brief_clarification_question import BriefClarificationQuestionService
+from .brief_question import BriefQuestionService
+from .brief_response_download import BriefResponseDownloadService
+from .brief_responses import BriefResponsesService
+from .briefs import BriefsService
 from .domain import DomainService
 from .domain_criteria import DomainCriteriaService
-from .briefs import BriefsService
-from .suppliers import SuppliersService
-from .supplier_domain import SupplierDomainService
-from .lots import LotsService
-from .brief_responses import BriefResponsesService
-from .users import UsersService
-from .key_value import KeyValueService
-from .publish import Publish
-from .frameworks import FrameworksService
-from .user_claims import UserClaimService
-from .teams import TeamService
-from .team_members import TeamMemberService
-from .team_member_permissions import TeamMemberPermissionService
 from .evidence import EvidenceService
 from .evidence_assessment import EvidenceAssessmentService
-from .work_order import WorkOrderService
-from .brief_question import BriefQuestionService
-from .brief_clarification_question import BriefClarificationQuestionService
-from .brief_response_download import BriefResponseDownloadService
-from .seller_dashboard import SellerDashboardService
-from .api_key import ApiKeyService
+from .frameworks import FrameworksService
 from .insight import InsightService
+from .key_value import KeyValueService
+from .lots import LotsService
+from .master_agreement import MasterAgreementService
+from .publish import Publish
+from .seller_dashboard import SellerDashboardService
+from .signed_agreement import SignedAgreementService
+from .supplier_domain import SupplierDomainService
+from .suppliers import SuppliersService
+from .team_member_permissions import TeamMemberPermissionService
+from .team_members import TeamMemberService
+from .teams import TeamService
+from .user_claims import UserClaimService
+from .users import UsersService
+from .work_order import WorkOrderService
 
 agency_service = AgencyService()
-agreement_service = AgreementService()
 signed_agreement_service = SignedAgreementService()
 application_service = ApplicationService()
 audit_service = AuditService()
@@ -60,3 +59,4 @@ brief_response_download_service = BriefResponseDownloadService()
 seller_dashboard_service = SellerDashboardService()
 api_key_service = ApiKeyService()
 insight_service = InsightService()
+master_agreement_service = MasterAgreementService()

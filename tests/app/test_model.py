@@ -12,11 +12,12 @@ from sqlalchemy.exc import DataError, IntegrityError
 
 from app import create_app, db
 from app.datetime_utils import naive, utcnow
-from app.models import (Address, Agreement, Application, Brief,
+from app.models import (Address, Application, Brief,
                         BriefClarificationQuestion, BriefResponse, Domain,
-                        Framework, Lot, Product, RecruiterInfo, Service,
-                        SignedAgreement, Supplier, SupplierDomain,
-                        SupplierFramework, User, ValidationError, WorkOrder)
+                        Framework, Lot, MasterAgreement, Product,
+                        RecruiterInfo, Service, SignedAgreement, Supplier,
+                        SupplierDomain, SupplierFramework, User,
+                        ValidationError, WorkOrder)
 
 from .helpers import (INCOMING_APPLICATION_DATA, BaseApplicationTest,
                       setup_dummy_user)
@@ -1284,11 +1285,12 @@ class TestApplication(BaseApplicationTest):
                 password_changed_at=utcnow(),
                 application=app
             )
-            agreement = Agreement(
-                id=1,
-                version='Marketplace Agreement 2.0',
-                url='http://url',
-                is_current=True
+
+            now = pendulum.now('utc')
+            agreement = MasterAgreement(
+                start_date=now.subtract(years=1),
+                end_date=now.add(years=1),
+                data={}
             )
 
             # flushing to database in order to set defaults (very annoying "feature" of sqlalchemy)
@@ -1299,7 +1301,6 @@ class TestApplication(BaseApplicationTest):
 
             assert len(app.serializable['signed_agreements']) == 0
 
-            now = pendulum.now('UTC')
             signed_agreement = SignedAgreement(
                 agreement_id=agreement.id,
                 user_id=user.id,
@@ -1311,11 +1312,10 @@ class TestApplication(BaseApplicationTest):
 
             assert app.serializable['signed_agreements'][0] == {
                 'agreement': {
+                    'data': {},
                     'email_address': 'email@digital.gov.au',
                     'name': 'name',
-                    'signed_at': now,
-                    'url': 'http://url',
-                    'version': 'Marketplace Agreement 2.0'
+                    'signed_at': now
                 }
             }
 

@@ -498,30 +498,31 @@ class PriceSchedule(db.Model):
         return rate
 
 
-class Agreement(db.Model):
-    __tablename__ = 'agreement'
+class MasterAgreement(db.Model):
+    __tablename__ = 'master_agreement'
 
     id = db.Column(db.Integer, primary_key=True)
-    version = db.Column(db.String, unique=True, nullable=False)
-    url = db.Column(db.String, nullable=False)
-    is_current = db.Column(db.Boolean, nullable=True)
+    start_date = db.Column(DateTime, nullable=False, default=utcnow)
+    end_date = db.Column(DateTime, nullable=False)
+    data = db.Column(MutableDict.as_mutable(JSON))
 
     def serialize(self):
-        serialized = {
+        data = self.data.copy()
+        data.update({
             'id': self.id,
-            'version': str(self.version),
-            'url': self.url,
-            'is_current': self.is_current,
-        }
-        return serialized
+            'startDate': self.start_date,
+            'endDate': self.end_date
+        })
+
+        return data
 
 
 class SignedAgreement(db.Model):
     __tablename__ = 'signed_agreement'
-    agreement = db.relationship('Agreement', single_parent=True)
+    master_agreement = db.relationship('MasterAgreement', single_parent=True)
     agreement_id = db.Column(
         db.Integer,
-        db.ForeignKey('agreement.id'),
+        db.ForeignKey('master_agreement.id'),
         primary_key=True,
         nullable=False
     )
@@ -904,11 +905,30 @@ class Supplier(db.Model):
 
         if 'case_studies' in j:
             j['case_studies'] = [normalize_key_case(c) for c in j['case_studies']]
+
+        signed_agreements = []
         for v in j['signed_agreements']:
-            agreement = Agreement.query.get(v['agreement_id'])
-            v['agreement'] = agreement.serialize() if agreement else None
+            signed_agreements.append(self.serialize_signed_agreement(v))
+
+        j['signed_agreements'] = signed_agreements
 
         return j
+
+    def serialize_signed_agreement(self, signed_agreement):
+        agreement = MasterAgreement.query.get(signed_agreement['agreement_id'])
+        user = User.query.get(signed_agreement['user_id'])
+
+        return {
+            'agreement': agreement.serialize() if agreement else None,
+            'applicationId': signed_agreement['application_id'],
+            'signedAt': signed_agreement['signed_at'],
+            'supplierCode': signed_agreement['supplier_code'],
+            'user': {
+                'id': user.id,
+                'emailAddress': user.email_address,
+                'name': user.name
+            }
+        }
 
     def update_from_json_before(self, data):
         self.data = self.data or {}
@@ -2923,9 +2943,9 @@ class Application(db.Model):
 
     def signed_agreements(self):
         query = db.session.query(
-            Agreement.version, Agreement.url, User.name, User.email_address, SignedAgreement.signed_at
+            SignedAgreement.signed_at, MasterAgreement.data, User.name, User.email_address
         ).join(
-            SignedAgreement, User
+            MasterAgreement, User
         ).order_by(
             SignedAgreement.agreement_id
         )

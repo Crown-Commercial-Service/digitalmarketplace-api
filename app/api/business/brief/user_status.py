@@ -1,19 +1,11 @@
 import pendulum
-from app.api.services import (
-    application_service,
-    assessments,
-    domain_service,
-    suppliers,
-    lots_service,
-    brief_responses_service,
-    evidence_service,
-    signed_agreement_service
-)
+
+from app.api.business.agreement_business import has_signed_current_agreement
 from app.api.business.validators import SupplierValidator
-from app.api.business.agreement_business import (
-    get_current_agreement,
-    has_signed_current_agreement
-)
+from app.api.services import (application_service, assessments,
+                              brief_responses_service, domain_service,
+                              evidence_service, lots_service,
+                              signed_agreement_service, suppliers)
 
 
 class BriefUserStatus(object):

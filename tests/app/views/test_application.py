@@ -2,12 +2,12 @@ import json
 from itertools import tee
 
 import mock
-import six
 import pendulum
-
-from app.models import (Agreement, Application, AuditEvent, Domain, Framework,
-                        Product, User, db, utcnow)
+import six
 from six.moves import zip as izip
+
+from app.models import (Application, AuditEvent, Domain, Framework,
+                        MasterAgreement, Product, User, db, utcnow)
 from tests.app.helpers import BaseApplicationTest
 
 application_data = {
@@ -163,11 +163,13 @@ class BaseApplicationsTest(BaseApplicationTest):
 
     def setup_agreement(self):
         with self.app.app_context():
-            agreement = Agreement(
-                version='1.0',
-                url='http://url',
-                is_current=True
+            now = pendulum.now('utc')
+            agreement = MasterAgreement(
+                start_date=now.subtract(years=1),
+                end_date=now.add(years=1),
+                data={}
             )
+
             db.session.add(agreement)
             db.session.commit()
 

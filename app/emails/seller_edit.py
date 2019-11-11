@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals
+
+from urllib import quote_plus
+
 import pendulum
+import rollbar
 import six
 from flask import current_app, session
-from urllib import quote_plus
+
+from app.api.business.agreement_business import (get_current_agreement,
+                                                 get_new_agreement)
 from app.api.helpers import get_root_url
-from .util import render_email_template, send_or_handle_error, escape_markdown
 from dmutils.email import EmailError, hash_email
-import rollbar
-from app.api.business.agreement_business import (
-    get_current_agreement,
-    get_new_agreement
-)
+
+from .util import escape_markdown, render_email_template, send_or_handle_error
 
 
 def send_notify_auth_rep_email(supplier_code):
@@ -20,25 +22,19 @@ def send_notify_auth_rep_email(supplier_code):
         audit_service,
         audit_types,
         suppliers,
-        key_values_service,
-        agreement_service
+        key_values_service
     )
 
     supplier = suppliers.get_supplier_by_code(supplier_code)
     to_address = supplier.data.get('email', '').encode('utf-8')
 
     agreement = get_new_agreement()
-    if not agreement:
+    if agreement is None:
         agreement = get_current_agreement()
 
     start_date = pendulum.now('Australia/Canberra').date()
     if agreement:
-        start_date = (
-            pendulum.parse(
-                agreement.get('startDate'),
-                tz='Australia/Canberra'
-            ).date()
-        )
+        start_date = agreement.start_date.in_tz('Australia/Canberra')
 
     # prepare copy
     email_body = render_email_template(

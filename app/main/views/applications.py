@@ -1,31 +1,25 @@
-from flask import jsonify, abort, request, current_app
+import pendulum
+from flask import abort, current_app, jsonify, request
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload, noload
+from sqlalchemy.sql.expression import true
+
+from app.api.business.agreement_business import get_current_agreement
+from app.api.business.validators import ApplicationValidator
+from app.api.services import AuditTypes, key_values_service
+from app.emails import (send_approval_notification,
+                        send_rejection_notification, send_revert_notification,
+                        send_submitted_existing_seller_notification,
+                        send_submitted_new_seller_notification)
 from app.jiraapi import get_marketplace_jira
 from app.main import main
-from app.models import db, Application, Agreement, SignedAgreement, User, AuditEvent, Domain
-from app.utils import (
-    get_json_from_request, json_has_required_keys,
-    pagination_links, get_valid_page_or_1,
-    get_positive_int_or_400, validate_and_return_updater_request
-)
-import pendulum
-from sqlalchemy.sql.expression import true
-from sqlalchemy import or_
-from sqlalchemy.orm import joinedload, noload
-# from dmapiclient.audit import AuditTypes
-from app.api.services import (
-    AuditTypes,
-    key_values_service,
-    agreement_service
-)
+from app.models import (Application, AuditEvent, Domain, SignedAgreement, User,
+                        db)
 from app.tasks import publish_tasks
-from app.emails import send_approval_notification, send_rejection_notification, \
-    send_submitted_existing_seller_notification, send_submitted_new_seller_notification, \
-    send_revert_notification
-from app.api.business.validators import ApplicationValidator
-from app.api.business.agreement_business import (
-    get_current_agreement
-)
+from app.utils import (get_json_from_request, get_positive_int_or_400,
+                       get_valid_page_or_1, json_has_required_keys,
+                       pagination_links, validate_and_return_updater_request)
 
 
 def get_application_json():
@@ -104,7 +98,7 @@ def update_application(application_id):
     return (
         jsonify(
             application=application.serializable,
-            agreement=agreement,
+            agreement=agreement.serialize() if agreement else None,
             application_errors=errors),
         200)
 
@@ -282,7 +276,7 @@ def get_application_by_id(application_id):
     return jsonify(
         application=application.serializable,
         domains=domains,
-        agreement=agreement,
+        agreement=agreement.serialize() if agreement else None,
         application_errors=errors)
 
 
@@ -432,14 +426,8 @@ def submit_application(application_id):
             abort(400, 'User supplier code does not match application supplier code')
 
     agreement = get_current_agreement()
-    if agreement:
-        current_agreement = Agreement.query.filter(
-            Agreement.id == agreement.get('agreementId')
-        ).first_or_404()
-    else:
-        current_agreement = Agreement.query.filter(
-            Agreement.is_current == true()
-        ).first_or_404()
+    if agreement is None:
+        abort(404, 'Current master agreement not found')
 
     db.session.add(AuditEvent(
         audit_type=AuditTypes.submit_application,
@@ -457,7 +445,7 @@ def submit_application(application_id):
         # only create signed agreements on initial applications
         signed_agreement = SignedAgreement()
         signed_agreement.user_id = user_id
-        signed_agreement.agreement_id = current_agreement.id
+        signed_agreement.agreement_id = agreement.id
         signed_agreement.signed_at = current_time
         signed_agreement.application_id = application_id
 

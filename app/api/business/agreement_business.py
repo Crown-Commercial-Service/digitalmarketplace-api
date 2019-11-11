@@ -1,45 +1,44 @@
 import pendulum
+
 from app.api.business.validators import SupplierValidator
-from app.api.services import (
-    suppliers,
-    application_service,
-    agreement_service,
-    key_values_service
-)
+from app.api.services import (application_service, key_values_service,
+                              master_agreement_service, suppliers)
+from app.models import MasterAgreement
+
+
+def get_old_agreements():
+    now = pendulum.now('utc')
+    return master_agreement_service.filter(
+        MasterAgreement.end_date < now
+    ).all()
 
 
 def get_current_agreement():
-    key_value = key_values_service.get_by_key('current_master_agreement')
+    now = pendulum.now('utc')
+    return master_agreement_service.filter(
+        MasterAgreement.start_date <= now,
+        MasterAgreement.end_date >= now
+    ).one_or_none()
 
-    agreement = None
-    if key_value:
-        now = pendulum.now('Australia/Canberra').date()
-        data = key_value.get('data', {})
-        for k in sorted(data.keys()):
-            v = data[k]
-            start_date = pendulum.parse(v.get('startDate'), tz='Australia/Canberra').date()
-            end_date = pendulum.parse(v.get('endDate'), tz='Australia/Canberra').date()
 
-            if start_date <= now and end_date >= now:
-                agreement = v
-                agreement['agreementId'] = int(k)
-                a = agreement_service.find(id=k).one_or_none()
-                agreement['pdfUrl'] = a.url
-                break
-
-    return agreement
+def get_new_agreement():
+    now = pendulum.now('utc')
+    return master_agreement_service.filter(
+        MasterAgreement.start_date > now
+    ).one_or_none()
 
 
 def has_signed_current_agreement(supplier):
-    key_value = key_values_service.get_by_key('old_agreements')
+    current_agreement = get_current_agreement()
 
-    agreement = get_current_agreement()
-    if agreement and key_value:
-        old_agreements = key_value.get('data').get('oldAgreements', [])
-        if agreement['agreementId'] in old_agreements:
-            to_check = old_agreements
+    if current_agreement:
+        old_agreements = get_old_agreements()
+        old_agreement_ids = [agreement.id for agreement in old_agreements]
+
+        if current_agreement.id in old_agreement_ids:
+            to_check = old_agreement_ids
         else:
-            to_check = [agreement['agreementId']]
+            to_check = [current_agreement.id]
 
         signed = next(
             iter([
@@ -56,39 +55,19 @@ def has_signed_current_agreement(supplier):
     return False
 
 
-def get_new_agreement():
-    key_value = key_values_service.get_by_key('current_master_agreement')
-
-    agreement = None
-    if key_value:
-        now = pendulum.now('Australia/Canberra').date()
-        data = key_value.get('data', {})
-        for k in sorted(data.keys()):
-            v = data[k]
-            start_date = pendulum.parse(v.get('startDate'), tz='Australia/Canberra').date()
-            end_date = pendulum.parse(v.get('endDate'), tz='Australia/Canberra').date()
-
-            if start_date > now:
-                agreement = v
-                agreement['agreementId'] = k
-                a = agreement_service.find(id=k).one_or_none()
-                agreement['pdfUrl'] = a.url
-                break
-
-    return agreement
-
-
 def use_old_work_order_creator(published_at):
     if not published_at:
         return False
-    key_value = key_values_service.get_by_key('old_agreements')
-    agreement = get_current_agreement()
+
+    current_agreement = get_current_agreement()
     old_work_order_creator = True
-    if agreement and key_value:
-        old_agreements = key_value.get('data').get('oldAgreements', [])
+
+    if current_agreement:
+        old_agreements = get_old_agreements()
+        old_agreement_ids = [agreement.id for agreement in old_agreements]
         if (
-            agreement['agreementId'] not in old_agreements and
-            published_at >= pendulum.parse(agreement.get('startDate'), tz='Australia/Canberra').date()
+            current_agreement.id not in old_agreement_ids and
+            published_at >= current_agreement.start_date
         ):
             old_work_order_creator = False
 

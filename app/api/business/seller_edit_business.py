@@ -1,34 +1,20 @@
-import rollbar
 import pendulum
-from app.api.services import (
-    key_values_service,
-    suppliers,
-    users,
-    user_claims_service,
-    agreement_service,
-    signed_agreement_service,
-    audit_service,
-    audit_types
-)
-from app.models import SignedAgreement
+import rollbar
+
+from app.api.business.agreement_business import (get_current_agreement,
+                                                 get_new_agreement,
+                                                 has_signed_current_agreement)
+from app.api.business.errors import (DeletedError, NotFoundError,
+                                     UnauthorisedError, ValidationError)
 from app.api.business.validators import SupplierValidator
+from app.api.services import (audit_service, audit_types, key_values_service,
+                              signed_agreement_service, suppliers,
+                              user_claims_service, users)
+from app.emails.seller_edit import (send_decline_master_agreement_email,
+                                    send_notify_auth_rep_email,
+                                    send_team_member_account_activation_email)
+from app.models import SignedAgreement
 from app.tasks import publish_tasks
-from app.emails.seller_edit import (
-    send_notify_auth_rep_email,
-    send_decline_master_agreement_email,
-    send_team_member_account_activation_email
-)
-from app.api.business.errors import (
-    DeletedError,
-    NotFoundError,
-    UnauthorisedError,
-    ValidationError
-)
-from app.api.business.agreement_business import (
-    get_current_agreement,
-    get_new_agreement,
-    has_signed_current_agreement
-)
 
 
 def accept_agreement(user_info):
@@ -43,12 +29,15 @@ def accept_agreement(user_info):
         raise UnauthorisedError('Unauthorised to accept agreement')
 
     agreement = get_current_agreement()
-    already_signed = signed_agreement_service.first(agreement_id=agreement['agreementId'], supplier_code=supplier_code)
+    if agreement is None:
+        raise NotFoundError('Current master agreement not found')
+
+    already_signed = signed_agreement_service.first(agreement_id=agreement.id, supplier_code=supplier_code)
     if already_signed:
         raise ValidationError('Already signed agreement')
 
     signed_agreement = SignedAgreement(
-        agreement_id=agreement['agreementId'],
+        agreement_id=agreement.id,
         user_id=user_id,
         signed_at=pendulum.now('Australia/Canberra'),
         supplier_code=supplier_code
@@ -145,13 +134,7 @@ def get_agreement_status(supplier, user_info):
     signed = has_signed_current_agreement(supplier)
 
     if agreement:
-        now = pendulum.now('Australia/Canberra').date()
-        start_date = (
-            pendulum.parse(
-                agreement.get('startDate'),
-                tz='Australia/Canberra'
-            ).date()
-        )
+        start_date = agreement.start_date.in_tz('Australia/Canberra')
         show_agreement = True
         can_sign_agreement = True
         signed_agreement = True if signed else False
@@ -168,8 +151,8 @@ def get_agreement_status(supplier, user_info):
         'canUserSign': can_user_sign_agreement,
         'signed': signed_agreement,
         'startDate': start_date.strftime('%Y-%m-%d'),
-        'currentAgreement': agreement,
-        'newAgreement': new_agreement
+        'currentAgreement': agreement.serialize() if agreement else None,
+        'newAgreement': new_agreement.serialize() if new_agreement else None
     }
 
 
