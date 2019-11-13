@@ -1290,7 +1290,10 @@ class TestApplication(BaseApplicationTest):
             agreement = MasterAgreement(
                 start_date=now.subtract(years=1),
                 end_date=now.add(years=1),
-                data={}
+                data={
+                    'htmlUrl': '/path/to/agreement.html',
+                    'pdfUrl': '/path/to/agreement.pdf'
+                }
             )
 
             # flushing to database in order to set defaults (very annoying "feature" of sqlalchemy)
@@ -1312,10 +1315,13 @@ class TestApplication(BaseApplicationTest):
 
             assert app.serializable['signed_agreements'][0] == {
                 'agreement': {
-                    'data': {},
-                    'email_address': 'email@digital.gov.au',
-                    'name': 'name',
-                    'signed_at': now
+                    'htmlUrl': '/path/to/agreement.html',
+                    'pdfUrl': '/path/to/agreement.pdf',
+                    'signedAt': now,
+                    'user': {
+                        'emailAddress': 'email@digital.gov.au',
+                        'name': 'name'
+                    }
                 }
             }
 

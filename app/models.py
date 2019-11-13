@@ -2943,7 +2943,13 @@ class Application(db.Model):
 
     def signed_agreements(self):
         query = db.session.query(
-            SignedAgreement.signed_at, MasterAgreement.data, User.name, User.email_address
+            SignedAgreement.signed_at.label('signedAt'),
+            MasterAgreement.data['htmlUrl'].label('htmlUrl'),
+            MasterAgreement.data['pdfUrl'].label('pdfUrl'),
+            func.json_build_object(
+                'name', User.name,
+                'emailAddress', User.email_address
+            ).label('user')
         ).join(
             MasterAgreement, User
         ).order_by(
