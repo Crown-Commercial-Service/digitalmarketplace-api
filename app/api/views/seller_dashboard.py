@@ -7,6 +7,7 @@ from app.api.helpers import role_required, exception_logger
 
 
 @api.route('/supplier/dashboard', methods=['GET'])
+@exception_logger
 @login_required
 @role_required('supplier')
 def supplier_dashboard():
@@ -27,6 +28,7 @@ def supplier_dashboard():
 
 
 @api.route('/supplier/dashboard/messages', methods=['GET'])
+@exception_logger
 @login_required
 @role_required('supplier')
 def get_messages():
@@ -47,6 +49,19 @@ def get_messages():
         ), 200
 
 
+@api.route('/supplier/dashboard/opportunities', methods=['GET'])
+@exception_logger
+@login_required
+@role_required('supplier')
+def get_seller_dashboard_opportunities():
+    opportunities = seller_dashboard_business.get_opportunities(current_user.supplier_code)
+    return jsonify(
+        opportunities={
+            'items': opportunities
+        }
+    ), 200
+
+
 @api.route('/supplier/dashboard/team', methods=['GET'])
 @exception_logger
 @login_required
@@ -61,6 +76,7 @@ def get_team_members():
 
 
 @api.route('/supplier/dashboard/categories', methods=['GET'])
+@exception_logger
 @login_required
 @role_required('supplier')
 def get_categories():
@@ -128,6 +144,7 @@ def get_categories():
 
 
 @api.route('/supplier/dashboard/user/<int:user_id>/deactivate', methods=['PUT'])
+@exception_logger
 @login_required
 @role_required('supplier')
 def deactivate_user(user_id):
