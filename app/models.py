@@ -920,6 +920,8 @@ class Supplier(db.Model):
 
         return {
             'agreement': agreement.serialize() if agreement else None,
+            'htmlUrl': agreement.data['htmlUrl'] if 'htmlUrl' in agreement.data else None,
+            'pdfUrl': agreement.data['pdfUrl'] if 'pdfUrl' in agreement.data else None,
             'applicationId': signed_agreement['application_id'],
             'signedAt': signed_agreement['signed_at'],
             'supplierCode': signed_agreement['supplier_code'],
@@ -2962,7 +2964,7 @@ class Application(db.Model):
 
         agreements = query.all()
 
-        return [{'agreement': a._asdict()} for a in agreements]
+        return [a._asdict() for a in agreements]
 
 
 def check_for_uuid(data):

@@ -1314,14 +1314,12 @@ class TestApplication(BaseApplicationTest):
             db.session.flush()
 
             assert app.serializable['signed_agreements'][0] == {
-                'agreement': {
-                    'htmlUrl': '/path/to/agreement.html',
-                    'pdfUrl': '/path/to/agreement.pdf',
-                    'signedAt': now,
-                    'user': {
-                        'emailAddress': 'email@digital.gov.au',
-                        'name': 'name'
-                    }
+                'htmlUrl': '/path/to/agreement.html',
+                'pdfUrl': '/path/to/agreement.pdf',
+                'signedAt': now,
+                'user': {
+                    'emailAddress': 'email@digital.gov.au',
+                    'name': 'name'
                 }
             }
 
