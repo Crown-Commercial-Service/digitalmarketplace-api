@@ -40,32 +40,6 @@ class SellerDashboardService(object):
             )
         )
 
-        invited_withdrawn_no_responses = (
-            db
-            .session
-            .query(
-                Brief.id.label("brief_id"),
-                BriefResponse.id.label("brief_response_id"),
-            )
-            .outerjoin(BriefResponse)
-            .filter(
-                Brief.data['sellers']['{}'.format(supplier_code)].isnot(None),
-                Brief.withdrawn_at.isnot(None)
-            )
-            .subquery()
-        )
-        excluded_briefs = (
-            db
-            .session
-            .query(
-                invited_withdrawn_no_responses.c.brief_id
-            )
-            .filter(
-                invited_withdrawn_no_responses.c.brief_response_id.is_(None)
-            )
-            .subquery()
-        )
-
         invited_query = (
             db
             .session
@@ -73,14 +47,6 @@ class SellerDashboardService(object):
                 Brief.id.label("brief_id")
             )
             .filter(Brief.data['sellers']['{}'.format(supplier_code)].isnot(None))
-            .filter(Brief.id.notin_(
-                db
-                .session
-                .query(
-                    excluded_briefs.c.brief_id
-                )
-                .subquery()
-            ))
         )
 
         query = union(responses_query, invited_query).alias('to_show_briefs')
@@ -128,7 +94,8 @@ class SellerDashboardService(object):
             )
             .join(Brief, brief_query.c.briefId == Brief.id)
             .filter(
-                Brief.closed_at < today
+                Brief.closed_at < today,
+                Brief.closed_at >= today - timedelta(days=60)
             )
             .order_by(Brief.closed_at.desc())
             .all()
