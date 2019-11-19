@@ -15,7 +15,7 @@ references:
         cf -v
   deploy_docker: &deploy_docker
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: circleci/python:2.7.17-stretch
         environment:
           TZ: "/usr/share/zoneinfo/Australia/Sydney"
   update_libs: &update_libs
