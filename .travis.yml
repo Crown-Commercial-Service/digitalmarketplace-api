@@ -5,7 +5,7 @@ python:
   - "3.8"
 addons:
   postgresql: "9.5"
-dist: "trusty"
+dist: "xenial"
 env:
   - SQLALCHEMY_DATABASE_URI=postgresql://postgres:@localhost:5432/digitalmarketplace_test
 install:
