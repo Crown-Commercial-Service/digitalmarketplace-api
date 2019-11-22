@@ -60,7 +60,7 @@ class SellerDashboardService(object):
                 Brief.data['numberOfSuppliers'].astext.label('numberOfSuppliers'),
                 Brief.closed_at,
                 Brief.withdrawn_at,
-                Lot.name.label('lotName'),
+                Lot.slug.label('lot'),
                 response_count_query.c.responseCount
             )
             .join(Brief, query.c.brief_id == Brief.id)
