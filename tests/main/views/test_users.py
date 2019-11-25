@@ -1482,7 +1482,7 @@ class TestUsersRemovePersonalData(BaseUserTest):
         assert data['users']['active'] is False
         assert data['users']['name'] == '<removed>'
         assert data['users']['phoneNumber'] == '<removed>'
-        assert data['users']['emailAddress'] == '<removed><111>@digital.cabinet-office.gov.uk'
+        assert data['users']['emailAddress'] == '<removed><111>@user.marketplace.team'
         assert data['users']['userResearchOptedIn'] is False
         assert data['users']['personalDataRemoved'] is True
         assert data['users']['failedLoginCount'] == 0
@@ -1490,8 +1490,11 @@ class TestUsersRemovePersonalData(BaseUserTest):
     @mock.patch('app.models.main.uuid4', return_value='111')
     def test_remove_buyer_user_personal_data(self, uuid4):
         now = datetime.utcnow()
-        buyer_email_domain = BuyerEmailDomain(domain_name='digital.cabinet-office.gov.uk')
-        db.session.add(buyer_email_domain)
+        buyer_email_domains = [
+            BuyerEmailDomain(domain_name='digital.cabinet-office.gov.uk'),
+            BuyerEmailDomain(domain_name='user.marketplace.team')
+        ]
+        db.session.bulk_save_objects(buyer_email_domains)
         db.session.commit()
 
         user = User(
@@ -1520,7 +1523,7 @@ class TestUsersRemovePersonalData(BaseUserTest):
         assert data['users']['active'] is False
         assert data['users']['name'] == '<removed>'
         assert data['users']['phoneNumber'] == '<removed>'
-        assert data['users']['emailAddress'] == '<removed><111>@digital.cabinet-office.gov.uk'
+        assert data['users']['emailAddress'] == '<removed><111>@user.marketplace.team'
         assert data['users']['userResearchOptedIn'] is False
         assert data['users']['personalDataRemoved'] is True
         assert data['users']['failedLoginCount'] == 0
