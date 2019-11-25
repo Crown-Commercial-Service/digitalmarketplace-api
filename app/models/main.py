@@ -965,7 +965,10 @@ class User(db.Model, RemovePersonalDataModelMixin):
     def remove_personal_data(self):
         """This method needs to remove all personal data from this object."""
         if self.role == 'buyer' or self.role in self.ADMIN_ROLES:
-            self.email_address = re.sub(r'.+?\@', '<removed><{}>@'.format(uuid4()), self.email_address)
+            self.email_address = '<removed><{uuid}>@{domain}'.format(
+                uuid=str(uuid4()),
+                domain='user.marketplace.team'
+            )
         else:
             self.email_address = '<removed>@{uuid}.com'.format(uuid=str(uuid4()))
         self.personal_data_removed = True

@@ -191,6 +191,8 @@ class TestUser(BaseApplicationTest, FixtureMixin):
     def test_remove_personal_data_should_set_personal_data_removed_flag(self, role):
         self.default_buyer_domain = "digital.cabinet-office.gov.uk"
         self.setup_default_buyer_domain()
+        self.default_buyer_domain = "user.marketplace.team"
+        self.setup_default_buyer_domain()
         now = datetime.utcnow()
         user = User(
             email_address='email@digital.cabinet-office.gov.uk',
@@ -219,6 +221,8 @@ class TestUser(BaseApplicationTest, FixtureMixin):
     def test_remove_personal_data_should_remove_personal_data(self, generate_password_hash, uuid4, role):
         self.default_buyer_domain = "digital.cabinet-office.gov.uk"
         self.setup_default_buyer_domain()
+        self.default_buyer_domain = "user.marketplace.team"
+        self.setup_default_buyer_domain()
         now = datetime.utcnow()
         user = User(
             email_address='email@digital.cabinet-office.gov.uk',
@@ -242,7 +246,7 @@ class TestUser(BaseApplicationTest, FixtureMixin):
         assert user.active is False
         assert user.name == '<removed>'
         assert user.phone_number == '<removed>'
-        assert user.email_address == '<removed><111>@digital.cabinet-office.gov.uk'
+        assert user.email_address == '<removed><111>@user.marketplace.team'
         assert user.user_research_opted_in is False
         assert user.password == '222'
 
@@ -285,6 +289,8 @@ class TestUser(BaseApplicationTest, FixtureMixin):
     @pytest.mark.parametrize('role', set(User.ROLES))
     def test_cannot_change_once_personal_data_removed(self, role):
         self.default_buyer_domain = "digital.cabinet-office.gov.uk"
+        self.setup_default_buyer_domain()
+        self.default_buyer_domain = "user.marketplace.team"
         self.setup_default_buyer_domain()
         now = datetime.utcnow()
         user = User(
