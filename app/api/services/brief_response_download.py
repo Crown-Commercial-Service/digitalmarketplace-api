@@ -18,6 +18,7 @@ class BriefResponseDownloadService(Service):
             )
             .join(User)
             .filter(BriefResponseDownload.brief_id == brief_id)
+            .filter(User.role != 'admin')
             .order_by(BriefResponseDownload.created_at.desc())
             .all()
         )
