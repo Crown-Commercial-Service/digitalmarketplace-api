@@ -212,12 +212,56 @@ class ApplicationValidator(object):
 
     def validate_recruiter(self):
         errors = []
-        if not self.application.data.get('recruiter'):
+        recruiter = self.application.data.get('recruiter')
+
+        if not recruiter:
             errors.append({
                 'message': 'Recruiter is required',
                 'severity': 'error',
                 'step': 'recruiter'
             })
+
+        if recruiter == 'yes' or recruiter == 'both':
+            labour_hire = self.application.data.get('labourHire', {})
+            if not labour_hire:
+                errors.append({
+                    'message': 'Labour hire license is required',
+                    'severity': 'error',
+                    'step': 'recruiter'
+                })
+            else:
+                at_lease_one_state_filled = False
+                now = pendulum.now('Australia/Canberra').date()
+                for state, state_value in labour_hire.iteritems():
+                    state_filled = True
+                    for k, v in state_value.iteritems():
+                        if v and k == 'expiry':
+                            try:
+                                expiry_date = pendulum.parse(v, tz='Australia/Sydney')
+
+                                if now > expiry_date.date():
+                                    errors.append({
+                                        'message': '{} labour hire has expired'.format(state.upper()),
+                                        'severity': 'error',
+                                        'step': 'recruiter'
+                                    })
+                            except ValueError:
+                                errors.append({
+                                    'message': '"{}" is an invalid date format'.format(expiry),
+                                    'severity': 'error',
+                                    'step': 'recruiter'
+                                })
+                        elif not v:
+                            state_filled = False
+                            break
+                    if state_filled:
+                        at_lease_one_state_filled = True
+                if at_lease_one_state_filled is False:
+                    errors.append({
+                        'message': 'At least one labour hire license is required',
+                        'severity': 'error',
+                        'step': 'recruiter'
+                    })
         return errors
 
     def validate_services(self):
