@@ -15,7 +15,8 @@ class SupplierValidator(object):
         result = (
             self.validate_basics() +
             self.validate_documents() +
-            self.validate_representative()
+            self.validate_representative() +
+            self.validate_recruiter()
         )
         warnings = [n for n in result if n.get('severity', 'error') == 'warning']
         errors = [n for n in result if n.get('severity', 'error') == 'error']
@@ -228,6 +229,49 @@ class SupplierValidator(object):
                         'id': 'S012-{}'.format(name)
                     })
 
+        return errors
+
+    def validate_recruiter(self):
+        errors = []
+        recruiter = self.supplier.data.get('recruiter')
+
+        if not recruiter:
+            errors.append({
+                'message': 'Recruiter is required',
+                'severity': 'error',
+                'step': 'recruiter'
+            })
+
+        if recruiter == 'yes' or recruiter == 'both':
+            labour_hire = self.supplier.data.get('labourHire', {})
+            now = pendulum.now('Australia/Canberra').date()
+            for state, state_value in labour_hire.iteritems():
+                state_filled = True
+                licence_number = state_value.get('licenceNumber')
+                expiry = state_value.get('expiry')
+                if (licence_number and not expiry) or (not licence_number and expiry):
+                    errors.append({
+                        'message': 'Licence number and expiry must be both filled for {}'.format(state.upper()),
+                        'severity': 'error',
+                        'step': 'recruiter'
+                    })
+
+                if expiry:
+                    try:
+                        expiry_date = pendulum.parse(expiry, tz='Australia/Sydney')
+
+                        if now > expiry_date.date():
+                            errors.append({
+                                'message': '{} labour hire has expired'.format(state.upper()),
+                                'severity': 'warning',
+                                'step': 'recruiter'
+                            })
+                    except ValueError:
+                        errors.append({
+                            'message': '"{}" is an invalid date format'.format(expiry),
+                            'severity': 'error',
+                            'step': 'recruiter'
+                        })
         return errors
 
     def validate_representative(self, step=None):

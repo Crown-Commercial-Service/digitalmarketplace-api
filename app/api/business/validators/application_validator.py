@@ -223,45 +223,34 @@ class ApplicationValidator(object):
 
         if recruiter == 'yes' or recruiter == 'both':
             labour_hire = self.application.data.get('labourHire', {})
-            if not labour_hire:
-                errors.append({
-                    'message': 'Labour hire license is required',
-                    'severity': 'error',
-                    'step': 'recruiter'
-                })
-            else:
-                at_lease_one_state_filled = False
-                now = pendulum.now('Australia/Canberra').date()
-                for state, state_value in labour_hire.iteritems():
-                    state_filled = True
-                    for k, v in state_value.iteritems():
-                        if v and k == 'expiry':
-                            try:
-                                expiry_date = pendulum.parse(v, tz='Australia/Sydney')
-
-                                if now > expiry_date.date():
-                                    errors.append({
-                                        'message': '{} labour hire has expired'.format(state.upper()),
-                                        'severity': 'error',
-                                        'step': 'recruiter'
-                                    })
-                            except ValueError:
-                                errors.append({
-                                    'message': '"{}" is an invalid date format'.format(expiry),
-                                    'severity': 'error',
-                                    'step': 'recruiter'
-                                })
-                        elif not v:
-                            state_filled = False
-                            break
-                    if state_filled:
-                        at_lease_one_state_filled = True
-                if at_lease_one_state_filled is False:
+            now = pendulum.now('Australia/Canberra').date()
+            for state, state_value in labour_hire.iteritems():
+                state_filled = True
+                licence_number = state_value.get('licenceNumber')
+                expiry = state_value.get('expiry')
+                if (licence_number and not expiry) or (not licence_number and expiry):
                     errors.append({
-                        'message': 'At least one labour hire license is required',
+                        'message': 'Licence number and expiry must be both filled for {}'.format(state.upper()),
                         'severity': 'error',
                         'step': 'recruiter'
                     })
+
+                if expiry:
+                    try:
+                        expiry_date = pendulum.parse(expiry, tz='Australia/Sydney')
+
+                        if now > expiry_date.date():
+                            errors.append({
+                                'message': '{} labour hire has expired'.format(state.upper()),
+                                'severity': 'error',
+                                'step': 'recruiter'
+                            })
+                    except ValueError:
+                        errors.append({
+                            'message': '"{}" is an invalid date format'.format(expiry),
+                            'severity': 'error',
+                            'step': 'recruiter'
+                        })
         return errors
 
     def validate_services(self):

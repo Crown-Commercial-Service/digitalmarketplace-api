@@ -21,3 +21,47 @@ def test_can_get_errors_with_no_recruiter():
     errors = ApplicationValidator(application).validate_recruiter()
 
     assert len(errors) == 1
+
+
+def test_can_get_errors_with_for_recruiter():
+    application = Application(
+        data={
+            'recruiter': 'yes'
+        }
+    )
+    errors = ApplicationValidator(application).validate_recruiter()
+
+    assert len(errors) == 0
+
+
+def test_can_get_errors_for_recruiter_and_labour_hire():
+    application = Application(
+        data={
+            'recruiter': 'yes',
+            'labourHire': {
+                'vic': {
+                    'expiry': '01/01/2019'
+                }
+            }
+        }
+    )
+    errors = ApplicationValidator(application).validate_recruiter()
+
+    assert len(errors) == 2
+
+
+def test_valid_for_recruiter_and_labour_hire():
+    application = Application(
+        data={
+            'recruiter': 'yes',
+            'labourHire': {
+                'vic': {
+                    'expiry': '01/01/2050',
+                    'licenceNumber': 'foobar-licence'
+                }
+            }
+        }
+    )
+    errors = ApplicationValidator(application).validate_recruiter()
+
+    assert len(errors) == 0
