@@ -235,14 +235,7 @@ class SupplierValidator(object):
         errors = []
         recruiter = self.supplier.data.get('recruiter')
 
-        if not recruiter:
-            errors.append({
-                'message': 'Recruiter is required',
-                'severity': 'error',
-                'step': 'recruiter'
-            })
-
-        if recruiter == 'yes' or recruiter == 'both':
+        if recruiter and (recruiter == 'yes' or recruiter == 'both'):
             labour_hire = self.supplier.data.get('labourHire', {})
             now = pendulum.now('Australia/Canberra').date()
             for state, state_value in labour_hire.iteritems():
