@@ -2892,6 +2892,20 @@ class Application(db.Model):
                 self.data.pop('representative', None)
                 self.data.pop('phone', None)
                 self.data.pop('email', None)
+
+                if self.data.get('recruiter') == 'no':
+                    self.data['labourHire'] = {}
+                else:
+                    to_remove = []
+                    for state, state_value in self.get('labourHire', {}).iteritems():
+                        if not (
+                            state_value.get('expiry') and
+                            state_value.get('licenceNumber')
+                        ):
+                            to_remove.append(state)
+                    for r in to_remove:
+                        self.get('labourHire', {}).pop(r)
+
             else:
                 supplier = Supplier()
             supplier.update_from_json(self.data)
