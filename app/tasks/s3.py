@@ -113,9 +113,19 @@ def create_responses_zip(brief_id):
                 zf.writestr('responses-{}.html'.format(brief_id), response_criteria_html.encode('utf-8'))
             elif brief.lot.slug == 'specialist':
                 compliance_check_template = template_env.get_template('compliance-check-specialist.html')
+                supplier_labour_hire = {}
+                for response in responses:
+                    labour_hire = []
+                    for state, state_value in response.supplier.data.get('labourHire', {}).iteritems():
+                        if state_value.get('licenceNumber') and state_value.get('expiry'):
+                            state_value['state'] = state.upper()
+                            labour_hire.append(state_value)
+                    supplier_labour_hire[response.supplier.code] = labour_hire
+
                 compliance_check_html = render_template(
                     compliance_check_template,
                     brief=brief,
+                    supplier_labour_hire=supplier_labour_hire,
                     responses=responses
                 )
                 zf.writestr('Compliance check ({}).html'.format(brief_id), compliance_check_html.encode('utf-8'))
