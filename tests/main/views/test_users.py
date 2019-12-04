@@ -222,7 +222,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         super(TestUsersPost, self).setup()
         self.setup_default_buyer_domain()
 
+    def _get_latest_audit_id(self):
+        return db.session.query(AuditEvent.id).order_by(-AuditEvent.id).scalar() or 0
+
     def test_can_post_a_buyer_user(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -239,7 +243,19 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert data["emailAddress"] == "joeblogs@digital.gov.uk"
         assert data["phoneNumber"] == "01234 567890"
 
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs@digital.gov.uk",
+            User.role == "buyer",
+        ).count() == 1
+
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs@digital.gov.uk"
+        assert audit_events[0].data == {"qualifyingBuyerEmailDomain": "digital.gov.uk"}
+
     def test_creating_buyer_user_with_bad_email_domain_fails(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -253,7 +269,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert response.status_code == 400
         assert json.loads(response.get_data())['error'] == 'invalid_buyer_domain'
 
+        assert not db.session.query(User).filter(User.email_address == "joeblogs@example.com").all()
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+
     def test_creating_buyer_user_with_good_email_domain_succeeds(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -268,12 +288,24 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         data = json.loads(response.get_data())['users']
         assert data['active']
 
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs@digital.gov.uk",
+            User.role == "buyer",
+        ).count() == 1
+
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs@digital.gov.uk"
+        assert audit_events[0].data == {"qualifyingBuyerEmailDomain": "digital.gov.uk"}
+
     def test_creating_buyer_user_with_no_phone_number_succeeds(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
                 'users': {
-                    'emailAddress': 'joeblogs@digital.gov.uk',
+                    'emailAddress': 'joeblogs@foo.digital.gov.uk',
                     'phoneNumber': '',
                     'password': '1234567890',
                     'role': 'buyer',
@@ -283,8 +315,21 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert response.status_code == 201
         data = json.loads(response.get_data())['users']
         assert data['active']
+        assert data['phoneNumber'] is None
+
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs@foo.digital.gov.uk",
+            User.role == "buyer",
+        ).count() == 1
+
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs@foo.digital.gov.uk"
+        assert audit_events[0].data == {"qualifyingBuyerEmailDomain": "digital.gov.uk"}
 
     def test_creating_buyer_user_with_bad_phone_number_fails(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -298,23 +343,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
         assert response.status_code == 400
 
-    def test_creating_buyer_user_with_no_phone_stores_none(self):
-        response = self.client.post(
-            '/users',
-            data=json.dumps({
-                'users': {
-                    'emailAddress': 'joeblogs@digital.gov.uk',
-                    'phoneNumber': '',
-                    'password': '1234567890',
-                    'role': 'buyer',
-                    'name': 'joe bloggs'}}),
-            content_type='application/json')
-
-        assert response.status_code == 201
-        data = json.loads(response.get_data())['users']
-        assert data['phoneNumber'] is None
+        assert not db.session.query(User).filter(User.email_address == "joeblogs@digital.gov.uk").all()
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
 
     def test_can_post_an_admin_user(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -329,7 +362,19 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         data = json.loads(response.get_data())["users"]
         assert data["emailAddress"] == "joeblogs@digital.cabinet-office.gov.uk"
 
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs@digital.cabinet-office.gov.uk",
+            User.role == "admin",
+        ).count() == 1
+
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs@digital.cabinet-office.gov.uk"
+        assert audit_events[0].data == {}
+
     def test_can_post_an_admin_ccs_category_user(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -344,7 +389,19 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         data = json.loads(response.get_data())["users"]
         assert data["emailAddress"] == "joeblogs@crowncommercial.gov.uk"
 
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs@crowncommercial.gov.uk",
+            User.role == "admin-ccs-category",
+        ).count() == 1
+
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs@crowncommercial.gov.uk"
+        assert audit_events[0].data == {}
+
     def test_can_post_an_admin_ccs_sourcing_user(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -359,7 +416,19 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         data = json.loads(response.get_data())["users"]
         assert data["emailAddress"] == "joeblogs+sourcing@crowncommercial.gov.uk"
 
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs+sourcing@crowncommercial.gov.uk",
+            User.role == "admin-ccs-sourcing",
+        ).count() == 1
+
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs+sourcing@crowncommercial.gov.uk"
+        assert audit_events[0].data == {}
+
     def test_can_post_an_admin_manager_user(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -374,7 +443,19 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         data = json.loads(response.get_data())["users"]
         assert data["emailAddress"] == "joeblogs+manager@digital.cabinet-office.gov.uk"
 
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs+manager@digital.cabinet-office.gov.uk",
+            User.role == "admin-manager",
+        ).count() == 1
+
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs+manager@digital.cabinet-office.gov.uk"
+        assert audit_events[0].data == {}
+
     def test_can_post_an_admin_framework_manager_user(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -389,7 +470,19 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         data = json.loads(response.get_data())["users"]
         assert data["emailAddress"] == "joeblogs+framework+manager@digital.cabinet-office.gov.uk"
 
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs+framework+manager@digital.cabinet-office.gov.uk",
+            User.role == "admin-framework-manager",
+        ).count() == 1
+
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs+framework+manager@digital.cabinet-office.gov.uk"
+        assert audit_events[0].data == {}
+
     def test_can_post_an_admin_data_controller_user(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -404,8 +497,20 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         data = json.loads(response.get_data())["users"]
         assert data["emailAddress"] == "joeblogs+ccs+data+controller@digital.cabinet-office.gov.uk"
 
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs+ccs+data+controller@digital.cabinet-office.gov.uk",
+            User.role == "admin-ccs-data-controller",
+        ).count() == 1
+
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs+ccs+data+controller@digital.cabinet-office.gov.uk"
+        assert audit_events[0].data == {}
+
     # The admin-ccs role is no longer in use
     def test_can_not_post_an_admin_ccs_user(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -420,7 +525,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         error = json.loads(response.get_data())['error']
         assert "'admin-ccs' is not one of" in error
 
+        assert not db.session.query(User).filter(User.email_address == "joeblogs+admin@crowncommercial.gov.uk").all()
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+
     def test_creating_admin_user_with_bad_email_domain_fails(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -434,7 +543,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert response.status_code == 400
         assert json.loads(response.get_data())['error'] == 'invalid_admin_domain'
 
+        assert not db.session.query(User).filter(User.email_address == "joeblogs@example.com").all()
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+
     def test_can_post_a_supplier_user(self, supplier_basic):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -451,29 +564,20 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert data["emailAddress"] == "joeblogs@email.com"
         assert data["supplier"]["supplierId"] == supplier_basic
 
-    def test_post_a_user_creates_audit_event(self, supplier_basic):
-        response = self.client.post(
-            '/users',
-            data=json.dumps({
-                'users': {
-                    'emailAddress': 'joeblogs@email.com',
-                    'password': '1234567890',
-                    'supplierId': supplier_basic,
-                    'role': 'supplier',
-                    'name': 'joe bloggs'}}),
-            content_type='application/json')
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs@email.com",
+            User.role == "supplier",
+            User.supplier_id == supplier_basic,
+        ).count() == 1
 
-        assert response.status_code == 201
-
-        audit_response = self.client.get('/audit-events')
-        assert audit_response.status_code == 200
-        data = json.loads(audit_response.get_data())
-
-        assert len(data['auditEvents']) == 1
-        assert data['auditEvents'][0]['type'] == 'create_user'
-        assert data['auditEvents'][0]['data']['supplierId'] == supplier_basic
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs@email.com"
+        assert audit_events[0].data == {"supplierId": 1}
 
     def test_should_reject_a_supplier_user_with_invalid_supplier_id(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -489,7 +593,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert response.status_code == 400
         assert data == "Invalid supplier id"
 
+        assert not db.session.query(User).filter(User.email_address == "joeblogs@email.com").all()
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+
     def test_should_reject_a_supplier_user_with_no_supplier_id(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -504,7 +612,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert response.status_code == 400
         assert data == "No supplier id provided for supplier user"
 
+        assert not db.session.query(User).filter(User.email_address == "joeblogs@email.com").all()
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+
     def test_should_reject_non_supplier_user_with_supplier_id(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -520,7 +632,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert response.status_code == 400
         assert data == "'supplierId' is only valid for users with 'supplier' role, not 'admin'"
 
+        assert not db.session.query(User).filter(User.email_address == "joeblogs@digital.cabinet-office.gov.uk").all()
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+
     def test_should_reject_user_with_invalid_role(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -533,7 +649,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
         assert response.status_code == 400
 
+        assert not db.session.query(User).filter(User.email_address == "joeblogs@email.com").all()
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+
     def test_can_post_a_user_with_hashed_password(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -551,7 +671,14 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
             .first()
         assert user.password != '1234567890'
 
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs@digital.cabinet-office.gov.uk"
+        assert audit_events[0].data == {}
+
     def test_can_post_a_user_without_hashed_password(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -569,6 +696,12 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
             .first()
         assert user.password == '1234567890'
 
+        audit_events = AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+        assert len(audit_events) == 1
+        assert audit_events[0].type == "create_user"
+        assert audit_events[0].object.email_address == "joeblogs@digital.cabinet-office.gov.uk"
+        assert audit_events[0].data == {}
+
     def test_posting_same_email_twice_is_an_error(self):
         response = self.client.post(
             '/users',
@@ -582,6 +715,7 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
         assert response.status_code == 201
 
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -594,7 +728,13 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
 
         assert response.status_code == 409
 
+        assert db.session.query(User).filter(
+            User.email_address == "joeblogs@digital.cabinet-office.gov.uk",
+        ).count() == 1
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+
     def test_return_400_for_invalid_user_json(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -609,7 +749,11 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         data = json.loads(response.get_data())["error"]
         assert "JSON was not a valid format" in data
 
+        assert not db.session.query(User).filter(User.email_address == "joeblogs@gov.uk").all()
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
+
     def test_return_400_for_invalid_user_role(self):
+        latest_audit_id = self._get_latest_audit_id()
         response = self.client.post(
             '/users',
             data=json.dumps({
@@ -623,6 +767,9 @@ class TestUsersPost(BaseApplicationTest, JSONTestMixin, FixtureMixin):
         assert response.status_code == 400
         data = json.loads(response.get_data())["error"]
         assert "JSON was not a valid format" in data
+
+        assert not db.session.query(User).filter(User.email_address == "joeblogs@email.com").all()
+        assert not AuditEvent.query.filter(AuditEvent.id > latest_audit_id).order_by(AuditEvent.id).all()
 
     @mock.patch('app.db.session.commit')
     def test_create_user_catches_db_errors(self, db_commit):
