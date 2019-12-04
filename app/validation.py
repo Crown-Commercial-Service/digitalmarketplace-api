@@ -3,6 +3,7 @@ import re
 import os
 import copy
 from decimal import Decimal
+from typing import Iterable, Optional, TYPE_CHECKING
 
 from flask import abort, current_app
 import glob
@@ -10,6 +11,10 @@ from jsonschema import ValidationError, FormatChecker
 from jsonschema.validators import validator_for
 from datetime import datetime
 from dmutils.formats import DATE_FORMAT
+
+# avoid cyclic imports when not type checking
+if TYPE_CHECKING:
+    from app.models.buyer_domains import BuyerEmailDomain  # noqa
 
 MINIMUM_SERVICE_ID_LENGTH = 10
 MAXIMUM_SERVICE_ID_LENGTH = 20
@@ -347,25 +352,50 @@ def validate_buyer_email_domain_json_or_400(submitted_json):
         abort(400, "JSON was not a valid format: {}".format(e1.message))
 
 
-def buyer_email_address_has_approved_domain(existing_buyer_domains, email_address):
+def buyer_email_address_first_approved_domain(
+    existing_buyer_domains: Iterable["BuyerEmailDomain"],
+    email_address: str,
+) -> Optional["BuyerEmailDomain"]:
     """
-    Check the buyer's email address is from an approved domain
-    :param existing_buyer_domains: BuyerEmailDomain queryset
-    :param email_address: string
-    :return: boolean
+    Returns the first-matched `BuyerEmailDomain` from `existing_buyer_domains` that qualifies `email_address` for a
+    buyer account, or None if there is no such match.
     """
     new_domain = email_address.split('@')[-1]
-    return is_approved_buyer_domain(existing_buyer_domains, new_domain)
+    return first_approved_buyer_domain(existing_buyer_domains, new_domain)
 
 
-def is_approved_buyer_domain(existing_buyer_domains, new_domain):
+def first_approved_buyer_domain(
+    existing_buyer_domains: Iterable["BuyerEmailDomain"],
+    new_domain: str,
+) -> Optional["BuyerEmailDomain"]:
+    """
+    Returns the first-matched `BuyerEmailDomain` from `existing_buyer_domains` that qualifies `new_domain` for a
+    buyer account, or None if there is no such match.
+    """
+    return next(
+        (bd for bd in existing_buyer_domains if ("." + new_domain).endswith('.' + bd.domain_name)),
+        None,
+    )
+
+
+def buyer_email_address_has_approved_domain(
+    existing_buyer_domains: Iterable["BuyerEmailDomain"],
+    email_address: str,
+) -> bool:
+    """
+    Check the buyer's email address is from an approved domain
+    """
+    return buyer_email_address_first_approved_domain(existing_buyer_domains, email_address) is not None
+
+
+def is_approved_buyer_domain(
+    existing_buyer_domains: Iterable["BuyerEmailDomain"],
+    new_domain: str,
+) -> bool:
     """
     Validate if a domain is approved before an admin adds a new one.
-    :param existing_buyer_domains: BuyerEmailDomain queryset
-    :param new_domain: string
-    :return: boolean
     """
-    return any(new_domain == d.domain_name or new_domain.endswith('.' + d.domain_name) for d in existing_buyer_domains)
+    return first_approved_buyer_domain(existing_buyer_domains, new_domain) is not None
 
 
 def admin_email_address_has_approved_domain(email_address):
