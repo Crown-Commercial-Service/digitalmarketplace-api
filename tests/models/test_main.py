@@ -246,7 +246,10 @@ class TestUser(BaseApplicationTest, FixtureMixin):
         assert user.active is False
         assert user.name == '<removed>'
         assert user.phone_number == '<removed>'
-        assert user.email_address == '<removed><111>@user.marketplace.team'
+        if role == "buyer":
+            assert user.email_address == "<removed><111>@user.marketplace.team"
+        else:
+            assert user.email_address == "<removed><111>@digital.cabinet-office.gov.uk"
         assert user.user_research_opted_in is False
         assert user.password == '222'
 
