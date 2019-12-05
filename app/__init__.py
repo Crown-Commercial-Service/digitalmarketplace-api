@@ -2,7 +2,7 @@ import json
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, create_engine
 
 import dmapiclient
 from dmutils.flask_init import init_app, api_error_handlers
@@ -39,6 +39,9 @@ def create_app(config_name):
     if application.config['VCAP_SERVICES']:
         cf_services = json.loads(application.config['VCAP_SERVICES'])
         application.config['SQLALCHEMY_DATABASE_URI'] = cf_services['postgres'][0]['credentials']['uri']
+
+    # Test credentials/ connection (with no-op) or raise
+    create_engine(application.config['SQLALCHEMY_DATABASE_URI']).connect().execute("SELECT NULL")
 
     from .metrics import metrics as metrics_blueprint, gds_metrics
     from .main import main as main_blueprint
