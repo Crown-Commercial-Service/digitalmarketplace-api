@@ -1482,7 +1482,7 @@ class TestUsersRemovePersonalData(BaseUserTest):
         assert data['users']['active'] is False
         assert data['users']['name'] == '<removed>'
         assert data['users']['phoneNumber'] == '<removed>'
-        assert data['users']['emailAddress'] == '<removed><111>@user.marketplace.team'
+        assert data['users']['emailAddress'] == '<removed><111>@digital.cabinet-office.gov.uk'
         assert data['users']['userResearchOptedIn'] is False
         assert data['users']['personalDataRemoved'] is True
         assert data['users']['failedLoginCount'] == 0
