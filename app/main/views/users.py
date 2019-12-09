@@ -29,6 +29,7 @@ from ...utils import (
 from ...validation import (
     admin_email_address_has_approved_domain,
     buyer_email_address_has_approved_domain,
+    buyer_email_address_first_approved_domain,
     validate_user_auth_json_or_400,
     validate_user_json_or_400,
 )
@@ -195,6 +196,12 @@ def create_user():
     )
 
     audit_data = {}
+
+    if user.role == "buyer":
+        audit_data["qualifyingBuyerEmailDomain"] = buyer_email_address_first_approved_domain(
+            BuyerEmailDomain.query.all(),
+            user.email_address,
+        ).domain_name
 
     if "supplierId" in json_payload:
         user.supplier_id = json_payload['supplierId']
