@@ -923,32 +923,6 @@ def get_brief_overview(brief_id):
 @api.route('/brief/<int:brief_id>/responses', methods=['GET'])
 @login_required
 def get_brief_responses(brief_id):
-    """All brief responses (role=supplier,buyer)
-    ---
-    tags:
-      - brief
-    security:
-      - basicAuth: []
-    parameters:
-      - name: brief_id
-        in: path
-        type: number
-        required: true
-    definitions:
-      BriefResponses:
-        properties:
-          briefResponses:
-            type: array
-            items:
-              id: BriefResponse
-    responses:
-      200:
-        description: A list of brief responses
-        schema:
-          id: BriefResponses
-      404:
-        description: brief_id not found
-    """
     brief = briefs.get(brief_id)
     if not brief:
         not_found("Invalid brief id '{}'".format(brief_id))
@@ -958,10 +932,18 @@ def get_brief_responses(brief_id):
             return forbidden("Unauthorised to view brief or brief does not exist")
 
     supplier_code = getattr(current_user, 'supplier_code', None)
+    supplier_contact = None
     if current_user.role == 'supplier':
         validation_result = supplier_business.get_supplier_messages(supplier_code, True)
         if len(validation_result.errors) > 0:
             abort(validation_result.errors)
+
+        supplier = suppliers.find(code=supplier_code).one_or_none()
+        if supplier:
+            supplier_contact = {
+                'email': supplier.data.get('contact_email'),
+                'phone': supplier.data.get('contact_phone')
+            }
         # strip data from seller view
         if 'sellers' in brief.data:
             brief.data['sellers'] = {}
@@ -1014,7 +996,8 @@ def get_brief_responses(brief_id):
                    briefResponses=brief_responses,
                    oldWorkOrderCreator=old_work_order_creator,
                    questionsAsked=questions_asked,
-                   briefResponseDownloaded=brief_response_downloaded)
+                   briefResponseDownloaded=brief_response_downloaded,
+                   supplierContact=supplier_contact)
 
 
 @api.route('/brief/<int:brief_id>/respond/documents/<string:supplier_code>/<slug>', methods=['POST'])
