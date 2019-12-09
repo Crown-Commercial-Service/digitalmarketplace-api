@@ -178,7 +178,7 @@ class Config:
     GENERIC_EMAIL_DOMAINS = ['bigpond.com', 'digital.gov.au', 'gmail.com', 'hotmail.com', 'icloud.com',
                              'iinet.net.au', 'internode.on.net', 'live.com.au', 'me.com', 'msn.com',
                              'optusnet.com.au', 'outlook.com', 'outlook.com.au', 'ozemail.com.au',
-                             'tpg.com.au', 'y7mail.com', 'yahoo.com', 'yahoo.com.au']
+                             'tpg.com.au', 'y7mail.com', 'yahoo.com', 'yahoo.com.au', 'grapevine.com.au']
 
     FRONTEND_ADDRESS = 'https://dm-dev.apps.y.cld.gov.au'
     ADMIN_ADDRESS = 'https://dm-dev-admin.apps.y.cld.gov.au'
