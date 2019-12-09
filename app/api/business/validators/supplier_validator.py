@@ -243,7 +243,7 @@ class SupplierValidator(object):
                     continue
                 licence_number = state_value.get('licenceNumber')
                 expiry = state_value.get('expiry')
-                if (licence_number and not expiry) or (not licence_number and expiry):
+                if not licence_number or not expiry:
                     errors.append({
                         'message': 'Licence number and expiry must be both filled for {}'.format(state.upper()),
                         'severity': 'error',
