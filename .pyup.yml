@@ -3,7 +3,6 @@
 # Check dependencies in _only_ requirements-app, and open PRs with PyUp prefix.
 
 search: False
-schedule: "every week on sunday"
 
 requirements:
 
