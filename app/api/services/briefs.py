@@ -189,7 +189,11 @@ class BriefsService(Service):
                           Brief.data['sellerSelector'].astext.label('openTo'),
                           func.count(BriefResponse.id).label('submissions'),
                           Lot.slug.label('lot'))
-                   .outerjoin(BriefResponse, Brief.id == BriefResponse.brief_id)
+                   .outerjoin(
+                       BriefResponse,
+                       and_(Brief.id == BriefResponse.brief_id,
+                            BriefResponse.withdrawn_at.is_(None),
+                            BriefResponse.submitted_at.isnot(None)))
                    .outerjoin(Lot)
                    .group_by(Brief.id, Lot.id))
 

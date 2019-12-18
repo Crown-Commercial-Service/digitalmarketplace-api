@@ -142,6 +142,7 @@ def brief_response(app):
             id=1,
             brief_id=1,
             supplier_code=1,
+            submitted_at=pendulum.now(),
             data={}
         ))
 

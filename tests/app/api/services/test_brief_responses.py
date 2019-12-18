@@ -1,4 +1,5 @@
 import pytest
+import pendulum
 
 from app.api.services import (brief_responses_service, frameworks_service,
                               lots_service)
@@ -64,6 +65,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=1,
                 brief_id=1,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=1
             )
 
@@ -74,6 +76,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=2,
                 brief_id=1,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=1
             )
 
@@ -84,6 +87,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=3,
                 brief_id=1,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=1
             )
 
@@ -94,6 +98,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=4,
                 brief_id=1,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=2
             )
 
@@ -103,6 +108,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=5,
                 brief_id=1,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=3
             )
 
@@ -112,6 +118,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=6,
                 brief_id=1,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=4
             )
 
@@ -127,6 +134,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=1,
                 brief_id=2,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=1
             )
 
@@ -138,6 +146,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=2,
                 brief_id=2,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=1
             )
 
@@ -149,6 +158,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=3,
                 brief_id=2,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=1
             )
 
@@ -160,6 +170,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=4,
                 brief_id=2,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=2
             )
 
@@ -169,6 +180,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=5,
                 brief_id=2,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=3
             )
 
@@ -178,6 +190,7 @@ class TestBriefResponseService(BaseApplicationTest):
                 id=6,
                 brief_id=2,
                 data=brief_response_data,
+                submitted_at=pendulum.now(),
                 supplier_code=4
             )
 

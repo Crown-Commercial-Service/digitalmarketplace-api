@@ -682,7 +682,10 @@ class TestBriefResponses(BaseApplicationTest):
                     'briefId': self.brief.id,
                     'supplierCode': 0,
                     'supplierName': 'Supplier 0',
+                    'status': 'draft',
                     'createdAt': mock.ANY,
+                    'submittedAt': mock.ANY,
+                    'updatedAt': mock.ANY,
                     'foo': 'bar',
                     'links': {
                         'self': (('.get_brief_response',), {'brief_response_id': brief_response.id}),

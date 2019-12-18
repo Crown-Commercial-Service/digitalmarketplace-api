@@ -136,22 +136,55 @@ def test_create_new_brief_response(brief_response,
     }), content_type='application/json')
     assert res.status_code == 200
 
-    res = client.post(
-        '/2/brief/1/respond',
+    res = client.post('/2/brief/1/respond')
+    assert res.status_code == 201
+    assert brief_response.delay.called is True
+
+
+@mock.patch('app.tasks.publish_tasks.brief_response')
+def test_save_draft_brief_response(brief_response,
+                                   client,
+                                   supplier_user,
+                                   supplier_domains,
+                                   briefs,
+                                   assessments,
+                                   suppliers):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
+    }), content_type='application/json')
+    assert res.status_code == 200
+
+    res = client.post('/2/brief/1/respond')
+    assert res.status_code == 201
+    data = json.loads(res.get_data(as_text=True))
+
+    res = client.patch(
+        '/2/brief/1/respond/%s' % data['id'],
         data=json.dumps({
-            'essentialRequirements': ['ABC', 'XYZ'],
+            'submit': False,
+            'specialistGivenNames': 'a',
+            'specialistSurname': 'b',
+            'previouslyWorked': 'x',
+            'visaStatus': 'y',
+            'essentialRequirements': [
+                {'TEST': 'xxx'},
+                {'TEST 2': 'yyy'}
+            ],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'dayRateExcludingGST': '91',
+            'resume': ['resume.pdf'],
             'attachedDocumentURL': [
                 'test.pdf'
             ]
         }),
         content_type='application/json'
     )
-    assert res.status_code == 201
-    assert brief_response.delay.called is True
+    assert res.status_code == 200
+    data = json.loads(res.get_data(as_text=True))
+    assert data['status'] == 'draft'
 
 
 @mock.patch('app.tasks.publish_tasks.brief_response')
@@ -162,20 +195,7 @@ def test_create_brief_response_creates_an_audit_event(brief_response, client, su
     }), content_type='application/json')
     assert res.status_code == 200
 
-    res = client.post(
-        '/2/brief/1/respond',
-        data=json.dumps({
-            'essentialRequirements': ['ABC', 'XYZ'],
-            'availability': '01/01/2018',
-            'respondToEmailAddress': 'supplier@email.com',
-            'specialistName': 'Test Specialist Name',
-            'dayRate': '100',
-            'attachedDocumentURL': [
-                'test.pdf'
-            ]
-        }),
-        content_type='application/json'
-    )
+    res = client.post('/2/brief/1/respond')
     assert res.status_code == 201
     assert brief_response.delay.called is True
 
@@ -185,33 +205,6 @@ def test_create_brief_response_creates_an_audit_event(brief_response, client, su
 
     assert len(audit_events) == 1
     assert audit_events[0].data['briefResponseId'] == 1
-
-
-@mock.patch('app.tasks.publish_tasks.brief_response')
-def test_create_brief_response_with_object(brief_response, client, supplier_user,
-                                           supplier_domains, briefs,
-                                           assessments, suppliers):
-    res = client.post('/2/login', data=json.dumps({
-        'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
-    }), content_type='application/json')
-    assert res.status_code == 200
-
-    res = client.post(
-        '/2/brief/1/respond',
-        data=json.dumps({
-            'essentialRequirements': {'0': 'ABC', '1': 'XYZ'},
-            'availability': '01/01/2018',
-            'respondToEmailAddress': 'supplier@email.com',
-            'specialistName': 'Test Specialist Name',
-            'dayRate': '100',
-            'attachedDocumentURL': [
-                'test.pdf'
-            ]
-        }),
-        content_type='application/json'
-    )
-    assert res.status_code == 201
-    assert brief_response.delay.called is True
 
 
 @mock.patch('app.tasks.publish_tasks.brief_response')
@@ -225,39 +218,13 @@ def test_cannot_respond_to_a_brief_more_than_three_times_from_the_same_supplier(
     assert res.status_code == 200
 
     for i in range(0, 3):
-        res = client.post(
-            '/2/brief/1/respond',
-            data=json.dumps({
-                'essentialRequirements': ['ABC', 'XYZ'],
-                'availability': '01/01/2018',
-                'respondToEmailAddress': 'supplier@email.com',
-                'specialistName': 'Test Specialist Name',
-                'dayRate': '100',
-                'attachedDocumentURL': [
-                    'test.pdf'
-                ]
-            }),
-            content_type='application/json'
-        )
+        res = client.post('/2/brief/1/respond')
         assert res.status_code == 201
         assert brief_response.delay.called is True
 
-    res = client.post(
-        '/2/brief/1/respond',
-        data=json.dumps({
-            'essentialRequirements': ['ABC', 'XYZ'],
-            'availability': '01/01/2018',
-            'respondToEmailAddress': 'supplier@email.com',
-            'specialistName': 'Test Specialist Name',
-            'dayRate': '100',
-            'attachedDocumentURL': [
-                'test.pdf'
-            ]
-        }),
-        content_type='application/json'
-    )
+    res = client.post('/2/brief/1/respond')
     assert res.status_code == 400
-    assert 'There are already 3 brief responses for supplier' in res.get_data(as_text=True)
+    assert 'There are already 3 drafts and/or responses' in res.get_data(as_text=True)
 
 
 def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, supplier_user,
@@ -268,14 +235,27 @@ def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, s
     }), content_type='application/json')
     assert res.status_code == 200
 
-    res = client.post(
-        '/2/brief/1/respond',
+    res = client.post('/2/brief/1/respond')
+    assert res.status_code == 201
+    data = json.loads(res.get_data(as_text=True))
+
+    res = client.patch(
+        '/2/brief/1/respond/%s' % data['id'],
         data=json.dumps({
-            'essentialRequirements': ['XYZ'],
+            'submit': True,
+            'specialistGivenNames': 'a',
+            'specialistSurname': 'b',
+            'previouslyWorked': 'x',
+            'visaStatus': 'y',
+            'essentialRequirements': [
+                {'TEST 2': 'yyy'}
+            ],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'dayRateExcludingGST': '91',
+            'resume': ['resume.pdf'],
             'attachedDocumentURL': [
                 'test.pdf'
             ]
@@ -298,21 +278,36 @@ def test_create_brief_response_success_with_audit_exception(brief_response,
     }), content_type='application/json')
     assert res.status_code == 200
 
-    res = client.post(
-        '/2/brief/1/respond',
+    res = client.post('/2/brief/1/respond')
+    assert res.status_code == 201
+    data = json.loads(res.get_data(as_text=True))
+
+    res = client.patch(
+        '/2/brief/1/respond/%s' % data['id'],
         data=json.dumps({
-            'essentialRequirements': ['ABC', 'XYZ'],
+            'submit': True,
+            'specialistGivenNames': 'a',
+            'specialistSurname': 'b',
+            'previouslyWorked': 'x',
+            'visaStatus': 'y',
+            'essentialRequirements': [
+                {'TEST': 'xxx'},
+                {'TEST 2': 'yyy'}
+            ],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'dayRateExcludingGST': '91',
+            'resume': ['resume.pdf'],
             'attachedDocumentURL': [
                 'test.pdf'
             ]
         }),
         content_type='application/json'
     )
-    assert res.status_code == 201
+    data = json.loads(res.get_data(as_text=True))
+    assert res.status_code == 200
     assert brief_response.delay.called is True
 
 
@@ -326,28 +321,52 @@ def test_create_brief_response_fail_with_incorrect_attachment(client, supplier_u
     }), content_type='application/json')
     assert res.status_code == 200
 
-    res = client.post(
-        '/2/brief/1/respond',
+    res = client.post('/2/brief/1/respond')
+    assert res.status_code == 201
+    data = json.loads(res.get_data(as_text=True))
+
+    res = client.patch(
+        '/2/brief/1/respond/%s' % data['id'],
         data=json.dumps({
-            'essentialRequirements': ['ABC', 'XYZ'],
+            'submit': True,
+            'specialistGivenNames': 'a',
+            'specialistSurname': 'b',
+            'previouslyWorked': 'x',
+            'visaStatus': 'y',
+            'essentialRequirements': [
+                {'TEST': 'xxx'},
+                {'TEST 2': 'yyy'}
+            ],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'dayRateExcludingGST': '91',
+            'resume': ['resume.pdf'],
             'attachedDocumentURL': [[{}]]
         }),
         content_type='application/json'
     )
     assert res.status_code == 400
 
-    res = client.post(
-        '/2/brief/1/respond',
+    res = client.patch(
+        '/2/brief/1/respond/%s' % data['id'],
         data=json.dumps({
-            'essentialRequirements': ['ABC', 'XYZ'],
+            'submit': True,
+            'specialistGivenNames': 'a',
+            'specialistSurname': 'b',
+            'previouslyWorked': 'x',
+            'visaStatus': 'y',
+            'essentialRequirements': [
+                {'TEST': 'xxx'},
+                {'TEST 2': 'yyy'}
+            ],
             'availability': '01/01/2018',
             'respondToEmailAddress': 'supplier@email.com',
             'specialistName': 'Test Specialist Name',
             'dayRate': '100',
+            'dayRateExcludingGST': '91',
+            'resume': ['resume.pdf'],
             'attachedDocumentURL': ['test.exe']
         }),
         content_type='application/json'
@@ -362,20 +381,7 @@ def test_get_brief(brief_response, client, supplier_user, supplier_domains, brie
     }), content_type='application/json')
     assert res.status_code == 200
 
-    res = client.post(
-        '/2/brief/1/respond',
-        data=json.dumps({
-            'essentialRequirements': ['ABC', 'XYZ'],
-            'availability': '01/01/2018',
-            'respondToEmailAddress': 'supplier@email.com',
-            'specialistName': 'Test Specialist Name',
-            'dayRate': '100',
-            'attachedDocumentURL': [
-                'test.pdf'
-            ]
-        }),
-        content_type='application/json'
-    )
+    res = client.post('/2/brief/1/respond')
     assert res.status_code == 201
     assert brief_response.delay.called is True
 
