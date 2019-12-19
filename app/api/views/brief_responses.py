@@ -5,10 +5,12 @@ from app.api.helpers import abort, not_found
 from app.api.services import (
     briefs,
     brief_responses_service,
+    suppliers,
     audit_service,
     audit_types,
     work_order_service
 )
+from app.emails import send_specialist_brief_response_withdrawn_email, send_brief_response_withdrawn_email
 from app.tasks import publish_tasks
 from ...models import AuditEvent
 from app.api.helpers import role_required
@@ -46,6 +48,7 @@ def withdraw_brief_response(brief_response_id):
 
     if brief_response:
         if brief_response.withdrawn_at is None:
+            status_before_withdrawn = brief_response.status
             brief_response.withdrawn_at = utcnow()
             brief_responses_service.save(brief_response)
 
@@ -54,7 +57,8 @@ def withdraw_brief_response(brief_response_id):
                     audit_type=audit_types.update_brief_response,
                     user=current_user.email_address,
                     data={
-                        'briefResponseId': brief_response.id
+                        'briefResponseId': brief_response.id,
+                        'withdrawn': True
                     },
                     db_object=brief_response
                 )
@@ -62,6 +66,19 @@ def withdraw_brief_response(brief_response_id):
             except Exception as e:
                 extra_data = {'audit_type': audit_types.update_brief_response, 'briefResponseId': brief_response.id}
                 rollbar.report_exc_info(extra_data=extra_data)
+
+            if status_before_withdrawn == 'submitted':
+                brief = briefs.get(id=brief_response.brief_id)
+                supplier = suppliers.get_supplier_by_code(brief_response.supplier_code)
+                if brief and supplier:
+                    if brief.lot.slug == 'specialist':
+                        send_specialist_brief_response_withdrawn_email(
+                            supplier, brief, brief_response, supplier_user=current_user.name
+                        )
+                    else:
+                        send_brief_response_withdrawn_email(
+                            supplier, brief, brief_response, supplier_user=current_user.name
+                        )
 
             publish_tasks.brief_response.delay(
                 publish_tasks.compress_brief_response(brief_response),
@@ -118,7 +135,7 @@ def get_brief_response(brief_response_id):
 
     if brief_response:
         if brief_response.withdrawn_at is not None:
-            abort('Brief response {} is withdrawn'.format(brief_response_id))
+            abort('This response has been withdrawn')
     else:
         not_found('Cannot find brief response with brief_response_id :{} and supplier_code: {}'
                   .format(brief_response_id, current_user.supplier_code))

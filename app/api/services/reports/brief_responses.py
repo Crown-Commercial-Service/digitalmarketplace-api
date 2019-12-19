@@ -23,6 +23,7 @@ class BriefResponsesService(Service):
             )
             .join(Brief, Lot)
             .filter(BriefResponse.withdrawn_at.is_(None))
+            .filter(BriefResponse.submitted_at.isnot(None))
             .order_by(Brief.id)
             .all()
         )

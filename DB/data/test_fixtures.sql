@@ -64,7 +64,7 @@ INSERT INTO framework (id, slug, name, framework, status, clarification_question
 INSERT INTO framework (id, slug, name, framework, status, clarification_questions_open, framework_agreement_details) VALUES (4, 'g-cloud-7', 'G-Cloud 7', 'g-cloud', 'pending', false, NULL);
 INSERT INTO framework (id, slug, name, framework, status, clarification_questions_open, framework_agreement_details) VALUES (5, 'digital-outcomes-and-specialists', 'Digital Outcomes and Specialists', 'dos', 'live', false, NULL);
 INSERT INTO framework (id, slug, name, framework, status, clarification_questions_open, framework_agreement_details) VALUES (6, 'digital-service-professionals', 'Digital Service Professionals', 'dsp', 'live', false, NULL);
-INSERT INTO framework (id, slug, name, framework, status, clarification_questions_open, framework_agreement_details) VALUES (7, 'digital-marketplace', 'Digital Marketplace', 'dm', 'pending', false, NULL);
+INSERT INTO framework (id, slug, name, framework, status, clarification_questions_open, framework_agreement_details) VALUES (7, 'digital-marketplace', 'Digital Marketplace', 'dm', 'live', false, NULL);
 
 
 --

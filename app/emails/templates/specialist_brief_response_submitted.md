@@ -1,4 +1,4 @@
-You submitted {{specialist_name}} successfully for [{{brief_name}} at {{brief_organisation}}]({{brief_url}}).  
+You submitted {{specialist_name}} successfully for [{{brief_name}} ({{brief_id}})]({{brief_url}}) at {{brief_organisation}}.  
   
 ###Summary of responses:  
 **Earliest date {{specialist_name}} can start:** {{response_start_date}}  

@@ -22,6 +22,44 @@ from six.moves import zip, zip_longest
 TEST_SUPPLIERS_COUNT = 3
 
 
+COMPLETE_SPECIALIST_BRIEF = {
+    "essentialRequirements": [
+        {
+            'criteria': 'TEST',
+            'weighting': '55'
+        },
+        {
+            'criteria': 'TEST 2',
+            'weighting': '45'
+        }
+    ],
+    "startDate": "31/12/2016",
+    "evaluationType": ["Reference", "Interview"],
+    "niceToHaveRequirements": [
+        {
+            'criteria': 'LISP'
+        }
+    ],
+    "existingTeam": "Nice people.",
+    "specialistWork": "All the things",
+    "workingArrangements": "Just get the work done.",
+    "organisation": "Org.org",
+    "location": "Wales",
+    "specialistRole": "developer",
+    "title": "I need a Developer",
+    "priceWeighting": 85,
+    "contractLength": "3 weeks",
+    "culturalWeighting": 5,
+    "securityClearance": "Developed vetting required.",
+    "technicalWeighting": 10,
+    "culturalFitCriteria": ["CULTURAL", "FIT"],
+    "numberOfSuppliers": 3,
+    "summary": "Doing some stuff to help out.",
+    "workplaceAddress": "Aviation House",
+    "requirementsLength": "2 weeks",
+    "preferredFormatForRates": "dailyRate"
+}
+
 COMPLETE_DIGITAL_SPECIALISTS_BRIEF = {
     "essentialRequirements": ["MS Paint", "GIMP"],
     "startDate": "31/12/2016",

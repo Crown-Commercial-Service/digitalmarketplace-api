@@ -15,7 +15,7 @@ from app.models import (Brief, BriefResponse, CaseStudy, Domain, Framework, Lot,
 class SellerDashboardService(object):
 
     def get_opportunities(self, supplier_code):
-        response_count_query = (
+        submitted_response_count_query = (
             db
             .session
             .query(
@@ -23,7 +23,40 @@ class SellerDashboardService(object):
                 func.count(BriefResponse.brief_id).label("responseCount")
             )
             .filter(
-                BriefResponse.supplier_code == supplier_code
+                BriefResponse.supplier_code == supplier_code,
+                BriefResponse.withdrawn_at.is_(None),
+                BriefResponse.submitted_at.isnot(None)
+            )
+            .group_by(BriefResponse.brief_id)
+            .subquery()
+        )
+
+        draft_response_count_query = (
+            db
+            .session
+            .query(
+                BriefResponse.brief_id.label("brief_id"),
+                func.count(BriefResponse.brief_id).label("draftResponseCount")
+            )
+            .filter(
+                BriefResponse.supplier_code == supplier_code,
+                BriefResponse.withdrawn_at.is_(None),
+                BriefResponse.submitted_at.is_(None)
+            )
+            .group_by(BriefResponse.brief_id)
+            .subquery()
+        )
+
+        brief_response_id_query = (
+            db
+            .session
+            .query(
+                BriefResponse.brief_id.label("brief_id"),
+                func.max(BriefResponse.id).label("briefResponseId")
+            )
+            .filter(
+                BriefResponse.supplier_code == supplier_code,
+                BriefResponse.withdrawn_at.is_(None)
             )
             .group_by(BriefResponse.brief_id)
             .subquery()
@@ -36,7 +69,8 @@ class SellerDashboardService(object):
                 BriefResponse.brief_id.label("brief_id")
             )
             .filter(
-                BriefResponse.supplier_code == supplier_code
+                BriefResponse.supplier_code == supplier_code,
+                BriefResponse.withdrawn_at.is_(None)
             )
         )
 
@@ -61,11 +95,15 @@ class SellerDashboardService(object):
                 Brief.closed_at,
                 Brief.withdrawn_at,
                 Lot.slug.label('lot'),
-                response_count_query.c.responseCount
+                submitted_response_count_query.c.responseCount,
+                draft_response_count_query.c.draftResponseCount,
+                brief_response_id_query.c.briefResponseId
             )
             .join(Brief, query.c.brief_id == Brief.id)
             .join(Lot)
-            .outerjoin(response_count_query, response_count_query.c.brief_id == Brief.id)
+            .outerjoin(submitted_response_count_query, submitted_response_count_query.c.brief_id == Brief.id)
+            .outerjoin(draft_response_count_query, draft_response_count_query.c.brief_id == Brief.id)
+            .outerjoin(brief_response_id_query, brief_response_id_query.c.brief_id == Brief.id)
             .filter(
                 Brief.published_at.isnot(None)
             )

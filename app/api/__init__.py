@@ -123,6 +123,7 @@ from app.api.views.reports import (  # noqa
     agency,
     brief,
     brief_response,
+    feedback,
     suppliers
 )
 
