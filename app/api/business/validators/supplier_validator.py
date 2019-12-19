@@ -3,7 +3,7 @@ import pendulum
 import re
 from flask import current_app
 from app.api.services import evidence_service
-from app.api.helpers import is_valid_email
+from app.api.helpers import is_valid_email, state_to_long_name
 
 
 class SupplierValidator(object):
@@ -245,7 +245,7 @@ class SupplierValidator(object):
                 expiry = state_value.get('expiry')
                 if not licence_number or not expiry:
                     errors.append({
-                        'message': 'Licence number and expiry must be both filled for {}'.format(state.upper()),
+                        'message': 'Licence number and expiry must be both filled for {}'.format(state_to_long_name(state)),
                         'severity': 'error',
                         'step': 'recruiter'
                     })
@@ -256,7 +256,7 @@ class SupplierValidator(object):
 
                         if now > expiry_date.date():
                             errors.append({
-                                'message': '{} labour hire has expired'.format(state.upper()),
+                                'message': 'Your {} labour hire has expired'.format(state_to_long_name(state)),
                                 'severity': 'warning',
                                 'step': 'recruiter'
                             })

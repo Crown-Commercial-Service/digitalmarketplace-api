@@ -291,6 +291,19 @@ def prepare_specialist_responses(brief, responses):
 
     return candidates
 
+def state_to_long_name(state):
+    states = {
+        'act': 'Australian Capital Territory',
+        'nsw': 'New South Wales',
+        'nt': 'Northern Territory',
+        'qld': 'Queensland',
+        'tas': 'Tasmania',
+        'sa': 'South Australia',
+        'wa': 'Western Australia',
+        'vic': 'Victoria'
+    }
+    return states.get(state, 'Unknown')
+
 
 class ServiceException(Exception):
     def __init__(self, msg):
