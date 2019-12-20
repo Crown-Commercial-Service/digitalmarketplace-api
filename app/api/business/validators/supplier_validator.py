@@ -245,7 +245,9 @@ class SupplierValidator(object):
                 expiry = state_value.get('expiry')
                 if not licence_number or not expiry:
                     errors.append({
-                        'message': 'Licence number and expiry must be both filled for {}'.format(state_to_long_name(state)),
+                        'message': (
+                            'Licence number and expiry must be both filled for {}'.format(state_to_long_name(state))
+                        ),
                         'severity': 'error',
                         'step': 'recruiter'
                     })

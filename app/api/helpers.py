@@ -291,6 +291,7 @@ def prepare_specialist_responses(brief, responses):
 
     return candidates
 
+
 def state_to_long_name(state):
     states = {
         'act': 'Australian Capital Territory',
