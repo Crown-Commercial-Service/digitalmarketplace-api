@@ -34,7 +34,7 @@ def test_can_get_errors_for_recruiter():
     assert len(errors) == 0
 
 
-def test_can_get_errors_for_recruiter_and_labour_hire():
+def test_can_get_errors_for_past_date_and_no_licence_number():
     application = Application(
         data={
             'recruiter': 'yes',
@@ -48,6 +48,38 @@ def test_can_get_errors_for_recruiter_and_labour_hire():
     errors = ApplicationValidator(application).validate_recruiter()
 
     assert len(errors) == 2
+
+
+def test_can_get_error_for_no_licence_number():
+    application = Application(
+        data={
+            'recruiter': 'yes',
+            'labourHire': {
+                'vic': {
+                    'expiry': '01/01/2050'
+                }
+            }
+        }
+    )
+    errors = ApplicationValidator(application).validate_recruiter()
+
+    assert len(errors) == 1
+
+
+def test_can_get_error_for_no_expiry():
+    application = Application(
+        data={
+            'recruiter': 'yes',
+            'labourHire': {
+                'vic': {
+                    'licenceNumber': 'foobar-licence'
+                }
+            }
+        }
+    )
+    errors = ApplicationValidator(application).validate_recruiter()
+
+    assert len(errors) == 1
 
 
 def test_valid_for_recruiter_and_labour_hire():
