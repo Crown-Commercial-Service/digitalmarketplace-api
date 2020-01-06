@@ -1117,7 +1117,7 @@ def download_brief_attachment(brief_id, slug):
         (
             current_user.role == 'buyer' or (
                 current_user.role == 'supplier' and
-                _can_do_brief_response(brief_id)
+                _can_do_brief_response(brief_id, update_only=True)
             )
         )
     ):
