@@ -33,26 +33,6 @@ class BriefsService(Service):
     def __init__(self, *args, **kwargs):
         super(BriefsService, self).__init__(*args, **kwargs)
 
-    def get_supplier_responses(self, code):
-        responses = db.session.query(BriefResponse.created_at.label('response_date'),
-                                     Brief.id, Brief.data['title'].astext.label('name'),
-                                     Lot.name.label('framework'),
-                                     Brief.closed_at,
-                                     case([(AuditEvent.type == 'read_brief_responses', True)], else_=False)
-                                     .label('is_downloaded'))\
-            .distinct(Brief.closed_at, Brief.id)\
-            .join(Brief, Lot)\
-            .outerjoin(AuditEvent, and_(Brief.id == AuditEvent.data['briefId'].astext.cast(Numeric),
-                                        AuditEvent.type == 'read_brief_responses'))\
-            .filter(BriefResponse.supplier_code == code,
-                    Brief.closed_at > pendulum.create(2018, 1, 1),
-                    BriefResponse.withdrawn_at.is_(None)
-                    )\
-            .order_by(Brief.closed_at, Brief.id)\
-            .all()
-
-        return [r._asdict() for r in responses]
-
     def get_brief_counts(self, user_id):
         accessible_briefs_subquery = self.accessible_briefs(user_id)
         result = [r._asdict() for r in (
@@ -554,6 +534,8 @@ class BriefsService(Service):
             .filter(Brief.created_at >= pendulum.parse(start_date, tz='Australia/Canberra'))
             .filter(Brief.created_at <= pendulum.parse(end_date, tz='Australia/Canberra'))
             .filter(Brief.published_at.isnot(None))
+            .filter(BriefResponse.withdrawn_at.is_(None))
+            .filter(BriefResponse.submitted_at.isnot(None))
             .filter(Lot.slug != 'training')
             .order_by(Brief.id)
         )
