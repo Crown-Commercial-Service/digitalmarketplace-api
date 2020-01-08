@@ -1040,9 +1040,30 @@ class ServiceTableMixin(object):
 
     @declared_attr
     def __table_args__(cls):
-        return (db.ForeignKeyConstraint([cls.framework_id, cls.lot_id],
-                                        ['framework_lots.framework_id', 'framework_lots.lot_id']),
-                {})
+        return (
+            db.ForeignKeyConstraint(
+                (cls.framework_id, cls.lot_id,),
+                ("framework_lots.framework_id", "framework_lots.lot_id",),
+            ),
+        ) + (() if not hasattr(cls, "lot_one_service_limit") else (
+            # if the model has a field named lot_one_service_limit, we enforce the one service limit where appropriate
+            # on this table using a database constraint. first a constraint to ensure the lot_one_service_limit is in
+            # sync with the value in the lots table
+            db.ForeignKeyConstraint(
+                (cls.lot_id, cls.lot_one_service_limit,),
+                ("lots.id", "lots.one_service_limit",),
+                name=f"fk_{cls.__tablename__}_lot_id_one_service_limit",
+            ),
+            # and now a conditional unique constraint where lot_one_service_limit is true
+            db.Index(
+                f"idx_{cls.__tablename__}_enforce_one_service_limit",
+                cls.supplier_id,
+                cls.lot_id,
+                cls.framework_id,
+                postgresql_where=cls.lot_one_service_limit,
+                unique=True,
+            ),
+        ))
 
     @declared_attr
     def lot_id(cls):
@@ -1059,7 +1080,7 @@ class ServiceTableMixin(object):
 
     @declared_attr
     def lot(cls):
-        return db.relationship(Lot, lazy='joined', innerjoin=True)
+        return db.relationship(Lot, lazy='joined', innerjoin=True, foreign_keys=(cls.lot_id,))
 
     @validates('service_id')
     def validate_service_id(self, key, value):
