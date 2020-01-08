@@ -584,6 +584,7 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
                         supplier_id=supplier_id,
                         data={},
                         status="not-submitted" if ind < unsub_count else "submitted",
+                        lot_one_service_limit=lot.one_service_limit,
                     )
                 )
 
