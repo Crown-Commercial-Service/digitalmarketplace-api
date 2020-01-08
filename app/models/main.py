@@ -102,6 +102,13 @@ class Lot(db.Model):
     one_service_limit = db.Column(db.Boolean, nullable=False, default=False)
     data = db.Column(JSON)
 
+    __table_args__ = (
+        # this may appear tautological (id is a unique column *on its own*, so clearly the combination of
+        # id/one_service_limit is), but is required by postgres to be able to make a compound foreign key to
+        # these together. fortunately it's not a big index to create.
+        db.UniqueConstraint(id, one_service_limit, name="uq_lots_id_one_service_limit"),
+    )
+
     @property
     def allows_brief(self):
         return self.one_service_limit
