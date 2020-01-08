@@ -2,6 +2,8 @@ import datetime
 import mock
 import pytest
 
+from itertools import cycle
+
 from flask import json
 from freezegun import freeze_time
 from sqlalchemy.exc import IntegrityError
@@ -566,18 +568,22 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
             )
         db.session.commit()
 
-    def create_drafts(self, framework_id, supplier_id_count_pairs, status='not-submitted'):
+    def create_drafts(self, framework_id, supplier_id_counts):
         framework = Framework.query.get(framework_id)
         framework_lots = framework.lots
-        for supplier_id, count in supplier_id_count_pairs:
-            for ind in range(count):
+        for supplier_id, unsub_count, sub_count in supplier_id_counts:
+            for ind, lot in zip(range(unsub_count + sub_count), cycle(framework_lots)):
+                if lot.one_service_limit and ind >= len(framework_lots):
+                    # skip creating second+ services for one_service_limit lots
+                    continue
+
                 db.session.add(
                     DraftService(
-                        lot=framework_lots[ind % 4],
+                        lot=lot,
                         framework_id=framework_id,
                         supplier_id=supplier_id,
                         data={},
-                        status=status
+                        status="not-submitted" if ind < unsub_count else "submitted",
                     )
                 )
 
@@ -625,17 +631,11 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
         self.make_declaration(framework.id, [0, 2, 4, 6, 8, 10], status='complete')
 
         self.create_drafts(framework.id, [
-            (1, 1),   # 1 saas; with declaration
-            (2, 7),   # 1 of each + iaas, paas, saas; with declaration
-            (3, 2),   # saas + paas; with declaration
-            (14, 3),  # iaas + paas + saas; without declaration
+            (1, 1, 2),
+            (2, 7, 15),
+            (3, 2, 2),
+            (14, 3, 7),
         ])
-        self.create_drafts(framework.id, [
-            (1, 2),   # saas + paas; with declaration
-            (2, 15),  # 3 of each + iaas, paas, saas; with declaration
-            (3, 2),   # saas + paas; with declaration
-            (14, 7),  # 1 of each + iaas + paas + saas; without declaration
-        ], status='submitted')
 
     def setup_data(self, framework_slug):
         self.setup_supplier_data()
@@ -664,21 +664,21 @@ class TestFrameworkStats(BaseApplicationTest, FixtureMixin):
                 {u'count': 1, u'status': u'not-submitted',
                  u'declaration_made': True, u'lot': u'scs'},
 
-                {u'count': 2, u'status': u'submitted',
+                {u'count': 3, u'status': u'submitted',
                  u'declaration_made': False, u'lot': u'iaas'},
-                {u'count': 4, u'status': u'submitted',
+                {u'count': 3, u'status': u'submitted',
                  u'declaration_made': True, u'lot': u'iaas'},
-                {u'count': 4, u'status': u'submitted',
+                {u'count': 3, u'status': u'submitted',
                  u'declaration_made': False, u'lot': u'paas'},
                 {u'count': 4, u'status': u'submitted',
                  u'declaration_made': True, u'lot': u'paas'},
-                {u'count': 4, u'status': u'submitted',
+                {u'count': 2, u'status': u'submitted',
                  u'declaration_made': False, u'lot': u'saas'},
                 {u'count': 4, u'status': u'submitted',
                  u'declaration_made': True, u'lot': u'saas'},
-                {u'count': 1, u'status': u'submitted',
-                 u'declaration_made': False, u'lot': u'scs'},
                 {u'count': 3, u'status': u'submitted',
+                 u'declaration_made': False, u'lot': u'scs'},
+                {u'count': 4, u'status': u'submitted',
                  u'declaration_made': True, u'lot': u'scs'},
             ],
             u'interested_suppliers': [
