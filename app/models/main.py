@@ -1225,7 +1225,7 @@ class DraftService(db.Model, ServiceTableMixin):
     # itself. must be initialized on DraftService creation.
     lot_one_service_limit = db.Column(
         db.Boolean,
-        nullable=True,
+        nullable=False,
     )
 
     @staticmethod
