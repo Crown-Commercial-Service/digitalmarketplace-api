@@ -1,3 +1,4 @@
+import datetime
 import json
 import mock
 import pytest
@@ -19,6 +20,7 @@ from app.utils import (
     purge_nulls_from_data,
     single_result_response,
     strip_whitespace_from_data,
+    compare_sql_datetime_with_string,
 )
 from tests.bases import BaseApplicationTest
 
@@ -299,3 +301,63 @@ def test_json_has_keys():
         ({'key1': 'value1'}, [], ['key2'], False),
     ]:
         check(data, data_required_keys, data_optional_keys, result)
+
+
+class TestSqlCompareDateString:
+
+    class Timestamp(datetime.datetime):
+        "An object that looks like an SQL TIMESTAMP value"
+
+        def between(self, a, b):
+            return a <= self and self <= b
+
+    def test_timestamp(self):
+        assert self.Timestamp(2000, 1, 1)
+        assert self.Timestamp(2000, 1, 1) == datetime.datetime(2000, 1, 1)
+        assert self.Timestamp(2000, 1, 1) >= datetime.datetime(2000, 1, 1)
+        assert self.Timestamp(2000, 1, 1) <= datetime.datetime(2000, 1, 1)
+        assert self.Timestamp(2000, 1, 1) > datetime.datetime(1999, 1, 1)
+        assert self.Timestamp(2000, 1, 1) < datetime.datetime(2001, 1, 1)
+        assert self.Timestamp(2000, 1, 1, 12) >= datetime.datetime(2000, 1, 1)
+        assert self.Timestamp(2000, 1, 1, 12) <= datetime.datetime(2000, 1, 2)
+        assert self.Timestamp(2000, 1, 1, 12).between(datetime.datetime(2000, 1, 1), datetime.datetime(2000, 1, 2))
+
+    def test_can_test_whether_timestamp_is_during_day(self):
+        timestamp = self.Timestamp(2010, 12, 2, 15, 34)
+        assert compare_sql_datetime_with_string(timestamp, "2010-12-02")
+
+    @pytest.mark.parametrize(
+        "date_string",
+        (
+            ">=2000-01-01",
+            "<=2000-01-01",
+            ">1999-01-01",
+            "<2001-01-01",
+            "2000-01-01..2000-01-02",
+            "0001-01-01..3000-01-01",
+        ))
+    def test_can_test_whether_timestamp_is_within_range(self, date_string):
+        timestamp = self.Timestamp(2000, 1, 1)
+        assert compare_sql_datetime_with_string(timestamp, date_string)
+
+    @pytest.mark.parametrize(
+        "date_string",
+        (
+            "<=4999-01-01",
+            ">=5001-01-01",
+            ">5000-01-01",
+            "<5000-01-01",
+            "2000-01-01..2000-01-02",
+            "0001-01-01..3000-01-01",
+        ))
+    def test_can_test_whether_timestamp_is_outside_range(self, date_string):
+        timestamp = self.Timestamp(5000, 1, 1)
+        assert not compare_sql_datetime_with_string(timestamp, date_string)
+
+    @pytest.mark.parametrize(
+        "invalid_date_string",
+        ("", "invalid", "12-30-2020", "2020-12-300")
+    )
+    def test_it_should_raise_value_error_if_date_string_is_not_valid(self, invalid_date_string):
+        with pytest.raises(ValueError):
+            compare_sql_datetime_with_string(mock.MagicMock(), invalid_date_string)

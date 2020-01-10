@@ -1,8 +1,11 @@
+import datetime
 import random
 
 from flask import url_for as base_url_for
 from flask import abort, current_app, request, jsonify
 from werkzeug.exceptions import BadRequest
+
+from dmutils.formats import DATE_FORMAT
 
 from .validation import validate_updater_json_or_400
 from . import search_api_client, dmapiclient
@@ -231,3 +234,69 @@ def index_object(framework, doc_type, object_id, serialized_object, wait_for_res
         current_app.logger.error(
             "Failed to find index name for framework '{}' with object type '{}'".format(framework, doc_type)
         )
+
+
+def compare_sql_datetime_with_string(filter_on, date_string):
+    """Filter an SQL query by a date or range of dates
+
+    Returns an SQLAlchemy `BinaryExpression` that can be used in a call to
+    `filter`.
+
+    `filter_on` should be an SQLAlchemy column expression that has a date or
+    datetime value.
+
+    `date_string` is a string that includes date(s) in format
+    `YYYY-MM-DD` and a range operator such as `>` or `<=`.
+
+    In full:
+
+    ====================== ========================================
+     Query                  Description
+    ====================== ========================================
+    YYYY-MM-DD             Matches dates on day
+    >YYYY-MM-DD            Matches dates after day
+    >=YYYY-MM-DD           Matches dates on or after day
+    <YYYY-MM-DD            Matches dates before day
+    <=YYYY-MM-DD           Matches dates on or before day
+    YYYY-MM-DD..YYYY-MM-DD Matches dates between days (inclusively)
+    ====================== ========================================
+
+    Examples:
+    >>> from app.models.main import AuditEvent
+    >>> # Equivalent to AuditEvent.created_at >= datetime.date(2012, 1, 1)
+    >>> compare_sql_datetime_with_string(AuditEvent.created_at, ">=2012-01-01")
+    <sqlalchemy.sql.elements.BinaryExpression object ...>
+    >>> # Equivalent to AuditEvent.created_at.between(datetime.date(2010, 1, 1), datetime.date(2019-01-31))
+    >>> AuditEvent.query.filter(
+        compare_sql_datetime_with_string(AuditEvent.created_at, "2010-01-01..2019-01-31"))
+    <app.models.main.AuditEvent.query_class object ...>
+    """
+    filter_test = None
+
+    def parse_date(s):
+        return datetime.datetime.strptime(s, DATE_FORMAT)
+
+    if date_string.startswith(">="):
+        date = parse_date(date_string[2:])
+        filter_test = (filter_on >= date)
+    elif date_string.startswith(">"):
+        date = parse_date(date_string[1:])
+        filter_test = (filter_on > date)
+    elif date_string.startswith("<="):
+        date = parse_date(date_string[2:])
+        filter_test = (filter_on <= date)
+    elif date_string.startswith("<"):
+        date = parse_date(date_string[1:])
+        filter_test = (filter_on < date)
+    elif ".." in date_string:
+        args = date_string.partition("..")
+
+        from_ = parse_date(args[0])
+        to_ = parse_date(args[2])
+
+        filter_test = filter_on.between(from_, to_)
+    else:
+        date = parse_date(date_string)
+        filter_test = filter_on.between(date, date + datetime.timedelta(days=1))
+
+    return filter_test
