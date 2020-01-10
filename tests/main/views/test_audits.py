@@ -20,26 +20,48 @@ from dmtestutils.api_model_stubs import AuditEventStub
 
 class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
     @staticmethod
-    def audit_event(user=0, type=AuditTypes.supplier_update, db_object=None, data={"request": "data"}):
-        return AuditEvent(
-            audit_type=type,
-            db_object=db_object,
-            user=user,
-            data=data,
-        )
+    def audit_event(
+        user=0,
+        type=AuditTypes.supplier_update,
+        db_object=None,
+        data={"request": "data"},
+        *,
+        created_at=None
+    ):
+        e = AuditEvent(audit_type=type, db_object=db_object, user=user, data=data,)
+        if created_at:
+            e.created_at = created_at
+        return e
 
-    def add_audit_event(self, user=0, type=AuditTypes.supplier_update, db_object=None, data={"request": "data"}):
-        ae = self.audit_event(user, type, db_object, data)
-        db.session.add(
-            ae
-        )
+    def add_audit_event(
+        self,
+        user=0,
+        type=AuditTypes.supplier_update,
+        db_object=None,
+        data={"request": "data"},
+        *,
+        created_at=None
+    ):
+        ae = self.audit_event(user, type, db_object, data, created_at=created_at)
+        db.session.add(ae)
         db.session.commit()
         return ae.id
 
-    def add_audit_events(self, number, type=AuditTypes.supplier_update, db_object=None):
+    def add_audit_events(
+        self,
+        number,
+        type=AuditTypes.supplier_update,
+        db_object=None,
+        *,
+        created_at=None
+    ):
         ids = []
         for user_id in range(number):
-            ids.append(self.add_audit_event(user=user_id, type=type, db_object=db_object))
+            ids.append(
+                self.add_audit_event(
+                    user=user_id, type=type, db_object=db_object, created_at=created_at
+                )
+            )
         return ids
 
     def add_audit_events_with_db_object(self):
@@ -687,9 +709,45 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert response.status_code == 200
         assert len(data['auditEvents']) == 0
 
-    def test_should_reject_invalid_audit_dates(self):
+    @pytest.mark.parametrize(
+        ("date_range_query", "number_of_events"),
+        (
+            ("<=2000-12-31", 4),
+            (">=2000-01-01", 4),
+            ("<2000-12-31", 3),
+            (">2000-01-01", 3),
+            ("2000-01-02..2000-12-30", 2),
+        ))
+    def test_can_find_audit_events_in_date_range(self, date_range_query, number_of_events):
+        AuditEvent.query.delete()
+
+        self.add_audit_event(created_at=datetime(2000, 1, 1))
+        self.add_audit_event(created_at=datetime(2000, 1, 2))
+        self.add_audit_event(created_at=datetime(2000, 2, 5))
+        self.add_audit_event(created_at=datetime(2000, 12, 31))
+
+        response = self.client.get(
+            "/audit-events",
+            query_string={"audit-date": date_range_query},
+        )
+        assert response.status_code == 200
+        events = response.json["auditEvents"]
+        assert len(events) == number_of_events
+
+    @pytest.mark.parametrize(
+        "invalid_date_string",
+        (
+            "invalid",
+            ">=",
+            "<invalid",
+            "3000-30-30",
+        ))
+    def test_should_reject_invalid_audit_dates(self, invalid_date_string):
         self.add_audit_event()
-        response = self.client.get('/audit-events?audit-date=invalid')
+        response = self.client.get(
+            "/audit-events",
+            query_string={"audit-date": invalid_date_string}
+        )
 
         assert response.status_code == 400
 

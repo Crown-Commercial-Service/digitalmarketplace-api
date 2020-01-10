@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from flask import jsonify, abort, request, current_app
 from sqlalchemy.exc import IntegrityError
@@ -6,18 +6,18 @@ from sqlalchemy.sql.expression import true, false, func
 from sqlalchemy.orm import class_mapper
 from dmapiclient.audit import AuditTypes
 from dmutils.config import convert_to_boolean
-from dmutils.formats import DATE_FORMAT
 
 from .. import main
 from ... import db, models
 from ...models import AuditEvent
-from ...validation import is_valid_date, is_valid_acknowledged_state
+from ...validation import is_valid_acknowledged_state
 from ...utils import (
     get_json_from_request,
     get_valid_page_or_1,
     json_has_required_keys,
     paginated_result_response,
     single_result_response,
+    compare_sql_datetime_with_string,
     validate_and_return_updater_request,
 )
 
@@ -64,13 +64,12 @@ def list_audits():
 
     audit_date = request.args.get('audit-date', None)
     if audit_date:
-        if is_valid_date(audit_date):
-            audit_datetime = datetime.strptime(audit_date, DATE_FORMAT)
-            audits = audits.filter(
-                AuditEvent.created_at.between(audit_datetime, audit_datetime + timedelta(days=1))
-            )
-        else:
+        try:
+            filter_test = compare_sql_datetime_with_string(AuditEvent.created_at, audit_date)
+        except ValueError:
             abort(400, 'invalid audit date supplied')
+
+        audits = audits.filter(filter_test)
 
     audit_type = request.args.get('audit-type')
     if audit_type:
