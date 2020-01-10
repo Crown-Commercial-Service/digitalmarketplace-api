@@ -405,3 +405,11 @@ def admin_email_address_has_approved_domain(email_address):
     :return: boolean
     """
     return email_address.split('@')[-1] in current_app.config.get('DM_ALLOWED_ADMIN_DOMAINS', [])
+
+
+def is_valid_email_address(email_address: str) -> bool:
+    "Check the email address is valid"
+    # regex from Mozilla Developer Network
+    # https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#Validation
+    pattern = r"^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"  # noqa: E501
+    return bool(re.fullmatch(pattern, email_address))

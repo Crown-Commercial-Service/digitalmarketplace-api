@@ -8,9 +8,19 @@ import mock
 from jsonschema import validate, SchemaError, ValidationError
 
 from app.utils import drop_foreign_fields
-from app.validation import validates_against_schema, is_valid_service_id, is_valid_date, \
-    is_valid_acknowledged_state, get_validation_errors, is_valid_string, min_price_less_than_max_price, \
-    translate_json_schema_errors, buyer_email_address_has_approved_domain, is_approved_buyer_domain
+from app.validation import (
+    validates_against_schema,
+    is_valid_service_id,
+    is_valid_date,
+    is_valid_acknowledged_state,
+    get_validation_errors,
+    is_valid_email_address,
+    is_valid_string,
+    min_price_less_than_max_price,
+    translate_json_schema_errors,
+    buyer_email_address_has_approved_domain,
+    is_approved_buyer_domain,
+)
 from tests.helpers import load_example_listing
 
 
@@ -809,3 +819,18 @@ def test_is_approved_buyer_domain(domain, expected_result):
     ]
 
     assert is_approved_buyer_domain(existing_domains, domain) == expected_result
+
+
+@pytest.mark.parametrize(
+    ("email_address", "is_valid"),
+    (
+        ("me@example.com", True),
+        ("very.common@example.com", True),
+        ("disposable.style.email.with+symbol@example.com", True),
+        ("", False),
+        ("Abc.example.com", False),
+        ("email-address-with-NUL\x00@example.com", False),
+        (r'a"b(c)d,e:f;g<h>i[j\k]l@example.com', False),
+    ))
+def test_is_valid_email_address(email_address, is_valid):
+    assert is_valid_email_address(email_address) is is_valid
