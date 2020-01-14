@@ -30,6 +30,7 @@ from ...validation import (
     admin_email_address_has_approved_domain,
     buyer_email_address_has_approved_domain,
     buyer_email_address_first_approved_domain,
+    is_valid_email_address,
     validate_user_auth_json_or_400,
     validate_user_json_or_400,
 )
@@ -115,6 +116,8 @@ def list_users():
     # email_address is a primary key
     email_address = request.args.get('email_address')
     if email_address:
+        if not is_valid_email_address(email_address):
+            abort(400, "email_address must be a valid email address")
         single_user = user_query.filter(
             User.email_address == email_address.lower()
         ).first_or_404()
