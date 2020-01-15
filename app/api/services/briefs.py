@@ -617,3 +617,19 @@ class BriefsService(Service):
         )
 
         return [r._asdict() for r in result]
+
+    def close_opportunity_early(self, brief):
+        now = pendulum.now('utc')
+
+        brief.data['originalQuestionsClosedAt'] = brief.questions_closed_at.to_iso8601_string(extended=True)
+        brief.data['originalClosedAt'] = brief.closed_at.to_iso8601_string(extended=True)
+
+        # To pass validation, questions_closed_at needs to be before closed_at
+        brief.data['closed_at'] = now.to_date_string()
+        brief.questions_closed_at = now.subtract(seconds=1)
+        brief.closed_at = now
+        brief.updated_at = now
+
+        self.save(brief)
+
+        return brief

@@ -762,6 +762,47 @@ def send_brief_clarification_to_seller(brief, brief_question, to_address):
         db_object=brief)
 
 
+def send_opportunity_closed_early_email(brief, current_user):
+    # to circumvent circular dependencies
+    from app.api.services import audit_service, audit_types
+
+    to_addresses = get_brief_emails(brief)
+    supplier_code, seller = next(iter(brief.data.get('sellers', {}).items()))
+
+    email_body = render_email_template(
+        'opportunity_closed_early.md',
+        brief_id=brief.id,
+        framework=brief.framework.slug,
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        possessive="'" if seller['name'].lower().endswith('s') else "'s",
+        seller_name=escape_markdown(seller['name']),
+        title=escape_markdown(brief.data['title']),
+        user=escape_markdown(current_user.name)
+    )
+
+    subject = "'{}' has been closed early".format(brief.data['title'])
+
+    send_or_handle_error(
+        to_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors=audit_types.close_opportunity_early
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_opportunity_closed_early_email,
+        user='',
+        data={
+            "to_addresses": ', '.join(to_addresses),
+            "email_body": email_body,
+            "subject": subject
+        },
+        db_object=brief
+    )
+
+
 def get_brief_emails(brief):
     to_addresses = [user.email_address for user in brief.users if user.active]
     to_addresses = to_addresses + [
