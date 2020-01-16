@@ -2037,7 +2037,7 @@ class TestServices(BaseApplicationTest, FixtureMixin):
         assert services.count() == 2
 
     def test_update_from_json(self):
-        self.setup_dummy_suppliers(1)
+        self.setup_dummy_suppliers(2)
         self.setup_dummy_service(
             service_id='1000000000',
             supplier_id=0,
@@ -2049,7 +2049,7 @@ class TestServices(BaseApplicationTest, FixtureMixin):
         updated_at = service.updated_at
         created_at = service.created_at
 
-        service.update_from_json({'foo': 'bar'})
+        service.update_from_json({'foo': 'bar', 'supplierId': 1})
 
         db.session.add(service)
         db.session.commit()
@@ -2057,6 +2057,23 @@ class TestServices(BaseApplicationTest, FixtureMixin):
         assert service.created_at == created_at
         assert service.updated_at > updated_at
         assert service.data == {'foo': 'bar', 'serviceName': 'Service 1000000000'}
+        assert service.supplier_id == 1
+
+    def test_updating_service_with_nonexistent_supplier_raises_error(self):
+        self.setup_dummy_suppliers(1)
+        self.setup_dummy_service(
+            service_id='1000000000',
+            supplier_id=0,
+            status='published',
+            framework_id=2)
+
+        service = Service.query.filter(Service.service_id == '1000000000').first()
+        service.update_from_json({'supplierId': 999})
+
+        db.session.add(service)
+        with pytest.raises(IntegrityError) as exc:
+            db.session.commit()
+        assert 'insert or update on table "services" violates foreign key constraint' in str(exc.value)
 
     def test_service_serialize_matches_api_stub_response(self):
         # Ensures our dmtestutils.api_model_stubs are kept up to date
