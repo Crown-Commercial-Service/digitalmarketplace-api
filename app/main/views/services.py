@@ -160,9 +160,12 @@ def update_service(service_id):
         service.copied_to_following_framework = update['copiedToFollowingFramework']
 
     updated_service = update_and_validate_service(service, update)
-    audit_type = (
-        AuditTypes.update_service_admin if request.args.get('user-role') == 'admin' else AuditTypes.update_service
-    )
+    if 'supplierId' in update:
+        audit_type = AuditTypes.update_service_supplier
+    else:
+        audit_type = (
+            AuditTypes.update_service_admin if request.args.get('user-role') == 'admin' else AuditTypes.update_service
+        )
 
     commit_and_archive_service(updated_service, update_details, audit_type)
     index_service(updated_service, wait_for_response=convert_to_boolean(request.args.get("wait-for-index", "true")))

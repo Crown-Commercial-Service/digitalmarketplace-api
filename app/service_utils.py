@@ -6,6 +6,7 @@ from .validation import get_validation_errors
 from . import search_api_client, dmapiclient
 from . import db
 
+from dmapiclient.audit import AuditTypes
 from dmutils.errors.api import ValidationError
 
 from .models import ArchivedService, AuditEvent, Framework, Service, Supplier
@@ -115,12 +116,22 @@ def commit_and_archive_service(updated_service, update_details,
         db.session.flush()
 
         audit_data.update({
-            'supplierName': updated_service.supplier.name,
-            'supplierId': updated_service.supplier.supplier_id,
             'serviceId': updated_service.service_id,
             'oldArchivedServiceId': last_archive,
-            'newArchivedServiceId': service_to_archive.id,
+            'newArchivedServiceId': service_to_archive.id
         })
+
+        if audit_type == AuditTypes.update_service_supplier:
+            audit_data.update({
+                'previousSupplierId': service_to_archive.supplier_id,
+                'previousSupplierName': service_to_archive.supplier.name,
+                'supplierId': updated_service.supplier_id
+            })
+        else:
+            audit_data.update({
+                'supplierName': updated_service.supplier.name,
+                'supplierId': updated_service.supplier.supplier_id
+            })
 
         audit = AuditEvent(
             audit_type=audit_type,

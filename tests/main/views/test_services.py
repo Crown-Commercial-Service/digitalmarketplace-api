@@ -489,9 +489,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         payload = load_example_listing("G6-SaaS")
         self.payload_g4 = load_example_listing("G4")
         self.service_id = str(payload['id'])
-        db.session.add(
-            Supplier(supplier_id=1, name=u"Supplier 1")
-        )
+        db.session.add_all([
+            Supplier(supplier_id=1, name=u"Supplier 1"),
+            Supplier(supplier_id=2, name=u"Supplier 2")
+        ])
         db.session.add(
             ContactInformation(
                 supplier_id=1,
@@ -729,6 +730,25 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert updated_auth_controls['assurance'] == 'CESG-assured components'
         assert len(updated_auth_controls['value']) == 1
         assert ('Authentication federation' in updated_auth_controls['value']) is True
+
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_can_change_the_supplier_id_for_a_service(self, index_service):
+        response = self._post_service_update({'supplierId': 2})
+        assert response.status_code == 200
+        assert index_service.called is True
+
+        response = self.client.get('/services/{}'.format(self.service_id))
+        data = json.loads(response.get_data())
+        assert data['services']['supplierId'] == 2
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data())
+
+        assert len(data['auditEvents']) == 1
+        assert data['auditEvents'][0]['type'] == 'update_service_supplier'
+        assert data['auditEvents'][0]['data']['supplierId'] == 2
+        assert data['auditEvents'][0]['data']['previousSupplierId'] == 1
 
     @mock.patch('app.main.views.services.index_service', autospec=True)
     def test_invalid_field_not_accepted_on_update(self, index_service):
