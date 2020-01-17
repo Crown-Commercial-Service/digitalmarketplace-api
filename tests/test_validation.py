@@ -503,233 +503,231 @@ def test_max_price_larger_than_min_does_not_overwrite_previous_errors():
     assert errors == {'developerPriceMax': 'max_less_than_min'}
 
 
-def test_brief_response_essential_requirements():
-    for schema_name in ("brief-responses-digital-outcomes-and-specialists-digital-specialists",
-                        "brief-responses-digital-outcomes-and-specialists-2-digital-specialists"):
-        assert get_validation_errors(
-            schema_name,
+@pytest.mark.parametrize("schema_name", (
+    "brief-responses-digital-outcomes-and-specialists-digital-specialists",
+    "brief-responses-digital-outcomes-and-specialists-2-digital-specialists",
+))
+def test_brief_response_essential_requirements(schema_name):
+    assert get_validation_errors(
+        schema_name,
+        {
+            "availability": "valid start date",
+            "dayRate": "100",
+            "essentialRequirementsMet": True,
+            "essentialRequirements": [
+                {"evidence": "valid evidence"},
+                {"evidence": "word " * 100},
+                {"evidence": "some more valid evidence"},
+                {},
+            ],
+            "niceToHaveRequirements": [
+                {"yesNo": False},
+            ],
+            "respondToEmailAddress": "valid@email.com",
+        },
+    ) == {
+        'essentialRequirements': [
             {
-                "availability": "valid start date",
-                "dayRate": "100",
-                "essentialRequirementsMet": True,
-                "essentialRequirements": [
-                    {"evidence": "valid evidence"},
-                    {"evidence": "word " * 100},
-                    {"evidence": "some more valid evidence"},
-                    {}
-                ],
-                "niceToHaveRequirements": [
-                    {"yesNo": False}
-                ],
-                "respondToEmailAddress": "valid@email.com"
-            }
-        ) == {
-            'essentialRequirements': [
-                {
-                    'error': 'under_100_words',
-                    'field': u'evidence',
-                    'index': 1
-                },
-                {
-                    'error': 'answer_required',
-                    'field': u'evidence',
-                    'index': 3
-                },
-            ]
-        }
+                'error': 'under_100_words',
+                'field': 'evidence',
+                'index': 1,
+            },
+            {
+                'error': 'answer_required',
+                'field': 'evidence',
+                'index': 3,
+            },
+        ],
+    }
 
 
-def test_brief_response_nice_to_have_requirements():
-    for schema_name in ("brief-responses-digital-outcomes-and-specialists-digital-specialists",
-                        "brief-responses-digital-outcomes-and-specialists-2-digital-specialists"):
-        data = {
+@pytest.mark.parametrize("schema_name", (
+    "brief-responses-digital-outcomes-and-specialists-digital-specialists",
+    "brief-responses-digital-outcomes-and-specialists-2-digital-specialists",
+))
+class TestBriefResponseNiceToHaveRequirements:
+    def setup_method(self, method):
+        self.data = {
             "availability": "valid start date",
             "dayRate": "100",
             "essentialRequirementsMet": True,
             "essentialRequirements": [
                 {"evidence": "valid evidence"},
             ],
-            "respondToEmailAddress": "valid@email.com"
+            "respondToEmailAddress": "valid@email.com",
         }
 
-        # Nice-to-have requirements are optional.
-        assert not get_validation_errors(schema_name, data)
+    def test_nice_to_have_optional(self, schema_name):
+        assert not get_validation_errors(schema_name, self.data)
 
-        data["niceToHaveRequirements"] = [
+    def test_error_messages(self, schema_name):
+        self.data["niceToHaveRequirements"] = [
             {},
             {"yesNo": True, "evidence": "valid evidence"},
             {"yesNo": True, "evidence": "word " * 100},
             {"yesNo": True},
             {"yesNo": False},
-            {"yesNo": False, "evidence": "shouldnt be here"}
+            {"yesNo": False, "evidence": "shouldnt be here"},
         ]
-        error_messages = get_validation_errors(schema_name, data)["niceToHaveRequirements"]
-        assert error_messages[:3] == [
+        assert get_validation_errors(schema_name, self.data)["niceToHaveRequirements"] == [
             {
                 'error': 'answer_required',
-                'field': u'yesNo',
+                'field': 'yesNo',
                 'index': 0
             },
             {
                 'error': 'under_100_words',
-                'field': u'evidence',
+                'field': 'evidence',
                 'index': 2
             },
             {
                 'error': 'answer_required',
-                'field': u'evidence',
+                'field': 'evidence',
                 'index': 3
-            }
+            },
+            {
+                'error': (
+                    # python 3.6+ guarantees consistent dict ordering
+                    "{'yesNo': False, 'evidence': 'shouldnt be here'} is not valid under any of the given schemas"
+                ),
+                'index': 5,
+            },
         ]
-        assert error_messages[3]["index"] == 5
-        # Python 3 dictionary ordering is unpredicatable so we have to cover both possible orders as it is converted to
-        # a string
-        assert error_messages[3]["error"] in [
-            "{'yesNo': False, 'evidence': 'shouldnt be here'} is not valid under any of the given schemas",
-            "{'evidence': 'shouldnt be here', 'yesNo': False} is not valid under any of the given schemas"
-        ]
-        assert len(error_messages) == 4
 
-        # Purely boolean nice to have requirements
-        data["niceToHaveRequirements"] = [True, True, True]
-        error_messages = get_validation_errors(schema_name, data)["niceToHaveRequirements"]
-        assert "True is not of type" in error_messages
-        assert "object" in error_messages
+    def test_pure_booleans(self, schema_name):
+        self.data["niceToHaveRequirements"] = [True, True, True]
+        assert get_validation_errors(schema_name, self.data)["niceToHaveRequirements"] == "True is not of type 'object'"
 
-        # Mix of dict and boolean nice to have requirements
-        data["niceToHaveRequirements"] = [
+    def test_dict_bool_mix(self, schema_name):
+        self.data["niceToHaveRequirements"] = [
             {"yesNo": False, "evidence": "shouldnt be here"},
             True,
             {'yesNo': False},
-            {"yesNo": False, "evidence": "shouldnt be here"}
+            {"yesNo": False, "evidence": "shouldnt be here"},
         ]
-        error_messages = get_validation_errors(schema_name, data)["niceToHaveRequirements"]
-        assert "True is not of type" in error_messages
-        assert "object" in error_messages
+        assert get_validation_errors(schema_name, self.data)["niceToHaveRequirements"] == "True is not of type 'object'"
 
 
-def test_g9_followup_questions():
-
-    def check(schema, required_fields, data, errors):
-        api_errors = get_validation_errors(
-            schema_name, data, enforce_required=False, required_fields=required_fields)
-
-        assert api_errors == errors
-
-    for schema_name in ("services-g-cloud-9-cloud-software", "services-g-cloud-9-cloud-hosting"):
-
-        # Valid responses for boolean question with followup
-
-        check(schema_name, ["freeVersionTrial"], {
-            "freeVersionTrialOption": False
-        }, {})
-
-        check(schema_name, ["freeVersionTrialOption"], {
+@pytest.mark.parametrize("schema_name", ("services-g-cloud-9-cloud-software", "services-g-cloud-9-cloud-hosting"))
+@pytest.mark.parametrize("required_fields,input_data,expected_errors", (
+    # Valid responses for boolean question with followup:
+    (["freeVersionTrial"], {"freeVersionTrialOption": False}, {}),
+    (
+        ["freeVersionTrialOption"],
+        {
             "freeVersionTrialOption": True,
             "freeVersionDescription": "description",
             "freeVersionLink": "https://gov.uk",
-        }, {})
-
-        # Missing followup answers
-
-        check(schema_name, ["freeVersionTrialOption"], {
-            "freeVersionTrialOption": True,
-        }, {
-            "freeVersionDescription": "answer_required",
-        })
-
-        check(schema_name, ["freeVersionTrialOption"], {
-            "freeVersionTrialOption": True,
-            "freeVersionLink": "https://gov.uk",
-        }, {
-            "freeVersionDescription": "answer_required",
-        })
-
-        # Missing followup question is not required if it's optional
-
-        check(schema_name, ["freeVersionTrialOption"], {
-            "freeVersionTrialOption": True,
-            "freeVersionDescription": "description",
-        }, {})
-
-        # Followup answers when none should be present. These return the original
-        # schema error since they shouldn't happen when request is coming from the
-        # frontend app so we don't need to display an error message.
-
-        data = {
+        },
+        {},
+    ),
+    # Missing followup answers:
+    (
+        ["freeVersionTrialOption"],
+        {"freeVersionTrialOption": True},
+        {"freeVersionDescription": "answer_required"},
+    ),
+    (
+        ["freeVersionTrialOption"],
+        {"freeVersionTrialOption": True, "freeVersionLink": "https://gov.uk"},
+        {"freeVersionDescription": "answer_required"},
+    ),
+    # Missing followup question is not required if it's optional:
+    (
+        ["freeVersionTrialOption"],
+        {"freeVersionTrialOption": True, "freeVersionDescription": "description"},
+        {},
+    ),
+    # Followup answers when none should be present. These return the original
+    # schema error since they shouldn't happen when request is coming from the
+    # frontend app so we don't need to display an error message.
+    (
+        ["freeVersionTrialOption"],
+        {
             "freeVersionTrialOption": False,
             "freeVersionLink": "https://gov.uk",
-        }
-        check(schema_name, ["freeVersionTrialOption"], data, {
-            '_form': [u'{} is not valid under any of the given schemas'.format(data)]
-        })
-
-        data = {
+        },
+        {'_form': ['{} is not valid under any of the given schemas'.format({
+            "freeVersionTrialOption": False,
+            "freeVersionLink": "https://gov.uk",
+        })]},
+    ),
+    (
+        ["freeVersionTrialOption"],
+        {
             "freeVersionTrialOption": False,
             "freeVersionDescription": "description",
-        }
-        check(schema_name, ["freeVersionTrialOption"], data, {
-            '_form': [u'{} is not valid under any of the given schemas'.format(data)]
-        })
-
-        # Followup answers when the original question answer is missing
-
-        check(schema_name, ["freeVersionTrialOption"], {
+        },
+        {'_form': [u'{} is not valid under any of the given schemas'.format({
+            "freeVersionTrialOption": False,
             "freeVersionDescription": "description",
-            "freeVersionLink": "https://gov.uk",
-        }, {"freeVersionTrialOption": "answer_required"})
-
-        # Valid responses for checkbox question with followups
-
-        check(schema_name, ["securityGovernanceStandards"], {
-            "securityGovernanceAccreditation": True,
-            "securityGovernanceStandards": ["csa_ccm"]
-        }, {})
-
-        check(schema_name, ["securityGovernanceStandards"], {
-            "securityGovernanceAccreditation": False,
-            "securityGovernanceApproach": "some other approach"
-        }, {})
-
-        check(schema_name, ["securityGovernanceStandards"], {
+        })]},
+    ),
+    # Followup answers when the original question answer is missing
+    (
+        ["freeVersionTrialOption"],
+        {"freeVersionDescription": "description", "freeVersionLink": "https://gov.uk"},
+        {"freeVersionTrialOption": "answer_required"},
+    ),
+    # Valid responses for checkbox question with followups
+    (
+        ["securityGovernanceStandards"],
+        {"securityGovernanceAccreditation": True, "securityGovernanceStandards": ["csa_ccm"]},
+        {},
+    ),
+    (
+        ["securityGovernanceStandards"],
+        {"securityGovernanceAccreditation": False, "securityGovernanceApproach": "some other approach"},
+        {},
+    ),
+    (
+        ["securityGovernanceStandards"],
+        {
             "securityGovernanceAccreditation": True,
             "securityGovernanceStandards": ["csa_ccm", "other"],
-            "securityGovernanceStandardsOther": "some other standards"
-        }, {})
-
-        # Missing followup answers for checkbox question
-
-        check(schema_name, ["securityGovernanceStandards"], {
-            "securityGovernanceAccreditation": True,
-            "securityGovernanceStandards": ["csa_ccm", "other"]
-        }, {
-            "securityGovernanceStandardsOther": "answer_required"
-        })
-
-        # Followup answers when none should be present
-
-        data = {
+            "securityGovernanceStandardsOther": "some other standards",
+        },
+        {},
+    ),
+    # Missing followup answers for checkbox question
+    (
+        ["securityGovernanceStandards"],
+        {"securityGovernanceAccreditation": True, "securityGovernanceStandards": ["csa_ccm", "other"]},
+        {"securityGovernanceStandardsOther": "answer_required"},
+    ),
+    # Followup answers when none should be present
+    (
+        ["securityGovernanceStandards"],
+        {
             "securityGovernanceAccreditation": True,
             "securityGovernanceStandards": ["csa_ccm"],
-            "securityGovernanceStandardsOther": "some other standards"
-        }
-        check(schema_name, ["securityGovernanceStandards"], data, {
-            "_form": [u'{} is not valid under any of the given schemas'.format(data)]
-        })
-
-        # Followup answers when the original question answer is missing
-
-        check(schema_name, ["securityGovernanceAccreditation"], {
-            "securityGovernanceStandards": ["csa_ccm"]
-        }, {
-            "securityGovernanceAccreditation": "answer_required"
-        })
-
-        check(schema_name, ["securityGovernanceStandards"], {
-            "securityGovernanceStandardsOther": "some other standards"
-        }, {
-            "securityGovernanceStandards": "answer_required"
-        })
+            "securityGovernanceStandardsOther": "some other standards",
+        },
+        {"_form": [u'{} is not valid under any of the given schemas'.format({
+            "securityGovernanceAccreditation": True,
+            "securityGovernanceStandards": ["csa_ccm"],
+            "securityGovernanceStandardsOther": "some other standards",
+        })]},
+    ),
+    # Followup answers when the original question answer is missing
+    (
+        ["securityGovernanceAccreditation"],
+        {"securityGovernanceStandards": ["csa_ccm"]},
+        {"securityGovernanceAccreditation": "answer_required"},
+    ),
+    (
+        ["securityGovernanceStandards"],
+        {"securityGovernanceStandardsOther": "some other standards"},
+        {"securityGovernanceStandards": "answer_required"},
+    ),
+))
+def test_g9_followup_questions(schema_name, required_fields, input_data, expected_errors):
+    assert get_validation_errors(
+        schema_name,
+        input_data,
+        enforce_required=False,
+        required_fields=required_fields,
+    ) == expected_errors
 
 
 def test_api_type_is_optional():
