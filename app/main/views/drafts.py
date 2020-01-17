@@ -455,7 +455,8 @@ def create_new_draft_service():
         lot=lot,
         supplier=supplier,
         data=draft_json,
-        status="not-submitted"
+        status="not-submitted",
+        lot_one_service_limit=lot.one_service_limit,
     )
 
     validate_service_data(draft, enforce_required=False, required_fields=page_questions)

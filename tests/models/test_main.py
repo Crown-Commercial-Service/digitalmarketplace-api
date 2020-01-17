@@ -2200,6 +2200,7 @@ class TestDraftService(BaseApplicationTest, FixtureMixin):
             status="enabled",
             created_at="2017-04-07T12:34:00.000000Z",
             updated_at="2017-05-08T13:24:00.000000Z",
+            lot_one_service_limit=Lot.query.get(9).one_service_limit,
         )
         db.session.add(draft_service)
         db.session.commit()

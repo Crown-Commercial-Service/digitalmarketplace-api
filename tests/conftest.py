@@ -76,7 +76,8 @@ def draft_service(request, app, supplier_framework):
             data={},
             status='submitted',
             updated_at=datetime.now(),
-            created_at=datetime.now()
+            created_at=datetime.now(),
+            lot_one_service_limit=lot.one_service_limit,
         )
         db.session.add(fl)
         db.session.add(ds)

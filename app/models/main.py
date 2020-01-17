@@ -1221,6 +1221,13 @@ class DraftService(db.Model, ServiceTableMixin):
     service_id = db.Column(db.String, index=True, unique=False, nullable=True,
                            default=None)
 
+    # this column will enforce its consistency with the related lot's one_service_limit, but will *not* auto-populate
+    # itself. must be initialized on DraftService creation.
+    lot_one_service_limit = db.Column(
+        db.Boolean,
+        nullable=True,
+    )
+
     @staticmethod
     def from_service(service, questions_to_copy=None, target_framework_id=None):
         draft_not_on_same_framework_as_service = target_framework_id and target_framework_id != service.framework.id
@@ -1237,6 +1244,7 @@ class DraftService(db.Model, ServiceTableMixin):
             } if draft_not_on_same_framework_as_service else service.data,
             'status': service.status if not target_framework_id or
             target_framework_id == service.framework.id else 'not-submitted',
+            'lot_one_service_limit': service.lot.one_service_limit,
         }
 
         if draft_not_on_same_framework_as_service:
@@ -1266,6 +1274,7 @@ class DraftService(db.Model, ServiceTableMixin):
             supplier=self.supplier,
             data=data,
             status='not-submitted',
+            lot_one_service_limit=self.lot.one_service_limit,
         )
 
     def serialize(self):

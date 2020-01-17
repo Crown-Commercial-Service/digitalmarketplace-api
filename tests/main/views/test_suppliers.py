@@ -6,7 +6,7 @@ import pytest
 
 from app import db
 from app.models import Supplier, ContactInformation, AuditEvent, \
-    SupplierFramework, Framework, FrameworkAgreement, DraftService, Service
+    SupplierFramework, Framework, FrameworkAgreement, DraftService, Service, Lot
 from mock import mock
 from sqlalchemy.exc import DataError, IntegrityError
 from tests.bases import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin
@@ -1731,7 +1731,8 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                 service_id="0987654321",
                 supplier_id=1,
                 data={},
-                status='not-submitted'
+                status='not-submitted',
+                lot_one_service_limit=Lot.query.get(1).one_service_limit,
             ),
             DraftService(
                 framework_id=1,
@@ -1739,7 +1740,8 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                 service_id="1234567890",
                 supplier_id=1,
                 data={},
-                status='submitted'
+                status='submitted',
+                lot_one_service_limit=Lot.query.get(2).one_service_limit,
             ),
             Service(
                 framework_id=1,
@@ -1747,7 +1749,7 @@ class TestGetSupplierFrameworks(BaseApplicationTest):
                 service_id="1234567890",
                 supplier_id=2,
                 data={},
-                status='published'
+                status='published',
             )
         ])
         db.session.commit()
