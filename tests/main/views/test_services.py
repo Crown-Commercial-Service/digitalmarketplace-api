@@ -733,13 +733,15 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
     @mock.patch('app.main.views.services.index_service', autospec=True)
     def test_can_change_the_supplier_id_for_a_service(self, index_service):
-        response = self._post_service_update({'supplierId': 2})
+        response = self._post_service_update({'supplierId': 2, 'foo': 'bar'})
         assert response.status_code == 200
         assert index_service.called is True
 
         response = self.client.get('/services/{}'.format(self.service_id))
         data = json.loads(response.get_data())
         assert data['services']['supplierId'] == 2
+        # Other fields are ignored
+        assert 'foo' not in data['services'].keys()
 
         audit_response = self.client.get('/audit-events')
         assert audit_response.status_code == 200
@@ -749,6 +751,8 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert data['auditEvents'][0]['type'] == 'update_service_supplier'
         assert data['auditEvents'][0]['data']['supplierId'] == 2
         assert data['auditEvents'][0]['data']['previousSupplierId'] == 1
+        # Other fields are ignored
+        assert 'foo' not in data['auditEvents'][0]['data'].keys()
 
     @mock.patch('app.main.views.services.index_service', autospec=True)
     def test_invalid_field_not_accepted_on_update(self, index_service):
