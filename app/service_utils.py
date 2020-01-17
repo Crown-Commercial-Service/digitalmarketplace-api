@@ -122,6 +122,8 @@ def commit_and_archive_service(updated_service, update_details,
         })
 
         if audit_type == AuditTypes.update_service_supplier:
+            # The updated_service.supplier.supplier_id foreign key won't be updated
+            # until the commit() below, so use the updated .supplier_id attribute
             audit_data.update({
                 'previousSupplierId': service_to_archive.supplier_id,
                 'previousSupplierName': service_to_archive.supplier.name,
