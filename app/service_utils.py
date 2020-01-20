@@ -16,6 +16,11 @@ def validate_and_return_service_request(service_id):
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['services'])
     json_has_matching_id(json_payload['services'], service_id)
+
+    if 'supplierId' in json_payload['services']:
+        if len(json_payload['services'].keys()) > 1:
+            abort(400, "Cannot update supplierID and other fields at the same time")
+
     return json_payload['services']
 
 

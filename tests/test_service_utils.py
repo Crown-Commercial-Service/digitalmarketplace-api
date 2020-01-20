@@ -1,10 +1,36 @@
 import mock
 
 import pytest
+from werkzeug.exceptions import BadRequest
 
 from tests.bases import BaseApplicationTest
-from app.service_utils import index_service, delete_service_from_index
+from app.service_utils import index_service, delete_service_from_index, validate_and_return_service_request
 from app.models import Service, Framework
+
+
+@mock.patch('app.service_utils.get_json_from_request')
+class TestValidateAndReturnServiceJSON(BaseApplicationTest):
+    def test_service_request_accepts_supplier_id_on_its_own(self, get_json_from_request):
+        get_json_from_request.return_value = {
+            'services': {
+                'supplierId': 12345
+            }
+        }
+        assert validate_and_return_service_request('any_service_id') == {
+            'supplierId': 12345
+        }
+
+    def test_service_request_invalid_if_supplier_id_and_other_fields(self, get_json_from_request):
+        get_json_from_request.return_value = {
+            'services': {
+                'supplierId': 12345,
+                'foo': 'bar'
+            }
+        }
+        with pytest.raises(BadRequest) as exc:
+            validate_and_return_service_request('any_service_id')
+        assert exc.value.code == 400
+        assert str(exc.value) == "400 Bad Request: Cannot update supplierID and other fields at the same time"
 
 
 @mock.patch('app.service_utils.index_object', autospec=True)
