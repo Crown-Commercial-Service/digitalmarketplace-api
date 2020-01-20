@@ -730,6 +730,41 @@ def test_g9_followup_questions(schema_name, required_fields, input_data, expecte
     ) == expected_errors
 
 
+@pytest.mark.parametrize("required_fields,input_data,expected_errors", (
+    (
+        ["openStandardsPrinciples", "dataProtocols"],
+        {
+            "openStandardsPrinciples": True,
+            "dataProtocols": True,
+            "designerPriceMax": "900",
+        },
+        {},
+    ),
+    # by including designerPriceMax in the required_fields we're stating that its dependencies must also be satisfied
+    (
+        ["openStandardsPrinciples", "dataProtocols", "designerPriceMax"],
+        {
+            "openStandardsPrinciples": True,
+            "dataProtocols": True,
+            "designerPriceMax": "900",
+        },
+        {
+            'designerAccessibleApplications': 'answer_required',
+            'designerLocations': 'answer_required',
+            'designerPriceMin': 'answer_required',
+        },
+    ),
+))
+def test_dos4_dependent_questions(required_fields, input_data, expected_errors):
+    # specifically dos4 services because they have "dependencies"
+    assert get_validation_errors(
+        "services-digital-outcomes-and-specialists-4-digital-specialists",
+        input_data,
+        enforce_required=False,
+        required_fields=required_fields,
+    ) == expected_errors
+
+
 def test_api_type_is_optional():
     data = load_example_listing("G6-PaaS")
     del data["apiType"]

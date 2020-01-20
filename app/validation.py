@@ -50,6 +50,11 @@ def get_validator(schema_name, enforce_required=True, required_fields=None):
             field for field in schema.get('required', [])
             if field in required_fields
         ]
+        schema['dependencies'] = {
+            k: v
+            for k, v in schema.get('dependencies', {}).items()
+            if k in required_fields
+        }
         schema.pop('anyOf', None)
     return validator_for(schema)(schema, format_checker=FORMAT_CHECKER)
 
