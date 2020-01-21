@@ -29,7 +29,7 @@ class TestValidateAndReturnServiceJSON(BaseApplicationTest):
         assert exc.value.code == 400
         assert str(exc.value) == "400 Bad Request: id parameter must match id in data"
 
-    def test_service_request_accepts_multiple_non_supplier_id_fields(self, get_json_from_request):
+    def test_service_request_happy_path(self, get_json_from_request):
         get_json_from_request.return_value = {
             'services': {
                 'foo': 'bar',
@@ -40,28 +40,6 @@ class TestValidateAndReturnServiceJSON(BaseApplicationTest):
             'foo': 'bar',
             'baz': 'bork'
         }
-
-    def test_service_request_accepts_supplier_id_on_its_own(self, get_json_from_request):
-        get_json_from_request.return_value = {
-            'services': {
-                'supplierId': 12345
-            }
-        }
-        assert validate_and_return_service_request('any_service_id') == {
-            'supplierId': 12345
-        }
-
-    def test_service_request_invalid_if_supplier_id_and_other_fields(self, get_json_from_request):
-        get_json_from_request.return_value = {
-            'services': {
-                'supplierId': 12345,
-                'foo': 'bar'
-            }
-        }
-        with pytest.raises(BadRequest) as exc:
-            validate_and_return_service_request('any_service_id')
-        assert exc.value.code == 400
-        assert str(exc.value) == "400 Bad Request: Cannot update supplierID and other fields at the same time"
 
 
 @mock.patch('app.service_utils.index_object', autospec=True)
