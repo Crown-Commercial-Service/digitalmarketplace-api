@@ -159,8 +159,10 @@ def update_service(service_id):
             abort(400, "Invalid value for 'copiedToFollowingFramework' supplied")
         service.copied_to_following_framework = update['copiedToFollowingFramework']
 
-    if 'supplierId' in update:
+    if 'supplierId' in update and update['supplierId'] != service.supplier_id:
         audit_type = AuditTypes.update_service_supplier
+        if len(update.keys()) > 1:
+            abort(400, "Cannot update supplierID and other fields at the same time")
         # Discard any other updates
         update = {
             'supplierId': update['supplierId']

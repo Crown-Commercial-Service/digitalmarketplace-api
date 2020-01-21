@@ -715,7 +715,8 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def test_can_post_a_valid_service_update_with_object(self, index_service):
         identity_authentication_controls = {
             "value": ["Authentication federation"],
-            "assurance": "CESG-assured components"
+            "assurance": "CESG-assured components",
+            "supplierId": 1  # Supplier ID has not changed
         }
         response = self._post_service_update({'identityAuthenticationControls': identity_authentication_controls})
         assert response.status_code == 200
@@ -733,7 +734,7 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
 
     @mock.patch('app.main.views.services.index_service', autospec=True)
     def test_can_change_the_supplier_id_for_a_service(self, index_service):
-        response = self._post_service_update({'supplierId': 2, 'foo': 'bar'})
+        response = self._post_service_update({'supplierId': 2})
         assert response.status_code == 200
         assert index_service.called is True
 
@@ -753,6 +754,27 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert data['auditEvents'][0]['data']['previousSupplierId'] == 1
         # Other fields are ignored
         assert 'foo' not in data['auditEvents'][0]['data'].keys()
+
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_updating_both_supplier_id_and_other_service_attributes_raises_error(self, index_service):
+        response = self._post_service_update({
+            'supplierId': 2,
+            'foo': 'bar'
+        })
+        assert response.status_code == 400
+        assert "Cannot update supplierID and other fields at the same time" in response.get_data(as_text=True)
+        assert index_service.called is False
+
+        response = self.client.get('/services/{}'.format(self.service_id))
+        data = json.loads(response.get_data())
+        # No updates made
+        assert data['services']['supplierId'] == 1
+        assert 'foo' not in data['services']
+
+        # No audit events created
+        audit_response = self.client.get('/audit-events')
+        data = json.loads(audit_response.get_data())
+        assert len(data['auditEvents']) == 0
 
     @mock.patch('app.main.views.services.index_service', autospec=True)
     def test_invalid_field_not_accepted_on_update(self, index_service):
