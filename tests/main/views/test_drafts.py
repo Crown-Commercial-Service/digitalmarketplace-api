@@ -2046,7 +2046,7 @@ class TestDOSServices(BaseApplicationTest, FixtureMixin):
                 # missing "developerLocations"
                 "dataProtocols": True,
                 "developerPriceMin": "1"},
-            page_questions=[]
+            page_questions=["dataProtocols", "developerPriceMin"],
         )
         data = json.loads(update.get_data())
         for key in ['developerLocations', 'developerPriceMax']:
