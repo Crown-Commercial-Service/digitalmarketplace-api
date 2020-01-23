@@ -732,9 +732,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert len(updated_auth_controls['value']) == 1
         assert ('Authentication federation' in updated_auth_controls['value']) is True
 
+    @pytest.mark.parametrize('posted_supplier_id', (2, "2"))
     @mock.patch('app.main.views.services.index_service', autospec=True)
-    def test_can_change_the_supplier_id_for_a_service(self, index_service):
-        response = self._post_service_update({'supplierId': 2})
+    def test_can_change_the_supplier_id_for_a_service(self, index_service, posted_supplier_id):
+        response = self._post_service_update({'supplierId': posted_supplier_id})
         assert response.status_code == 200
         assert index_service.called is True
 
