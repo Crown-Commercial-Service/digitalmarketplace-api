@@ -3,7 +3,7 @@
 # with package version changes made in requirements-app.txt
 
 git+https://github.com/alphagov/digitalmarketplace-utils.git@51.0.0#egg=digitalmarketplace-utils==51.0.0
-git+https://github.com/alphagov/digitalmarketplace-apiclient.git@21.4.1#egg=digitalmarketplace-apiclient==21.4.1
+git+https://github.com/alphagov/digitalmarketplace-apiclient.git@21.5.0#egg=digitalmarketplace-apiclient==21.5.0
 
 Flask==1.0.4 # pyup: >=1.0.0,<1.1.0
 Flask-Bcrypt==0.7.1

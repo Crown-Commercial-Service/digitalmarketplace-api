@@ -159,10 +159,19 @@ def update_service(service_id):
             abort(400, "Invalid value for 'copiedToFollowingFramework' supplied")
         service.copied_to_following_framework = update['copiedToFollowingFramework']
 
+    if 'supplierId' in update and int(update['supplierId']) != service.supplier_id:
+        audit_type = AuditTypes.update_service_supplier
+        if len(update.keys()) > 1:
+            abort(400, "Cannot update supplierID and other fields at the same time")
+        # Discard any other updates
+        update = {
+            'supplierId': int(update['supplierId'])
+        }
+    else:
+        audit_type = (
+            AuditTypes.update_service_admin if request.args.get('user-role') == 'admin' else AuditTypes.update_service
+        )
     updated_service = update_and_validate_service(service, update)
-    audit_type = (
-        AuditTypes.update_service_admin if request.args.get('user-role') == 'admin' else AuditTypes.update_service
-    )
 
     commit_and_archive_service(updated_service, update_details, audit_type)
     index_service(updated_service, wait_for_response=convert_to_boolean(request.args.get("wait-for-index", "true")))

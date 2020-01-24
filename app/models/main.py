@@ -1146,6 +1146,10 @@ class ServiceTableMixin(object):
         current_data = dict(self.data.items())
         current_data.update(data)
 
+        # Enables us to transfer services between suppliers
+        if 'supplierId' in data:
+            self.supplier_id = data['supplierId']
+
         self.data = current_data
 
     def __repr__(self):

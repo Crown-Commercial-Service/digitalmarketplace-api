@@ -489,9 +489,10 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         payload = load_example_listing("G6-SaaS")
         self.payload_g4 = load_example_listing("G4")
         self.service_id = str(payload['id'])
-        db.session.add(
-            Supplier(supplier_id=1, name=u"Supplier 1")
-        )
+        db.session.add_all([
+            Supplier(supplier_id=1, name=u"Supplier 1"),
+            Supplier(supplier_id=2, name=u"Supplier 2")
+        ])
         db.session.add(
             ContactInformation(
                 supplier_id=1,
@@ -714,7 +715,8 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     def test_can_post_a_valid_service_update_with_object(self, index_service):
         identity_authentication_controls = {
             "value": ["Authentication federation"],
-            "assurance": "CESG-assured components"
+            "assurance": "CESG-assured components",
+            "supplierId": 1  # Supplier ID has not changed
         }
         response = self._post_service_update({'identityAuthenticationControls': identity_authentication_controls})
         assert response.status_code == 200
@@ -729,6 +731,51 @@ class TestPostService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
         assert updated_auth_controls['assurance'] == 'CESG-assured components'
         assert len(updated_auth_controls['value']) == 1
         assert ('Authentication federation' in updated_auth_controls['value']) is True
+
+    @pytest.mark.parametrize('posted_supplier_id', (2, "2"))
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_can_change_the_supplier_id_for_a_service(self, index_service, posted_supplier_id):
+        response = self._post_service_update({'supplierId': posted_supplier_id})
+        assert response.status_code == 200
+        assert index_service.called is True
+
+        response = self.client.get('/services/{}'.format(self.service_id))
+        data = json.loads(response.get_data())
+        assert data['services']['supplierId'] == 2
+        # Other fields are ignored
+        assert 'foo' not in data['services'].keys()
+
+        audit_response = self.client.get('/audit-events')
+        assert audit_response.status_code == 200
+        data = json.loads(audit_response.get_data())
+
+        assert len(data['auditEvents']) == 1
+        assert data['auditEvents'][0]['type'] == 'update_service_supplier'
+        assert data['auditEvents'][0]['data']['supplierId'] == 2
+        assert data['auditEvents'][0]['data']['previousSupplierId'] == 1
+        # Other fields are ignored
+        assert 'foo' not in data['auditEvents'][0]['data'].keys()
+
+    @mock.patch('app.main.views.services.index_service', autospec=True)
+    def test_updating_both_supplier_id_and_other_service_attributes_raises_error(self, index_service):
+        response = self._post_service_update({
+            'supplierId': 2,
+            'foo': 'bar'
+        })
+        assert response.status_code == 400
+        assert "Cannot update supplierID and other fields at the same time" in response.get_data(as_text=True)
+        assert index_service.called is False
+
+        response = self.client.get('/services/{}'.format(self.service_id))
+        data = json.loads(response.get_data())
+        # No updates made
+        assert data['services']['supplierId'] == 1
+        assert 'foo' not in data['services']
+
+        # No audit events created
+        audit_response = self.client.get('/audit-events')
+        data = json.loads(audit_response.get_data())
+        assert len(data['auditEvents']) == 0
 
     @mock.patch('app.main.views.services.index_service', autospec=True)
     def test_invalid_field_not_accepted_on_update(self, index_service):
