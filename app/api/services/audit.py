@@ -31,6 +31,7 @@ class AuditService(Service):
 class AuditTypes(Enum):
     update_price = 'update_price'
     sent_closed_brief_email = 'sent_closed_brief_email'
+    sent_opportunity_closed_early_email = 'sent_opportunity_closed_early_email'
     update_brief_response = 'update_brief_response'
     update_brief_response_contact = 'update_brief_response_contact'
     update_application = 'update_application'
@@ -48,6 +49,7 @@ class AuditTypes(Enum):
     create_brief_response = 'create_brief_response'
     read_brief_responses = 'read_brief_responses'
     add_brief_clarification_question = 'add_brief_clarification_question'
+    close_opportunity_early = 'close_opportunity_early'
     delete_brief = 'delete_brief'
     seller_requested_feedback_from_buyer_email = 'seller_requested_feedback_from_buyer_email'
     seller_to_review_pricing_case_study_email = 'seller_to_review_pricing_case_study_email'

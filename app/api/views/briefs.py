@@ -71,6 +71,8 @@ from ...models import (AuditEvent, Brief, BriefResponse, Framework, Supplier,
                        BriefQuestion, BriefResponseDownload)
 from ...utils import get_json_from_request
 
+from app.api.business.errors import BriefError, NotFoundError, UnauthorisedError
+
 
 def _can_do_brief_response(brief_id, update_only=False):
     try:
@@ -751,6 +753,24 @@ def update_brief(brief_id):
     return jsonify(brief.serialize(with_users=False))
 
 
+@api.route('/brief/<int:brief_id>/close', methods=['POST'])
+@exception_logger
+@login_required
+@permissions_required('publish_opportunities')
+@role_required('buyer')
+def close_opportunity_early(brief_id):
+    try:
+        brief = brief_overview_business.close_opportunity_early(current_user, brief_id)
+    except NotFoundError as e:
+        not_found(e.message)
+    except UnauthorisedError as e:
+        forbidden(e.message)
+    except BriefError as e:
+        abort(e.message)
+
+    return jsonify(brief.serialize(with_users=False))
+
+
 @api.route('/brief/<int:brief_id>', methods=['DELETE'])
 @login_required
 @role_required('buyer')
@@ -981,6 +1001,7 @@ def get_brief_responses(brief_id):
 
     return jsonify(brief=brief.serialize(with_users=False, with_author=False),
                    briefResponses=brief_responses,
+                   canCloseOpportunity=brief_overview_business.can_close_opportunity_early(brief),
                    oldWorkOrderCreator=old_work_order_creator,
                    questionsAsked=questions_asked,
                    briefResponseDownloaded=brief_response_downloaded,
@@ -1117,7 +1138,7 @@ def download_brief_attachment(brief_id, slug):
         (
             current_user.role == 'buyer' or (
                 current_user.role == 'supplier' and
-                _can_do_brief_response(brief_id)
+                _can_do_brief_response(brief_id, update_only=True)
             )
         )
     ):

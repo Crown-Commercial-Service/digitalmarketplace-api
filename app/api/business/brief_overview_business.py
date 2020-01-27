@@ -1,6 +1,77 @@
+import rollbar
 from flask_login import current_user
+
 from app.api.business.agreement_business import use_old_work_order_creator
+from app.api.business.errors import (BriefError, NotFoundError,
+                                     UnauthorisedError)
+from app.api.services import (audit_service, audit_types,
+                              brief_responses_service, briefs)
+from app.emails import send_opportunity_closed_early_email
+from app.tasks import publish_tasks
+from app.tasks.s3 import create_responses_zip
 from app.validation import get_sections as get_validation_sections
+
+
+def can_close_opportunity_early(brief):
+    seller_selector = brief.data.get('sellerSelector', '')
+    invited_sellers = brief.data.get('sellers', {}).keys()
+    number_of_candidates = int(brief.data.get('numberOfSuppliers', 0))
+
+    if brief.status == 'live' and len(invited_sellers) == 1 and (
+        (brief.lot.slug in ['rfx', 'training2'] and seller_selector == 'oneSeller') or
+        (brief.lot.slug == 'specialist' and seller_selector == 'someSellers')
+    ):
+        invited_seller_code = int(invited_sellers.pop())
+        response_count = brief_responses_service.find(
+            brief_id=brief.id,
+            supplier_code=invited_seller_code,
+            status='submitted'
+        ).count()
+
+        if brief.lot.slug in ['rfx', 'training2'] and response_count == 1:
+            return True
+
+        if brief.lot.slug == 'specialist' and response_count == number_of_candidates:
+            return True
+
+    return False
+
+
+def close_opportunity_early(current_user, brief_id):
+    brief = briefs.get(brief_id)
+    if not brief:
+        raise NotFoundError('Opportunity {} does not exist'.format(brief_id))
+
+    if not briefs.has_permission_to_brief(current_user.id, brief_id):
+        raise UnauthorisedError('Not authorised to close opportunity {}'.format(brief_id))
+
+    if not can_close_opportunity_early(brief):
+        raise BriefError('Unable to close opportunity {}'.format(brief_id))
+
+    brief = briefs.close_opportunity_early(brief)
+    create_responses_zip(brief.id)
+    send_opportunity_closed_early_email(brief, current_user)
+
+    try:
+        audit_service.log_audit_event(
+            audit_type=audit_types.close_opportunity_early,
+            data={
+                'briefId': brief.id
+            },
+            db_object=brief,
+            user=current_user.email_address
+        )
+
+        publish_tasks.brief.delay(
+            publish_tasks.compress_brief(brief),
+            'closed_early',
+            email_address=current_user.email_address,
+            name=current_user.name
+        )
+    except Exception as e:
+        rollbar.report_exc_info()
+
+    return brief
 
 
 def get_path_for_brief_link(brief, link, paths=None):
