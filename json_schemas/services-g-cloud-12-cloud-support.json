@@ -1,0 +1,1255 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "planningService": {
+              "enum": [
+                false
+              ]
+            },
+            "planningServiceDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "planningService": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "planningService",
+            "planningServiceDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "planningService": {
+              "enum": [
+                false
+              ]
+            },
+            "planningServiceCompatibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "planningService": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "planningService",
+            "planningServiceCompatibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "planningServiceCompatibility": {
+              "enum": [
+                false
+              ]
+            },
+            "planningServiceCompatibilityList": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "planningServiceCompatibility": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "planningServiceCompatibility",
+            "planningServiceCompatibilityList"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "setupAndMigrationService": {
+              "enum": [
+                false
+              ]
+            },
+            "setupAndMigrationServiceDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "setupAndMigrationService": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "setupAndMigrationService",
+            "setupAndMigrationServiceDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "setupAndMigrationService": {
+              "enum": [
+                false
+              ]
+            },
+            "setupAndMigrationServiceSpecific": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "setupAndMigrationService": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "setupAndMigrationService",
+            "setupAndMigrationServiceSpecific"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "setupAndMigrationServiceSpecific": {
+              "enum": [
+                false
+              ]
+            },
+            "setupAndMigrationServiceSpecificList": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "setupAndMigrationServiceSpecific": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "setupAndMigrationServiceSpecific",
+            "setupAndMigrationServiceSpecificList"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "QAAndTesting": {
+              "enum": [
+                false
+              ]
+            },
+            "QAAndTestingDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "QAAndTesting": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "QAAndTesting",
+            "QAAndTestingDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTesting": {
+              "enum": [
+                false
+              ]
+            },
+            "securityTestingWhat": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTesting": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "securityTesting",
+            "securityTestingWhat"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTestingWhat": {
+              "items": {
+                "enum": [
+                  "cyber_security_consultancy",
+                  "security_audit_services",
+                  "security_design",
+                  "security_incident_management",
+                  "security_risk_management",
+                  "security_strategy",
+                  "security_testing"
+                ]
+              }
+            },
+            "securityTestingWhatOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingWhat": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "cyber_security_consultancy",
+                    "security_audit_services",
+                    "security_design",
+                    "security_incident_management",
+                    "security_risk_management",
+                    "security_strategy",
+                    "security_testing"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityTestingWhat",
+            "securityTestingWhatOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTestingAccredited": {
+              "type": "null"
+            },
+            "securityTestingWhat": {
+              "items": {
+                "enum": [
+                  "cyber_security_consultancy",
+                  "other",
+                  "security_audit_services",
+                  "security_design",
+                  "security_incident_management",
+                  "security_risk_management",
+                  "security_strategy"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingWhat": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "cyber_security_consultancy",
+                    "other",
+                    "security_audit_services",
+                    "security_design",
+                    "security_incident_management",
+                    "security_risk_management",
+                    "security_strategy"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityTestingWhat",
+            "securityTestingAccredited"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTestingCCP": {
+              "type": "null"
+            },
+            "securityTestingWhat": {
+              "items": {
+                "enum": [
+                  "cyber_security_consultancy",
+                  "other",
+                  "security_audit_services",
+                  "security_design",
+                  "security_incident_management",
+                  "security_risk_management",
+                  "security_strategy",
+                  "security_testing"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingWhat": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "cyber_security_consultancy",
+                    "other",
+                    "security_audit_services",
+                    "security_design",
+                    "security_incident_management",
+                    "security_risk_management",
+                    "security_strategy",
+                    "security_testing"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityTestingWhat",
+            "securityTestingCCP"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTestingAccreditations": {
+              "type": "null"
+            },
+            "securityTestingAccredited": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingAccredited": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "securityTestingAccredited",
+            "securityTestingAccreditations"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityTestingAccreditations": {
+              "items": {
+                "enum": [
+                  "check",
+                  "crest",
+                  "cyber_scheme",
+                  "gbest",
+                  "tigerscheme"
+                ]
+              }
+            },
+            "securityTestingAccreditationsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityTestingAccreditations": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "check",
+                    "crest",
+                    "cyber_scheme",
+                    "gbest",
+                    "tigerscheme"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityTestingAccreditations",
+            "securityTestingAccreditationsOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "training": {
+              "enum": [
+                false
+              ]
+            },
+            "trainingDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "training": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "training",
+            "trainingDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "training": {
+              "enum": [
+                false
+              ]
+            },
+            "trainingServiceSpecific": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "training": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "training",
+            "trainingServiceSpecific"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "trainingServiceSpecific": {
+              "enum": [
+                false
+              ]
+            },
+            "trainingServiceSpecificList": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "trainingServiceSpecific": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "trainingServiceSpecific",
+            "trainingServiceSpecificList"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "ongoingSupport": {
+              "enum": [
+                false
+              ]
+            },
+            "ongoingSupportDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "ongoingSupport": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "ongoingSupport",
+            "ongoingSupportDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "ongoingSupport": {
+              "enum": [
+                false
+              ]
+            },
+            "ongoingSupportServices": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "ongoingSupport": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "ongoingSupport",
+            "ongoingSupportServices"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "resellingOrganisations": {
+              "type": "null"
+            },
+            "resellingType": {
+              "enum": [
+                "not_reseller"
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "resellingType": {
+              "enum": [
+                "reseller_extra_features_and_support",
+                "reseller_extra_support",
+                "reseller_no_extras"
+              ]
+            }
+          },
+          "required": [
+            "resellingType",
+            "resellingOrganisations"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "emailOrTicketingSupportResponseTimes": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "emailOrTicketingSupport",
+            "emailOrTicketingSupportResponseTimes"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "emailOrTicketingSupportPriority": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "emailOrTicketingSupport",
+            "emailOrTicketingSupportPriority"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "emailOrTicketingSupportAccessibility": {
+              "type": "null"
+            },
+            "emailOrTicketingSupportPriority": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "emailOrTicketingSupportPriority": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "emailOrTicketingSupportPriority",
+            "emailOrTicketingSupportAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "phoneSupport": {
+              "enum": [
+                false
+              ]
+            },
+            "phoneSupportAvailability": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "phoneSupport": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "phoneSupport",
+            "phoneSupportAvailability"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAvailability": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAvailability"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAccessibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAccessibilityTesting": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAccessibilityTesting"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupportAccessibility": {
+              "enum": [
+                "wcag_a",
+                "wcag_aa",
+                "wcag_aaa"
+              ]
+            },
+            "webChatSupportAccessibilityDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupportAccessibility": {
+              "enum": [
+                "none_or_not_sure"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupportAccessibility",
+            "webChatSupportAccessibilityDescription"
+          ]
+        }
+      ]
+    }
+  ],
+  "properties": {
+    "QAAndTesting": {
+      "type": "boolean"
+    },
+    "QAAndTestingDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "educationPricing": {
+      "type": "boolean"
+    },
+    "emailOrTicketingSupport": {
+      "enum": [
+        "yes",
+        "yes_extra_cost",
+        "no"
+      ]
+    },
+    "emailOrTicketingSupportAccessibility": {
+      "enum": [
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none"
+      ]
+    },
+    "emailOrTicketingSupportPriority": {
+      "type": "boolean"
+    },
+    "emailOrTicketingSupportResponseTimes": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "governmentSecurityClearances": {
+      "enum": [
+        "dv",
+        "sc",
+        "bpss",
+        "none"
+      ]
+    },
+    "ongoingSupport": {
+      "type": "boolean"
+    },
+    "ongoingSupportDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "ongoingSupportServices": {
+      "items": {
+        "enum": [
+          "buyer",
+          "supplier",
+          "third_party"
+        ]
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "phoneSupport": {
+      "type": "boolean"
+    },
+    "phoneSupportAvailability": {
+      "enum": [
+        "24_7",
+        "9_to_5_7_days",
+        "9_to_5_mon_to_fri"
+      ]
+    },
+    "planningService": {
+      "type": "boolean"
+    },
+    "planningServiceCompatibility": {
+      "type": "boolean"
+    },
+    "planningServiceCompatibilityList": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "planningServiceDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "priceInterval": {
+      "enum": [
+        "",
+        "Second",
+        "Minute",
+        "Hour",
+        "Day",
+        "Week",
+        "Month",
+        "Quarter",
+        "6 months",
+        "Year"
+      ]
+    },
+    "priceMax": {
+      "pattern": "^$|^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "priceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "priceUnit": {
+      "enum": [
+        "Unit",
+        "Person",
+        "Licence",
+        "User",
+        "Device",
+        "Instance",
+        "Server",
+        "Virtual machine",
+        "Transaction",
+        "Megabyte",
+        "Gigabyte",
+        "Terabyte"
+      ]
+    },
+    "pricingDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "resellingOrganisations": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+      "type": "string"
+    },
+    "resellingType": {
+      "enum": [
+        "not_reseller",
+        "reseller_extra_features_and_support",
+        "reseller_extra_support",
+        "reseller_no_extras"
+      ]
+    },
+    "securityTesting": {
+      "type": "boolean"
+    },
+    "securityTestingAccreditations": {
+      "items": {
+        "enum": [
+          "gbest",
+          "check",
+          "crest",
+          "tigerscheme",
+          "cyber_scheme",
+          "other"
+        ]
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "securityTestingAccreditationsOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "securityTestingAccredited": {
+      "type": "boolean"
+    },
+    "securityTestingCCP": {
+      "type": "boolean"
+    },
+    "securityTestingWhat": {
+      "items": {
+        "enum": [
+          "security_strategy",
+          "security_risk_management",
+          "security_design",
+          "cyber_security_consultancy",
+          "security_testing",
+          "security_incident_management",
+          "security_audit_services",
+          "other"
+        ]
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "securityTestingWhatOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "serviceBenefits": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "serviceConstraints": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "serviceDefinitionDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "serviceDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "serviceFeatures": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "serviceName": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "setupAndMigrationService": {
+      "type": "boolean"
+    },
+    "setupAndMigrationServiceDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "setupAndMigrationServiceSpecific": {
+      "type": "boolean"
+    },
+    "setupAndMigrationServiceSpecificList": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "sfiaRateDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "staffSecurityClearanceChecks": {
+      "enum": [
+        "staff_screening_to_bs7858_2012",
+        "staff_screening_not_bs7858_2012",
+        "none"
+      ]
+    },
+    "supportLevels": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "termsAndConditionsDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "training": {
+      "type": "boolean"
+    },
+    "trainingDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "trainingServiceSpecific": {
+      "type": "boolean"
+    },
+    "trainingServiceSpecificList": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "webChatSupport": {
+      "enum": [
+        "yes",
+        "yes_extra_cost",
+        "no"
+      ]
+    },
+    "webChatSupportAccessibility": {
+      "enum": [
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none_or_not_sure"
+      ]
+    },
+    "webChatSupportAccessibilityDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "webChatSupportAccessibilityTesting": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "webChatSupportAvailability": {
+      "enum": [
+        "24_7",
+        "9_to_5_7_days",
+        "9_to_5_mon_to_fri"
+      ]
+    }
+  },
+  "required": [
+    "QAAndTesting",
+    "educationPricing",
+    "emailOrTicketingSupport",
+    "governmentSecurityClearances",
+    "ongoingSupport",
+    "phoneSupport",
+    "planningService",
+    "priceMin",
+    "priceUnit",
+    "pricingDocumentURL",
+    "resellingType",
+    "securityTesting",
+    "serviceBenefits",
+    "serviceConstraints",
+    "serviceDefinitionDocumentURL",
+    "serviceDescription",
+    "serviceFeatures",
+    "serviceName",
+    "setupAndMigrationService",
+    "staffSecurityClearanceChecks",
+    "supportLevels",
+    "termsAndConditionsDocumentURL",
+    "training",
+    "webChatSupport"
+  ],
+  "title": "G-Cloud 12 Cloud Support Service Schema",
+  "type": "object"
+}
