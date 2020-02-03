@@ -93,11 +93,25 @@ class ApplicationValidator(object):
         return errors
 
     def validate_details(self):
-        return self.__validate_required(
+        errors = []
+        errors = self.__validate_required(
             self.application.data, {
                 'number_of_employees': 'Number of employees'
             },
-            'business-info')
+            'business-info'
+        )
+        seller_type = self.application.data.get('seller_type', None)
+        if (
+            seller_type and 'sme' in seller_type and seller_type['sme'] and
+            self.application.data.get('number_of_employees', None) == '200+'
+        ):
+            errors.append({
+                'field': 'sme',
+                'message': 'Your company has more than 200 employees and does not qualify as an SME',
+                'severity': 'error',
+                'step': 'business-info'
+            })
+        return errors
 
     def validate_contacts(self):
         return (
