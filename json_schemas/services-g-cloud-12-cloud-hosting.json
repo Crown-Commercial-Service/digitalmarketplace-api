@@ -1,0 +1,3297 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "resellingOrganisations": {
+              "type": "null"
+            },
+            "resellingType": {
+              "enum": [
+                "not_reseller"
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "resellingType": {
+              "enum": [
+                "reseller_extra_features_and_support",
+                "reseller_extra_support",
+                "reseller_no_extras"
+              ]
+            }
+          },
+          "required": [
+            "resellingType",
+            "resellingOrganisations"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "emailOrTicketingSupportResponseTimes": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "emailOrTicketingSupport",
+            "emailOrTicketingSupportResponseTimes"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "emailOrTicketingSupportPriority": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "emailOrTicketingSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "emailOrTicketingSupport",
+            "emailOrTicketingSupportPriority"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "emailOrTicketingSupportAccessibility": {
+              "type": "null"
+            },
+            "emailOrTicketingSupportPriority": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "emailOrTicketingSupportPriority": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "emailOrTicketingSupportPriority",
+            "emailOrTicketingSupportAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "phoneSupport": {
+              "enum": [
+                false
+              ]
+            },
+            "phoneSupportAvailability": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "phoneSupport": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "phoneSupport",
+            "phoneSupportAvailability"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAvailability": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAvailability"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAccessibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "no"
+              ]
+            },
+            "webChatSupportAccessibilityTesting": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupport": {
+              "enum": [
+                "yes",
+                "yes_extra_cost"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupport",
+            "webChatSupportAccessibilityTesting"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webChatSupportAccessibility": {
+              "enum": [
+                "wcag_a",
+                "wcag_aa",
+                "wcag_aaa"
+              ]
+            },
+            "webChatSupportAccessibilityDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webChatSupportAccessibility": {
+              "enum": [
+                "none_or_not_sure"
+              ]
+            }
+          },
+          "required": [
+            "webChatSupportAccessibility",
+            "webChatSupportAccessibilityDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webInterface": {
+              "enum": [
+                false
+              ]
+            },
+            "webInterfaceUsage": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webInterface": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "webInterface",
+            "webInterfaceUsage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webInterface": {
+              "enum": [
+                false
+              ]
+            },
+            "webInterfaceAccessibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webInterface": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "webInterface",
+            "webInterfaceAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webInterface": {
+              "enum": [
+                false
+              ]
+            },
+            "webInterfaceAccessibilityTesting": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webInterface": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "webInterface",
+            "webInterfaceAccessibilityTesting"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "webInterfaceAccessibility": {
+              "enum": [
+                "wcag_a",
+                "wcag_aa",
+                "wcag_aaa"
+              ]
+            },
+            "webInterfaceAccessibilityDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "webInterfaceAccessibility": {
+              "enum": [
+                "none_or_not_sure"
+              ]
+            }
+          },
+          "required": [
+            "webInterfaceAccessibility",
+            "webInterfaceAccessibilityDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "APIHosting": {
+              "enum": [
+                false
+              ]
+            },
+            "APIUsage": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "APIHosting": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "APIHosting",
+            "APIUsage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "APIAutomationTools": {
+              "type": "null"
+            },
+            "APIHosting": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "APIHosting": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "APIHosting",
+            "APIAutomationTools"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "APIDocumentation": {
+              "type": "null"
+            },
+            "APIHosting": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "APIHosting": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "APIHosting",
+            "APIDocumentation"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "APIAutomationTools": {
+              "items": {
+                "enum": [
+                  "ansible",
+                  "chef",
+                  "openstack",
+                  "puppet",
+                  "saltstack",
+                  "terraform"
+                ]
+              }
+            },
+            "APIAutomationToolsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "APIAutomationTools": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "ansible",
+                    "chef",
+                    "openstack",
+                    "puppet",
+                    "saltstack",
+                    "terraform"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "APIAutomationTools"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "APIDocumentation": {
+              "enum": [
+                false
+              ]
+            },
+            "APIDocumentationFormats": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "APIDocumentation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "APIDocumentation",
+            "APIDocumentationFormats"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "commandLineInterface": {
+              "enum": [
+                false
+              ]
+            },
+            "commandLineOS": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "commandLineInterface": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "commandLineInterface",
+            "commandLineOS"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "commandLineInterface": {
+              "enum": [
+                false
+              ]
+            },
+            "commandLineUsage": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "commandLineInterface": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "commandLineInterface",
+            "commandLineUsage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "documentation": {
+              "enum": [
+                false
+              ]
+            },
+            "documentationFormats": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "documentation",
+            "documentationFormats"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "documentation": {
+              "enum": [
+                false
+              ]
+            },
+            "documentationAccessibility": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "documentation",
+            "documentationAccessibility"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "documentationFormats": {
+              "items": {
+                "enum": [
+                  "html",
+                  "odf",
+                  "pdf"
+                ]
+              }
+            },
+            "documentationFormatsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentationFormats": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "html",
+                    "odf",
+                    "pdf"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "documentationFormats",
+            "documentationFormatsOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "documentationAccessibility": {
+              "enum": [
+                "wcag_a",
+                "wcag_aa",
+                "wcag_aaa"
+              ]
+            },
+            "documentationAccessibilityDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "documentationAccessibility": {
+              "enum": [
+                "none_or_not_sure"
+              ]
+            }
+          },
+          "required": [
+            "documentationAccessibility",
+            "documentationAccessibilityDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                false
+              ]
+            },
+            "backupWhatData": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "backup"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                false
+              ]
+            },
+            "backupControls": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "backup",
+            "backupControls"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                false
+              ]
+            },
+            "backupDatacentre": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "backup",
+            "backupDatacentre"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                false
+              ]
+            },
+            "backupScheduling": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "backup",
+            "backupScheduling"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                false
+              ]
+            },
+            "backupRecovery": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "backup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "backup",
+            "backupRecovery"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                false
+              ]
+            },
+            "metricsWhat": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "metrics",
+            "metricsWhat"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                false
+              ]
+            },
+            "metricsHow": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "metrics",
+            "metricsHow"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "metricsWhat": {
+              "items": {
+                "enum": [
+                  "cpu",
+                  "disk",
+                  "http",
+                  "memory",
+                  "network",
+                  "num_instances"
+                ]
+              }
+            },
+            "metricsWhatOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "metricsWhat": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "cpu",
+                    "disk",
+                    "http",
+                    "memory",
+                    "network",
+                    "num_instances"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "metricsWhat",
+            "metricsWhatOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "scaling": {
+              "enum": [
+                false
+              ]
+            },
+            "scalingType": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "scaling": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "scaling",
+            "scalingType"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "usageNotifications": {
+              "enum": [
+                false
+              ]
+            },
+            "usageNotificationsHow": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "usageNotifications": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "usageNotifications",
+            "usageNotificationsHow"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataProtectionBetweenNetworks": {
+              "items": {
+                "enum": [
+                  "bonded_fibre",
+                  "ipsec_or_vpn",
+                  "legacy_ssl",
+                  "private_or_psn",
+                  "tls"
+                ]
+              }
+            },
+            "dataProtectionBetweenNetworksOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataProtectionBetweenNetworks": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "bonded_fibre",
+                    "ipsec_or_vpn",
+                    "legacy_ssl",
+                    "private_or_psn",
+                    "tls"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "dataProtectionBetweenNetworks",
+            "dataProtectionBetweenNetworksOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataProtectionWithinNetwork": {
+              "items": {
+                "enum": [
+                  "ipsec_or_vpn",
+                  "ssl",
+                  "tls"
+                ]
+              }
+            },
+            "dataProtectionWithinNetworkOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataProtectionWithinNetwork": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "ipsec_or_vpn",
+                    "ssl",
+                    "tls"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "dataProtectionWithinNetwork",
+            "dataProtectionWithinNetworkOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                false
+              ]
+            },
+            "dataStorageAndProcessingLocations": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "dataStorageAndProcessing",
+            "dataStorageAndProcessingLocations"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                false
+              ]
+            },
+            "dataStorageAndProcessingUserControl": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataStorageAndProcessing": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "dataStorageAndProcessing",
+            "dataStorageAndProcessingUserControl"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "penetrationTesting": {
+              "enum": [
+                "never"
+              ]
+            },
+            "penetrationTestingApproach": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "penetrationTesting": {
+              "enum": [
+                "at_least_every_6_months",
+                "at_least_once_a_year",
+                "less_than_once_a_year"
+              ]
+            }
+          },
+          "required": [
+            "penetrationTesting",
+            "penetrationTestingApproach"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "protectionOfDataAtRest": {
+              "items": {
+                "enum": [
+                  "csa_ccm",
+                  "encrypted_media",
+                  "other_standard",
+                  "scale_obfuscation_sharding",
+                  "ssae_isae"
+                ]
+              }
+            },
+            "protectionOfDataAtRestOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "protectionOfDataAtRest": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "csa_ccm",
+                    "encrypted_media",
+                    "other_standard",
+                    "scale_obfuscation_sharding",
+                    "ssae_isae"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "protectionOfDataAtRest",
+            "protectionOfDataAtRestOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "dataSanitisation": {
+              "enum": [
+                false
+              ]
+            },
+            "dataSanitisationType": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "dataSanitisation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "dataSanitisation",
+            "dataSanitisationType"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "virtualisation": {
+              "enum": [
+                false
+              ]
+            },
+            "virtualisationImplementedBy": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "virtualisation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "virtualisation",
+            "virtualisationImplementedBy"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "virtualisation": {
+              "enum": [
+                false
+              ]
+            },
+            "virtualisationSeparation": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "virtualisation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "virtualisation",
+            "virtualisationSeparation"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "virtualisationImplementedBy": {
+              "enum": [
+                "third_party"
+              ]
+            },
+            "virtualisationTechnologiesUsed": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "virtualisationImplementedBy": {
+              "enum": [
+                "supplier"
+              ]
+            }
+          },
+          "required": [
+            "virtualisationImplementedBy",
+            "virtualisationTechnologiesUsed"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "virtualisationImplementedBy": {
+              "enum": [
+                "supplier"
+              ]
+            },
+            "virtualisationThirdPartyProvider": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "virtualisationImplementedBy": {
+              "enum": [
+                "third_party"
+              ]
+            }
+          },
+          "required": [
+            "virtualisationImplementedBy",
+            "virtualisationThirdPartyProvider"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "virtualisationTechnologiesUsed": {
+              "enum": [
+                "citrix",
+                "hyperv",
+                "kvm",
+                "oracle",
+                "redhat",
+                "vmware"
+              ]
+            },
+            "virtualisationTechnologiesUsedOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "virtualisationTechnologiesUsed": {
+              "enum": [
+                "other"
+              ]
+            }
+          },
+          "required": [
+            "virtualisationTechnologiesUsed",
+            "virtualisationTechnologiesUsedOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityGovernanceAccreditation": {
+              "enum": [
+                false
+              ]
+            },
+            "securityGovernanceStandards": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityGovernanceAccreditation": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "securityGovernanceAccreditation",
+            "securityGovernanceStandards"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityGovernanceAccreditation": {
+              "enum": [
+                true
+              ]
+            },
+            "securityGovernanceApproach": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityGovernanceAccreditation": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "securityGovernanceAccreditation",
+            "securityGovernanceApproach"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "securityGovernanceStandards": {
+              "items": {
+                "enum": [
+                  "csa_ccm",
+                  "iso_iec_27001"
+                ]
+              }
+            },
+            "securityGovernanceStandardsOther": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "securityGovernanceStandards": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "csa_ccm",
+                    "iso_iec_27001"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "securityGovernanceStandards",
+            "securityGovernanceStandardsOther"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "userAuthentication": {
+              "items": {
+                "enum": [
+                  "dedicated_link",
+                  "government_network",
+                  "identity_federation",
+                  "pka",
+                  "two_factor",
+                  "username_or_password"
+                ]
+              }
+            },
+            "userAuthenticationDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "userAuthentication": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "dedicated_link",
+                    "government_network",
+                    "identity_federation",
+                    "pka",
+                    "two_factor",
+                    "username_or_password"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "userAuthentication",
+            "userAuthenticationDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "managementAccessAuthentication": {
+              "items": {
+                "enum": [
+                  "dedicated_link",
+                  "government_network",
+                  "identity_federation",
+                  "public_key",
+                  "two_factor",
+                  "username_or_password"
+                ]
+              }
+            },
+            "managementAccessAuthenticationDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "managementAccessAuthentication": {
+              "not": {
+                "items": {
+                  "enum": [
+                    "dedicated_link",
+                    "government_network",
+                    "identity_federation",
+                    "public_key",
+                    "two_factor",
+                    "username_or_password"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "managementAccessAuthentication",
+            "managementAccessAuthenticationDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "auditBuyersActions": {
+              "enum": [
+                "not_available"
+              ]
+            },
+            "auditBuyersActionsStorage": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "auditBuyersActions": {
+              "enum": [
+                "real_time",
+                "regular",
+                "support_request",
+                "supplier_controlled"
+              ]
+            }
+          },
+          "required": [
+            "auditBuyersActions",
+            "auditBuyersActionsStorage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "auditSuppliersActions": {
+              "enum": [
+                "not_available"
+              ]
+            },
+            "auditSuppliersActionsStorage": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "auditSuppliersActions": {
+              "enum": [
+                "real_time",
+                "regular",
+                "support_request",
+                "supplier_controlled"
+              ]
+            }
+          },
+          "required": [
+            "auditSuppliersActions",
+            "auditSuppliersActionsStorage"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001Who": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001Who"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001When": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001When"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISOIEC27001Exclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISOIEC27001": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISOIEC27001",
+            "standardsISOIEC27001Exclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISO28000Who": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISO28000",
+            "standardsISO28000Who"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISO28000When": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISO28000",
+            "standardsISO28000When"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsISO28000Exclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsISO28000": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsISO28000",
+            "standardsISO28000Exclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsCSASTARWhen": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsCSASTAR",
+            "standardsCSASTARWhen"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsCSASTARLevel": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsCSASTAR",
+            "standardsCSASTARLevel"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsCSASTARExclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsCSASTAR": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsCSASTAR",
+            "standardsCSASTARExclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsPCIWho": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsPCI",
+            "standardsPCIWho"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsPCIWhen": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsPCI",
+            "standardsPCIWhen"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                false
+              ]
+            },
+            "standardsPCIExclusions": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "standardsPCI": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "standardsPCI",
+            "standardsPCIExclusions"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "accreditationsOther": {
+              "enum": [
+                false
+              ]
+            },
+            "accreditationsOtherList": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "accreditationsOther": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "accreditationsOther",
+            "accreditationsOtherList"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "energyEfficientDatacentres": {
+              "enum": [
+                false
+              ]
+            },
+            "energyEfficientDatacentresDescription": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "energyEfficientDatacentres": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "energyEfficientDatacentres",
+            "energyEfficientDatacentresDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "freeVersionDescription": {
+              "type": "null"
+            },
+            "freeVersionTrialOption": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "freeVersionTrialOption": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "freeVersionTrialOption",
+            "freeVersionDescription"
+          ]
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "freeVersionLink": {
+              "type": "null"
+            },
+            "freeVersionTrialOption": {
+              "enum": [
+                false
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "freeVersionTrialOption": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "freeVersionTrialOption"
+          ]
+        }
+      ]
+    }
+  ],
+  "properties": {
+    "APIAutomationTools": {
+      "items": {
+        "enum": [
+          "ansible",
+          "chef",
+          "openstack",
+          "saltstack",
+          "terraform",
+          "puppet",
+          "other"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "APIAutomationToolsOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 0,
+      "type": "array"
+    },
+    "APIDocumentation": {
+      "type": "boolean"
+    },
+    "APIDocumentationFormats": {
+      "items": {
+        "enum": [
+          "openapi",
+          "html",
+          "odf",
+          "pdf",
+          "other"
+        ]
+      },
+      "maxItems": 5,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "APIHosting": {
+      "type": "boolean"
+    },
+    "APIUsage": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "accessRestrictionManagementAndSupport": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "accessRestrictionTesting": {
+      "enum": [
+        "at_least_every_6_months",
+        "at_least_once_a_year",
+        "less_than_once_a_year",
+        "never"
+      ]
+    },
+    "accreditationsOther": {
+      "type": "boolean"
+    },
+    "accreditationsOtherList": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "approachToResilience": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "auditBuyersActions": {
+      "enum": [
+        "real_time",
+        "regular",
+        "support_request",
+        "supplier_controlled",
+        "not_available"
+      ]
+    },
+    "auditBuyersActionsStorage": {
+      "enum": [
+        "user_defined",
+        "at_least_12_months",
+        "6_to_12_months",
+        "1_to_6_months",
+        "less_than_1_month"
+      ]
+    },
+    "auditSuppliersActions": {
+      "enum": [
+        "real_time",
+        "regular",
+        "support_request",
+        "supplier_controlled",
+        "not_available"
+      ]
+    },
+    "auditSuppliersActionsStorage": {
+      "enum": [
+        "user_defined",
+        "over_12_months",
+        "6_to_12_months",
+        "1_to_6_months",
+        "under_1_month"
+      ]
+    },
+    "backup": {
+      "type": "boolean"
+    },
+    "backupControls": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "backupDatacentre": {
+      "items": {
+        "enum": [
+          "multiple_with_dr",
+          "multiple",
+          "single_with_copies",
+          "single"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "backupRecovery": {
+      "items": {
+        "enum": [
+          "user_recovery",
+          "support_request"
+        ]
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "backupScheduling": {
+      "enum": [
+        "user_defined",
+        "support_request",
+        "supplier_defined"
+      ]
+    },
+    "backupWhatData": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 0,
+      "type": "array"
+    },
+    "boardLevelServiceSecurity": {
+      "type": "boolean"
+    },
+    "commandLineInterface": {
+      "type": "boolean"
+    },
+    "commandLineOS": {
+      "items": {
+        "enum": [
+          "linux_or_unix",
+          "windows",
+          "macos",
+          "other"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "commandLineUsage": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "configurationAndChangeManagementProcesses": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "configurationAndChangeManagementType": {
+      "enum": [
+        "recognised_standard",
+        "supplier_defined"
+      ]
+    },
+    "dataProtectionBetweenNetworks": {
+      "items": {
+        "enum": [
+          "private_or_psn",
+          "tls",
+          "ipsec_or_vpn",
+          "bonded_fibre",
+          "legacy_ssl",
+          "other"
+        ]
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataProtectionBetweenNetworksOther": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "dataProtectionWithinNetwork": {
+      "items": {
+        "enum": [
+          "tls",
+          "ipsec_or_vpn",
+          "ssl",
+          "other"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataProtectionWithinNetworkOther": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "dataSanitisation": {
+      "type": "boolean"
+    },
+    "dataSanitisationType": {
+      "items": {
+        "enum": [
+          "overwriting",
+          "no_access",
+          "hardware_destroyed"
+        ]
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataStorageAndProcessing": {
+      "type": "boolean"
+    },
+    "dataStorageAndProcessingLocations": {
+      "items": {
+        "enum": [
+          "uk",
+          "eea",
+          "privacy_shield",
+          "other"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dataStorageAndProcessingUserControl": {
+      "type": "boolean"
+    },
+    "datacentreSecurityStandards": {
+      "enum": [
+        "recognised_standard",
+        "supplier_defined",
+        "third_party"
+      ]
+    },
+    "devicesUsersManageTheServiceThrough": {
+      "items": {
+        "enum": [
+          "dedicated_device_on_segregated_network",
+          "dedicated_device_on_government_network",
+          "dedicated_device_over_multiple_networks",
+          "any_device_using_bastion_host",
+          "any_device"
+        ]
+      },
+      "maxItems": 5,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "documentation": {
+      "type": "boolean"
+    },
+    "documentationAccessibility": {
+      "enum": [
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none_or_not_sure"
+      ]
+    },
+    "documentationAccessibilityDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "documentationFormats": {
+      "items": {
+        "enum": [
+          "html",
+          "odf",
+          "pdf",
+          "other"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "documentationFormatsOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "educationPricing": {
+      "type": "boolean"
+    },
+    "emailOrTicketingSupport": {
+      "enum": [
+        "yes",
+        "yes_extra_cost",
+        "no"
+      ]
+    },
+    "emailOrTicketingSupportAccessibility": {
+      "enum": [
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none"
+      ]
+    },
+    "emailOrTicketingSupportPriority": {
+      "type": "boolean"
+    },
+    "emailOrTicketingSupportResponseTimes": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "endOfContractDataExtraction": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "endOfContractProcess": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "energyEfficientDatacentres": {
+      "type": "boolean"
+    },
+    "energyEfficientDatacentresDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "equipmentDisposalApproach": {
+      "enum": [
+        "recognised_standard",
+        "in_house",
+        "third_party"
+      ]
+    },
+    "freeVersionDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "freeVersionLink": {
+      "maxLength": 1000,
+      "minLength": 0,
+      "type": "string"
+    },
+    "freeVersionTrialOption": {
+      "type": "boolean"
+    },
+    "gettingStarted": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "governmentSecurityClearances": {
+      "enum": [
+        "dv",
+        "sc",
+        "bpss",
+        "none"
+      ]
+    },
+    "guaranteedAvailability": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "howLongSystemLogsStored": {
+      "enum": [
+        "user_defined",
+        "at_least_12_months",
+        "6_to_12_months",
+        "1_to_6_months",
+        "less_than_1_month"
+      ]
+    },
+    "incidentManagementApproach": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "incidentManagementType": {
+      "enum": [
+        "recognised_standard",
+        "supplier_defined",
+        "undisclosed"
+      ]
+    },
+    "independenceOfResources": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "informationSecurityPoliciesAndProcesses": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "managementAccessAuthentication": {
+      "items": {
+        "enum": [
+          "two_factor",
+          "public_key",
+          "identity_federation",
+          "government_network",
+          "dedicated_link",
+          "username_or_password",
+          "other"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "managementAccessAuthenticationDescription": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "metrics": {
+      "type": "boolean"
+    },
+    "metricsHow": {
+      "items": {
+        "enum": [
+          "api",
+          "real_time",
+          "regular_reports",
+          "on_request"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "metricsWhat": {
+      "items": {
+        "enum": [
+          "cpu",
+          "disk",
+          "http",
+          "memory",
+          "network",
+          "num_instances",
+          "other"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "metricsWhatOther": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "onsiteSupport": {
+      "enum": [
+        "yes",
+        "yes_extra_cost",
+        "no"
+      ]
+    },
+    "outageReporting": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "penetrationTesting": {
+      "enum": [
+        "at_least_every_6_months",
+        "at_least_once_a_year",
+        "less_than_once_a_year",
+        "never"
+      ]
+    },
+    "penetrationTestingApproach": {
+      "enum": [
+        "it_health_check_check_provider",
+        "it_health_check_tigerscheme_or_crest_provider",
+        "other_penetration_testing_organisation",
+        "in_house"
+      ]
+    },
+    "phoneSupport": {
+      "type": "boolean"
+    },
+    "phoneSupportAvailability": {
+      "enum": [
+        "24_7",
+        "9_to_5_7_days",
+        "9_to_5_mon_to_fri"
+      ]
+    },
+    "priceInterval": {
+      "enum": [
+        "",
+        "Second",
+        "Minute",
+        "Hour",
+        "Day",
+        "Week",
+        "Month",
+        "Quarter",
+        "6 months",
+        "Year"
+      ]
+    },
+    "priceMax": {
+      "pattern": "^$|^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "priceMin": {
+      "pattern": "^\\d{1,15}(?:\\.\\d{1,5})?$",
+      "type": "string"
+    },
+    "priceUnit": {
+      "enum": [
+        "Unit",
+        "Person",
+        "Licence",
+        "User",
+        "Device",
+        "Instance",
+        "Server",
+        "Virtual machine",
+        "Transaction",
+        "Megabyte",
+        "Gigabyte",
+        "Terabyte"
+      ]
+    },
+    "pricingDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "protectionOfDataAtRest": {
+      "items": {
+        "enum": [
+          "csa_ccm",
+          "ssae_isae",
+          "other_standard",
+          "encrypted_media",
+          "scale_obfuscation_sharding",
+          "other"
+        ]
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "protectionOfDataAtRestOther": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "protectiveMonitoringApproach": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "protectiveMonitoringType": {
+      "enum": [
+        "recognised_standard",
+        "supplier_defined",
+        "undisclosed"
+      ]
+    },
+    "resellingOrganisations": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+      "type": "string"
+    },
+    "resellingType": {
+      "enum": [
+        "not_reseller",
+        "reseller_extra_features_and_support",
+        "reseller_extra_support",
+        "reseller_no_extras"
+      ]
+    },
+    "scaling": {
+      "type": "boolean"
+    },
+    "scalingType": {
+      "items": {
+        "enum": [
+          "automatic",
+          "user_intervention"
+        ]
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "secureDevelopment": {
+      "enum": [
+        "independent_review",
+        "recognised_standard",
+        "supplier_defined"
+      ]
+    },
+    "securityGovernanceAccreditation": {
+      "type": "boolean"
+    },
+    "securityGovernanceApproach": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "securityGovernanceStandards": {
+      "items": {
+        "enum": [
+          "csa_ccm",
+          "iso_iec_27001",
+          "other"
+        ]
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "securityGovernanceStandardsOther": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "serviceBenefits": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "serviceCategories": {
+      "items": {
+        "enum": [
+          "Archiving, backup and disaster recovery",
+          "Block storage",
+          "Compute and application hosting",
+          "Container service",
+          "Content delivery network",
+          "Data warehousing",
+          "Distributed denial of service attack (DDOS) protection",
+          "Firewall",
+          "Infrastructure and platform security",
+          "Intrusion detection",
+          "Load balancing",
+          "Logging and analysis",
+          "Message queuing and processing",
+          "Networking (including network as a service)",
+          "NoSQL database",
+          "Object storage",
+          "Other database services",
+          "Other storage services",
+          "Platform as a service (PaaS)",
+          "Protective monitoring",
+          "Relational database",
+          "Search"
+        ]
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "serviceConstraints": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "serviceDefinitionDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "serviceDescription": {
+      "maxLength": 500,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,49}\\S+$",
+      "type": "string"
+    },
+    "serviceFeatures": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "serviceName": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "sfiaRateDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "staffSecurityClearanceChecks": {
+      "enum": [
+        "staff_screening_to_bs7858_2012",
+        "staff_screening_not_bs7858_2012",
+        "none"
+      ]
+    },
+    "standardsCSASTAR": {
+      "type": "boolean"
+    },
+    "standardsCSASTARExclusions": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "standardsCSASTARLevel": {
+      "enum": [
+        "level_1_csa_star_self_assessment",
+        "level_2_csa_star_attestation",
+        "level_3_csa_star_certification",
+        "level_4_csa_cstar_assessment",
+        "level_5_csa_star_continuous_monitoring"
+      ]
+    },
+    "standardsCSASTARWhen": {
+      "maxLength": 50,
+      "minLength": 1,
+      "type": "string"
+    },
+    "standardsISO28000": {
+      "type": "boolean"
+    },
+    "standardsISO28000Exclusions": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "standardsISO28000When": {
+      "maxLength": 50,
+      "minLength": 1,
+      "type": "string"
+    },
+    "standardsISO28000Who": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+      "type": "string"
+    },
+    "standardsISOIEC27001": {
+      "type": "boolean"
+    },
+    "standardsISOIEC27001Exclusions": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "standardsISOIEC27001When": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "standardsISOIEC27001Who": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+      "type": "string"
+    },
+    "standardsPCI": {
+      "type": "boolean"
+    },
+    "standardsPCIExclusions": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "standardsPCIWhen": {
+      "maxLength": 50,
+      "minLength": 1,
+      "type": "string"
+    },
+    "standardsPCIWho": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+      "type": "string"
+    },
+    "supportAvailableToThirdParty": {
+      "type": "boolean"
+    },
+    "supportLevels": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "systemRequirements": {
+      "items": {
+        "maxLength": 100,
+        "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "type": "array"
+    },
+    "termsAndConditionsDocumentURL": {
+      "format": "uri",
+      "type": "string"
+    },
+    "usageNotifications": {
+      "type": "boolean"
+    },
+    "usageNotificationsHow": {
+      "items": {
+        "enum": [
+          "api",
+          "email",
+          "sms",
+          "other"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "userAuthentication": {
+      "items": {
+        "enum": [
+          "two_factor",
+          "pka",
+          "identity_federation",
+          "government_network",
+          "dedicated_link",
+          "username_or_password",
+          "other"
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "userAuthenticationDescription": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "virtualisation": {
+      "type": "boolean"
+    },
+    "virtualisationImplementedBy": {
+      "enum": [
+        "supplier",
+        "third_party"
+      ]
+    },
+    "virtualisationSeparation": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "virtualisationTechnologiesUsed": {
+      "enum": [
+        "vmware",
+        "hyperv",
+        "citrix",
+        "oracle",
+        "redhat",
+        "kvm",
+        "other"
+      ]
+    },
+    "virtualisationTechnologiesUsedOther": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "virtualisationThirdPartyProvider": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,9}\\S+$",
+      "type": "string"
+    },
+    "vulnerabilityManagementApproach": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "vulnerabilityManagementType": {
+      "enum": [
+        "recognised_standard",
+        "supplier_defined",
+        "undisclosed"
+      ]
+    },
+    "webChatSupport": {
+      "enum": [
+        "yes",
+        "yes_extra_cost",
+        "no"
+      ]
+    },
+    "webChatSupportAccessibility": {
+      "enum": [
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none_or_not_sure"
+      ]
+    },
+    "webChatSupportAccessibilityDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "webChatSupportAccessibilityTesting": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "webChatSupportAvailability": {
+      "enum": [
+        "24_7",
+        "9_to_5_7_days",
+        "9_to_5_mon_to_fri"
+      ]
+    },
+    "webInterface": {
+      "type": "boolean"
+    },
+    "webInterfaceAccessibility": {
+      "enum": [
+        "wcag_aaa",
+        "wcag_aa",
+        "wcag_a",
+        "none_or_not_sure"
+      ]
+    },
+    "webInterfaceAccessibilityDescription": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "webInterfaceAccessibilityTesting": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "webInterfaceUsage": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "APIHosting",
+    "accessRestrictionManagementAndSupport",
+    "accessRestrictionTesting",
+    "accreditationsOther",
+    "approachToResilience",
+    "auditBuyersActions",
+    "auditSuppliersActions",
+    "backup",
+    "boardLevelServiceSecurity",
+    "commandLineInterface",
+    "configurationAndChangeManagementProcesses",
+    "configurationAndChangeManagementType",
+    "dataProtectionBetweenNetworks",
+    "dataProtectionWithinNetwork",
+    "dataSanitisation",
+    "dataStorageAndProcessing",
+    "datacentreSecurityStandards",
+    "devicesUsersManageTheServiceThrough",
+    "documentation",
+    "educationPricing",
+    "emailOrTicketingSupport",
+    "endOfContractDataExtraction",
+    "endOfContractProcess",
+    "energyEfficientDatacentres",
+    "equipmentDisposalApproach",
+    "freeVersionTrialOption",
+    "gettingStarted",
+    "governmentSecurityClearances",
+    "guaranteedAvailability",
+    "howLongSystemLogsStored",
+    "incidentManagementApproach",
+    "incidentManagementType",
+    "independenceOfResources",
+    "informationSecurityPoliciesAndProcesses",
+    "managementAccessAuthentication",
+    "metrics",
+    "onsiteSupport",
+    "outageReporting",
+    "penetrationTesting",
+    "phoneSupport",
+    "priceMin",
+    "priceUnit",
+    "pricingDocumentURL",
+    "protectionOfDataAtRest",
+    "protectiveMonitoringApproach",
+    "protectiveMonitoringType",
+    "resellingType",
+    "scaling",
+    "secureDevelopment",
+    "securityGovernanceAccreditation",
+    "serviceBenefits",
+    "serviceCategories",
+    "serviceConstraints",
+    "serviceDefinitionDocumentURL",
+    "serviceDescription",
+    "serviceFeatures",
+    "serviceName",
+    "staffSecurityClearanceChecks",
+    "standardsCSASTAR",
+    "standardsISO28000",
+    "standardsISOIEC27001",
+    "standardsPCI",
+    "supportAvailableToThirdParty",
+    "supportLevels",
+    "systemRequirements",
+    "termsAndConditionsDocumentURL",
+    "usageNotifications",
+    "userAuthentication",
+    "virtualisation",
+    "vulnerabilityManagementApproach",
+    "vulnerabilityManagementType",
+    "webChatSupport",
+    "webInterface"
+  ],
+  "title": "G-Cloud 12 Cloud Hosting Service Schema",
+  "type": "object"
+}
