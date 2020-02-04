@@ -12,7 +12,7 @@ itsdangerous==0.24 # pyup: ignore
 --no-binary=psycopg2
 psycopg2==2.8.4
 SQLAlchemy==1.2.18 # pyup: ignore
-SQLAlchemy-Utils==0.35.0
+SQLAlchemy-Utils==0.36.1
 sqlalchemy-json==0.2.3
 
 # For schema validation
