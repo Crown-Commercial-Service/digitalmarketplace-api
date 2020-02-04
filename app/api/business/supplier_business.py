@@ -9,6 +9,17 @@ from app.api.business.validators import SupplierValidator
 from app.api.services import application_service, key_values_service, suppliers
 
 
+def abn_is_used(abn):
+    abn = "".join(abn.split())
+    supplier = suppliers.get_supplier_by_abn(abn)
+    if supplier:
+        return True
+    application = application_service.get_applications_by_abn(abn)
+    if application:
+        return True
+    return False
+
+
 def get_supplier_messages(code, skip_application_check):
     applications = application_service.find(
         supplier_code=code,
