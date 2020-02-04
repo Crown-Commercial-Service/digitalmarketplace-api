@@ -13,24 +13,24 @@ itsdangerous==0.24 # pyup: ignore
 --no-binary=psycopg2
 psycopg2==2.8.4
 SQLAlchemy==1.2.18 # pyup: ignore
-SQLAlchemy-Utils==0.35.0
+SQLAlchemy-Utils==0.36.1
 sqlalchemy-json==0.2.3
 
 # For schema validation
-jsonschema==3.1.1
+jsonschema==3.2.0
 rfc3987==1.3.8
 strict-rfc3339==0.7
 
 ## The following requirements were added by pip freeze:
-alembic==1.3.2
+alembic==1.4.0
 asn1crypto==1.3.0
 attrs==19.3.0
 bcrypt==3.1.7
 blinker==1.4
-boto3==1.10.50
-botocore==1.13.50
+boto3==1.11.14
+botocore==1.14.14
 certifi==2019.11.28
-cffi==1.13.2
+cffi==1.14.0
 chardet==3.0.4
 Click==7.0
 contextlib2==0.6.0.post1
@@ -39,24 +39,23 @@ defusedxml==0.6.0
 docopt==0.6.2
 docutils==0.15.2
 Flask-gzip==0.2
-Flask-Login==0.4.1
+Flask-Login==0.5.0
 Flask-Script==2.0.6
-Flask-WTF==0.14.2
+Flask-WTF==0.14.3
 fleep==1.0.1
 future==0.18.2
 gds-metrics==0.2.0
 govuk-country-register==0.5.0
 idna==2.8
-importlib-metadata==1.3.0
-Jinja2==2.10.3
+importlib-metadata==1.5.0
+Jinja2==2.11.1
 jmespath==0.9.4
 mailchimp3==3.0.6
-Mako==1.1.0
+Mako==1.1.1
 MarkupSafe==1.1.1
 monotonic==1.5
-more-itertools==8.0.2
-notifications-python-client==5.5.0
-odfpy==1.4.0
+notifications-python-client==5.5.1
+odfpy==1.4.1
 prometheus-client==0.2.0
 pycparser==2.19
 PyJWT==1.7.1
@@ -66,11 +65,11 @@ python-editor==1.0.4
 python-json-logger==0.1.11
 pytz==2019.3
 requests==2.22.0
-s3transfer==0.2.1
-six==1.13.0
+s3transfer==0.3.3
+six==1.14.0
 unicodecsv==0.14.1
-urllib3==1.25.7
-Werkzeug==0.16.0
+urllib3==1.25.8
+Werkzeug==0.16.1
 workdays==1.4
 WTForms==2.2.1
-zipp==0.6.0
+zipp==2.2.0
