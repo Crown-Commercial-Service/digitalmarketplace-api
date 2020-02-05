@@ -172,6 +172,9 @@ def applications(app, request):
         for i in range(1, 6):
             db.session.add(Application(
                 id=(i),
+                data={
+                    'abn': '123456'
+                }
             ))
 
             db.session.flush()
