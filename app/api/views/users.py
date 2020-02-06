@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from urllib import quote, unquote_plus
 
@@ -190,6 +191,8 @@ def signup():
     if user_type == 'seller' or user_type == 'applicant':
         if not abn:
             return jsonify(message='You must provide an ABN value'), 400
+        # remove any non numeric characters from the ABN
+        abn = re.sub(r'[^\d]', '', abn)
         if supplier_business.abn_is_used(abn):
             return jsonify(
                 email_address=email_address,
