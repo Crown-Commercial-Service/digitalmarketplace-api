@@ -55,6 +55,7 @@ class SuppliersService(Service):
                 .joinedload(SupplierDomain.domain)
             )
             .filter(func.replace(Supplier.abn, ' ', '') == abn)
+            .limit(1)
             .one_or_none()
         )
 
