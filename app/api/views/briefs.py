@@ -1,77 +1,55 @@
 import json
 import mimetypes
 import os
+
 import botocore
-import rollbar
 import pendulum
-from pendulum.parsing.exceptions import ParserError
+import rollbar
 from flask import Response, current_app, jsonify, request
 from flask_login import current_user, login_required
+from pendulum.parsing.exceptions import ParserError
 from sqlalchemy.exc import DataError
 
 from app.api import api
-from app.api.csv import generate_brief_responses_csv
-from app.api.business.validators import (
-    SupplierValidator,
-    RFXDataValidator,
-    ATMDataValidator,
-    TrainingDataValidator,
-    SpecialistDataValidator
-)
-from app.api.business.brief import BriefUserStatus
-from app.api.business import (
-    supplier_business,
-    brief_overview_business,
-    brief_training_business
-)
+from app.api.business import (brief_overview_business, brief_training_business,
+                              supplier_business)
 from app.api.business.agreement_business import use_old_work_order_creator
-from app.api.helpers import (
-    abort,
-    forbidden,
-    not_found,
-    role_required,
-    is_current_user_in_brief,
-    permissions_required,
-    get_email_domain,
-    exception_logger
-)
-from app.api.services import (agency_service,
-                              audit_service,
-                              audit_types,
-                              brief_responses_service,
-                              brief_response_download_service,
+from app.api.business.brief import BriefUserStatus, brief_business
+from app.api.business.errors import (BriefError, NotFoundError,
+                                     UnauthorisedError, ValidationError)
+from app.api.business.validators import (ATMDataValidator, RFXDataValidator,
+                                         SpecialistDataValidator,
+                                         SupplierValidator,
+                                         TrainingDataValidator)
+from app.api.csv import generate_brief_responses_csv
+from app.api.helpers import (abort, exception_logger, forbidden,
+                             get_email_domain, is_current_user_in_brief,
+                             not_found, notify_team, permissions_required,
+                             role_required)
+from app.api.services import (agency_service, audit_service, audit_types,
                               brief_question_service,
-                              briefs,
-                              domain_service,
-                              frameworks_service,
-                              key_values_service,
-                              lots_service,
-                              suppliers,
-                              users,
-                              evidence_service,
-                              work_order_service)
-from app.emails import (
-    send_brief_response_received_email,
-    render_email_template,
-    send_seller_invited_to_rfx_email,
-    send_seller_invited_to_training_email,
-    send_specialist_brief_seller_invited_email,
-    send_specialist_brief_published_email,
-    send_specialist_brief_response_received_email,
-    send_brief_clarification_to_buyer,
-    send_brief_clarification_to_seller
-)
-from app.api.helpers import notify_team
+                              brief_response_download_service,
+                              brief_responses_service, briefs, domain_service,
+                              evidence_service, frameworks_service,
+                              key_values_service, lots_service, suppliers,
+                              users, work_order_service)
+from app.emails import (render_email_template,
+                        send_brief_clarification_to_buyer,
+                        send_brief_clarification_to_seller,
+                        send_brief_response_received_email,
+                        send_seller_invited_to_rfx_email,
+                        send_seller_invited_to_training_email,
+                        send_specialist_brief_published_email,
+                        send_specialist_brief_response_received_email,
+                        send_specialist_brief_seller_invited_email)
 from app.tasks import publish_tasks
 from dmapiclient.audit import AuditTypes
 from dmutils.file import s3_download_file, s3_upload_file_from_request
 
-from ...models import (AuditEvent, Brief, BriefResponse, Framework, Supplier,
-                       ValidationError, Lot, User, Domain, db, WorkOrder,
-                       BriefQuestion, BriefResponseDownload)
+from ...models import (AuditEvent, Brief, BriefQuestion, BriefResponse,
+                       BriefResponseDownload, Domain, Framework, Lot, Supplier,
+                       User, ValidationError, WorkOrder, db)
 from ...utils import get_json_from_request
-
-from app.api.business.errors import BriefError, NotFoundError, UnauthorisedError
 
 
 def _can_do_brief_response(brief_id, update_only=False):
@@ -760,12 +738,36 @@ def update_brief(brief_id):
 @role_required('buyer')
 def close_opportunity_early(brief_id):
     try:
-        brief = brief_overview_business.close_opportunity_early(current_user, brief_id)
+        brief = brief_overview_business.close_opportunity_early(current_user.id, brief_id)
     except NotFoundError as e:
         not_found(e.message)
     except UnauthorisedError as e:
         forbidden(e.message)
     except BriefError as e:
+        abort(e.message)
+
+    return jsonify(brief.serialize(with_users=False))
+
+
+@api.route('/brief/<int:brief_id>/withdraw', methods=['POST'])
+@exception_logger
+@login_required
+@permissions_required('publish_opportunities')
+@role_required('buyer')
+def withdraw_opportunity(brief_id):
+    data = get_json_from_request()
+
+    try:
+        brief = brief_overview_business.withdraw_opportunity(
+            current_user.id,
+            brief_id,
+            data.get('reasonToWithdraw', '')
+        )
+    except NotFoundError as e:
+        not_found(e.message)
+    except UnauthorisedError as e:
+        forbidden(e.message)
+    except (BriefError, ValidationError) as e:
         abort(e.message)
 
     return jsonify(brief.serialize(with_users=False))
@@ -1004,6 +1006,7 @@ def get_brief_responses(brief_id):
     return jsonify(brief=brief.serialize(with_users=False, with_author=False),
                    briefResponses=brief_responses,
                    canCloseOpportunity=brief_overview_business.can_close_opportunity_early(brief),
+                   isOpenToAll=brief_business.is_open_to_all(brief),
                    oldWorkOrderCreator=old_work_order_creator,
                    questionsAsked=questions_asked,
                    briefResponseDownloaded=brief_response_downloaded,

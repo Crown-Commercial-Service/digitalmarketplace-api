@@ -72,7 +72,7 @@ def team_members(app):
         db.session.add(
             TeamMember(
                 team_id=1,
-                user_id=1,
+                user_id=4,
                 is_team_lead=True
             )
         )
@@ -80,7 +80,7 @@ def team_members(app):
         db.session.add(
             TeamMember(
                 team_id=1,
-                user_id=2,
+                user_id=5,
                 is_team_lead=False
             )
         )
@@ -100,7 +100,7 @@ def users(app, agencies):
     with app.app_context():
         db.session.add(
             User(
-                id=1,
+                id=4,
                 name='Muu Muu',
                 email_address='muu@dta.gov.au',
                 password='muumuu',
@@ -113,7 +113,7 @@ def users(app, agencies):
 
         db.session.add(
             User(
-                id=2,
+                id=5,
                 name='Moo Moo',
                 email_address='moo@dta.gov.au',
                 password='moomoo',

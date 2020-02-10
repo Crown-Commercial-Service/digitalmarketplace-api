@@ -13,13 +13,12 @@ class TestCanCloseOpportunity(BaseApplicationTest):
         super(TestCanCloseOpportunity, self).setup()
 
     @pytest.mark.parametrize('status', ['draft', 'closed', 'withdrawn'])
-    def test_can_not_close_opportunity_early_with_incorrect_status(self, briefs, status):
-        brief = briefs_service.find(status=status).one_or_none()
-
+    def test_can_not_close_opportunity_early_with_incorrect_status(self, overview_briefs, status):
+        brief = briefs_service.find(status=status).first()
         can_close = can_close_opportunity_early(brief)
         assert can_close is False
 
-    def test_can_not_close_published_atm_opportunity_early(self, briefs):
+    def test_can_not_close_published_atm_opportunity_early(self, overview_briefs):
         lot = lots_service.find(slug='atm').one_or_none()
         brief = briefs_service.find(lot=lot, status='live').one_or_none()
 
@@ -37,7 +36,7 @@ class TestCanCloseOpportunity(BaseApplicationTest):
         assert can_close is True
 
     @pytest.mark.parametrize('lot_slug', ['rfx', 'specialist', 'training2'])
-    def test_can_not_close_published_opportunity_early_with_multiple_invited_sellers(self, briefs, lot_slug):
+    def test_can_not_close_published_opportunity_early_with_multiple_invited_sellers(self, overview_briefs, lot_slug):
         lot = lots_service.find(slug=lot_slug).one_or_none()
         brief = briefs_service.find(lot=lot, status='live').one_or_none()
         brief.data['sellers'].update({'456': 'Big Corp'})
@@ -50,7 +49,8 @@ class TestCanCloseOpportunity(BaseApplicationTest):
         {'lot_slug': 'specialist', 'seller_selector': 'allSellers'},
         {'lot_slug': 'training2', 'seller_selector': 'someSellers'}
     ])
-    def test_can_not_close_published_opportunity_early_with_incorrect_seller_selector(self, briefs, brief_data):
+    def test_can_not_close_published_opportunity_early_with_incorrect_seller_selector(self, overview_briefs,
+                                                                                      brief_data):
         lot = lots_service.find(slug=brief_data['lot_slug']).one_or_none()
         brief = briefs_service.find(lot=lot, status='live').one_or_none()
         brief.data['sellerSelector'] = brief_data['seller_selector']
@@ -60,7 +60,7 @@ class TestCanCloseOpportunity(BaseApplicationTest):
 
     @pytest.mark.parametrize('lot_slug', ['rfx', 'specialist', 'training2'])
     def test_can_not_close_published_opportunity_early_with_multiple_seller_responses(
-        self, briefs, suppliers, lot_slug
+        self, overview_briefs, suppliers, lot_slug
     ):
         lot = lots_service.find(slug=lot_slug).one_or_none()
         brief = briefs_service.find(lot=lot, status='live').one_or_none()
@@ -70,9 +70,11 @@ class TestCanCloseOpportunity(BaseApplicationTest):
                 id=6,
                 brief_id=brief.id,
                 data={},
-                supplier_code=456
+                supplier_code=3
             )
         )
+
+        db.session.commit()
 
         can_close = can_close_opportunity_early(brief)
         assert can_close is False

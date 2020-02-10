@@ -2,11 +2,16 @@ import rollbar
 from flask_login import current_user
 
 from app.api.business.agreement_business import use_old_work_order_creator
+from app.api.business.brief import brief_business
 from app.api.business.errors import (BriefError, NotFoundError,
-                                     UnauthorisedError)
-from app.api.services import (audit_service, audit_types,
-                              brief_responses_service, briefs)
-from app.emails import send_opportunity_closed_early_email
+                                     UnauthorisedError, ValidationError)
+from app.api.services import (agency_service, audit_service, audit_types,
+                              brief_responses_service)
+from app.api.services import briefs as brief_service
+from app.api.services import users
+from app.emails import (send_opportunity_closed_early_email,
+                        send_opportunity_withdrawn_email_to_buyers,
+                        send_opportunity_withdrawn_email_to_seller)
 from app.tasks import publish_tasks
 from app.tasks.s3 import create_responses_zip
 from app.validation import get_sections as get_validation_sections
@@ -37,20 +42,24 @@ def can_close_opportunity_early(brief):
     return False
 
 
-def close_opportunity_early(current_user, brief_id):
-    brief = briefs.get(brief_id)
+def close_opportunity_early(user_id, brief_id):
+    brief = brief_service.get(brief_id)
     if not brief:
         raise NotFoundError('Opportunity {} does not exist'.format(brief_id))
 
-    if not briefs.has_permission_to_brief(current_user.id, brief_id):
+    if not brief_service.has_permission_to_brief(user_id, brief_id):
         raise UnauthorisedError('Not authorised to close opportunity {}'.format(brief_id))
 
     if not can_close_opportunity_early(brief):
         raise BriefError('Unable to close opportunity {}'.format(brief_id))
 
-    brief = briefs.close_opportunity_early(brief)
+    user = users.get(user_id)
+    if not user:
+        raise NotFoundError('User {} does not exist'.format(user_id))
+
+    brief = brief_service.close_opportunity_early(brief)
     create_responses_zip(brief.id)
-    send_opportunity_closed_early_email(brief, current_user)
+    send_opportunity_closed_early_email(brief, user)
 
     try:
         audit_service.log_audit_event(
@@ -59,14 +68,63 @@ def close_opportunity_early(current_user, brief_id):
                 'briefId': brief.id
             },
             db_object=brief,
-            user=current_user.email_address
+            user=user.email_address
         )
 
         publish_tasks.brief.delay(
             publish_tasks.compress_brief(brief),
             'closed_early',
-            email_address=current_user.email_address,
-            name=current_user.name
+            email_address=user.email_address,
+            name=user.name
+        )
+    except Exception as e:
+        rollbar.report_exc_info()
+
+    return brief
+
+
+def withdraw_opportunity(user_id, brief_id, withdrawal_reason):
+    brief = brief_service.get(brief_id)
+    if not brief:
+        raise NotFoundError('Opportunity {} does not exist'.format(brief_id))
+
+    if not brief_service.has_permission_to_brief(user_id, brief_id):
+        raise UnauthorisedError('Not authorised to withdraw opportunity {}'.format(brief_id))
+
+    if brief.status != 'live':
+        raise BriefError('Unable to withdraw opportunity {}'.format(brief_id))
+
+    if not withdrawal_reason:
+        raise ValidationError('Withdrawal reason is required for opportunity {}'.format(brief_id))
+
+    user = users.get(user_id)
+    if not user:
+        raise NotFoundError('User {} does not exist'.format(user_id))
+
+    brief = brief_service.withdraw_opportunity(brief, withdrawal_reason)
+    organisation = agency_service.get_agency_name(user.agency_id)
+    sellers_to_contact = brief_service.get_sellers_to_notify(brief, brief_business.is_open_to_all(brief))
+
+    for email_address in sellers_to_contact:
+        send_opportunity_withdrawn_email_to_seller(brief, email_address, organisation)
+
+    send_opportunity_withdrawn_email_to_buyers(brief, user)
+
+    try:
+        audit_service.log_audit_event(
+            audit_type=audit_types.withdraw_opportunity,
+            data={
+                'briefId': brief.id
+            },
+            db_object=brief,
+            user=user.email_address
+        )
+
+        publish_tasks.brief.delay(
+            publish_tasks.compress_brief(brief),
+            'withdrawn',
+            email_address=user.email_address,
+            name=user.name
         )
     except Exception as e:
         rollbar.report_exc_info()

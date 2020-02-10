@@ -803,6 +803,101 @@ def send_opportunity_closed_early_email(brief, current_user):
     )
 
 
+def send_opportunity_withdrawn_email_to_buyers(brief, current_user):
+    # to circumvent circular dependencies
+    from app.api.business.brief import brief_business
+    from app.api.services import audit_service, audit_types
+
+    to_addresses = get_brief_emails(brief)
+    seller_message = ''
+    invited_seller_codes = brief.data.get('sellers', {}).keys()
+
+    if brief_business.is_open_to_all(brief):
+        seller_message = 'We have notified sellers who have drafted or submitted responses to this opportunity'
+    elif len(invited_seller_codes) == 1:
+        invited_seller_code = invited_seller_codes.pop()
+        seller_name = brief.data['sellers'][invited_seller_code]['name']
+        seller_message = '{} has been notified'.format(seller_name)
+    else:
+        seller_message = 'All invited sellers have been notified'
+
+    email_body = render_email_template(
+        'opportunity_withdrawn_buyers.md',
+        brief_id=brief.id,
+        framework=brief.framework.slug,
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        seller_message=escape_markdown(seller_message),
+        title=escape_markdown(brief.data['title']),
+        user=escape_markdown(current_user.name),
+        withdrawal_reason=escape_markdown(brief.data['reasonToWithdraw'])
+    )
+
+    subject = "'{}' ({}) is withdrawn from the Digital Marketplace".format(
+        brief.data['title'],
+        brief.id
+    )
+
+    send_or_handle_error(
+        to_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors=audit_types.withdraw_opportunity
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_opportunity_withdrawn_email_to_buyers,
+        user='',
+        data={
+            "to_addresses": ', '.join(to_addresses),
+            "email_body": email_body,
+            "subject": subject
+        },
+        db_object=brief
+    )
+
+
+def send_opportunity_withdrawn_email_to_seller(brief, email_address, buyer):
+    # to circumvent circular dependencies
+    from app.api.services import audit_service, audit_types
+
+    email_body = render_email_template(
+        'opportunity_withdrawn_sellers.md',
+        brief_id=brief.id,
+        buyer=buyer,
+        framework=brief.framework.slug,
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        title=escape_markdown(brief.data['title']),
+        withdrawal_reason=escape_markdown(brief.data['reasonToWithdraw'])
+    )
+
+    subject = "'{}' ({}) is withdrawn from the Digital Marketplace".format(
+        brief.data['title'],
+        brief.id
+    )
+
+    send_or_handle_error(
+        email_address,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors=audit_types.withdraw_opportunity
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_opportunity_withdrawn_email_to_seller,
+        user='',
+        data={
+            "to_addresses": email_address,
+            "email_body": email_body,
+            "subject": subject
+        },
+        db_object=brief
+    )
+
+
 def get_brief_emails(brief):
     to_addresses = [user.email_address for user in brief.users if user.active]
     to_addresses = to_addresses + [

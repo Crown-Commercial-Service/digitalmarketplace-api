@@ -19,7 +19,7 @@ class TestTeamMemberValidation(BaseApplicationTest):
         db.session.add(
             TeamMember(
                 team_id=2,
-                user_id=2,
+                user_id=5,
                 is_team_lead=True
             )
         )
