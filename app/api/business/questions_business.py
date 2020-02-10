@@ -45,10 +45,12 @@ def get_question(current_user, brief_id, question_id):
         "brief": {
             "title": brief.data.get('title'),
             "id": brief.id,
+            "lot": brief.lot.slug,
             "questionsCloseAt": brief.questions_closed_at,
             "closedAt": brief.closed_at,
             "internalReference": brief.data.get('internalReference'),
-            "isOpenToAll": brief_business.is_open_to_all(brief)
+            "isOpenToAll": brief_business.is_open_to_all(brief),
+            "status": brief.status
         }
     }
 
@@ -68,9 +70,11 @@ def get_questions(current_user, brief_id):
         "brief": {
             "title": brief.data.get('title'),
             "id": brief.id,
+            "lot": brief.lot.slug,
             "closedAt": brief.closed_at,
             "internalReference": brief.data.get('internalReference'),
-            "isOpenToAll": brief_business.is_open_to_all(brief)
+            "isOpenToAll": brief_business.is_open_to_all(brief),
+            "status": brief.status
         },
         "questionCount": get_counts(brief_id, questions=questions)
     }

@@ -188,4 +188,8 @@ def get_suppliers_responded(brief_id):
     suppliers = brief_responses_service.get_suppliers_responded(brief_id)
     work_order = work_order_service.find(brief_id=brief_id).one_or_none()
 
-    return jsonify(suppliers=suppliers, workOrderCreated=True if work_order else False)
+    return jsonify(
+        brief=brief.serialize(with_users=False),
+        suppliers=suppliers,
+        workOrderCreated=True if work_order else False
+    )
