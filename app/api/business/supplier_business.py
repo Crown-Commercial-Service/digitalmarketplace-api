@@ -7,7 +7,20 @@ from app.api.business.agreement_business import (get_current_agreement,
                                                  has_signed_current_agreement)
 from app.api.business.validators import SupplierValidator
 from app.api.services import application_service, key_values_service, suppliers
+import requests as req
+import re
 
+def get_business_name_from_abn(abn):
+    #Guid number
+    authenticationGuid = '7ef41140-8406-40b4-8bf2-12582b5404ce'
+    includeHistoricalDetails = 'N'
+    abn = abn
+    conn = req.get('https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid)
+    xmlText = conn.content
+    searchXml = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
+    #takes the first organisation name as there are several such as trading names etc
+    organisationName = searchXml[0]
+    return organisationName
 
 def abn_is_used(abn):
     abn = "".join(abn.split())
