@@ -7,7 +7,6 @@ from app.api.business.agreement_business import (get_current_agreement,
                                                  has_signed_current_agreement)
 from app.api.business.validators import SupplierValidator
 from app.api.services import application_service, key_values_service, suppliers
-# import requests as req
 import requests
 from requests.exceptions import HTTPError
 import re
