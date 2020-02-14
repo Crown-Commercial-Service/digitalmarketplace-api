@@ -7,20 +7,50 @@ from app.api.business.agreement_business import (get_current_agreement,
                                                  has_signed_current_agreement)
 from app.api.business.validators import SupplierValidator
 from app.api.services import application_service, key_values_service, suppliers
-import requests as req
+# import requests as req
+import requests
+from requests.exceptions import HTTPError
 import re
-
+from app.tasks import publish_tasks
 def get_business_name_from_abn(abn):
     #Guid number
     authenticationGuid = '7ef41140-8406-40b4-8bf2-12582b5404ce'
     includeHistoricalDetails = 'N'
     abn = abn
-    conn = req.get('https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid)
-    xmlText = conn.content
-    searchXml = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
-    #takes the first organisation name as there are several such as trading names etc
-    organisationName = searchXml[0]
-    return organisationName
+
+    # url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid
+    url = 'http://godfgdfgdogle.cs'
+    try:
+        response = requests.get(url)
+        # if response is succcessful, no exceptions are raised
+        response.raise_for_status()
+        xmlText = response.content
+        searchXml = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
+        # #takes the first organisation name as there are several such as trading names etc
+        organisationName = searchXml[0]
+        print("YAYYYYYYY")
+        return organisationName
+    
+    # except HTTPError as http_err:
+    #     print('HTTP error occurred: {http_err}')
+   
+    except Exception as ex:
+        print("SAD")
+        publish_tasks.abnDown.delay(str(ex))
+        organisationName = ""
+        return organisationName
+
+    # if successful it will continue as planned
+    # xmlText = response.content
+    # searchXml = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
+    # # #takes the first organisation name as there are several such as trading names etc
+    # organisationName = searchXml[0]
+    # print("YAYYYYYYY")
+   
+
+    # searchXmlpostCode = re.findall(r'<postcode>(.*?)</postcode>', xmlText)
+    # print(searchXmlpostCode)
+    # return organisationName
 
 def abn_is_used(abn):
     abn = "".join(abn.split())
