@@ -28,5 +28,6 @@ class ApplicationService(Service):
                 Application
             )
             .filter(func.replace(Application.data['abn'].astext.label('abn'), ' ', '') == abn)
+            .filter(Application.status != 'deleted')
             .all()
         )
