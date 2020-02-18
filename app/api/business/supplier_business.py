@@ -17,8 +17,8 @@ def get_business_name_from_abn(abn):
     includeHistoricalDetails = 'N'
     abn = abn
 
-    # url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid
-    url = 'http://godfgdfgdogle.cs'
+    url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid
+    # url = 'http://godfgdfgdogle.cs'
     try:
         response = requests.get(url)
         # if response is succcessful, no exceptions are raised
