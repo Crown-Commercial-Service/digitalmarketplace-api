@@ -7,15 +7,18 @@ schedule: "every week on tuesday"
 
 requirements:
 
-  - requirements-app.txt:
+  - requirements.in:
       update: all
       pin: True
 
-  - requirements-dev.txt:
+  - requirements-dev.in:
       update: False
-      pin: True
+      pin: False
 
   - requirements.txt:
+      update: False
+
+  - requirements-dev.txt:
       update: False
 
 pr_prefix: "PyUp - "
