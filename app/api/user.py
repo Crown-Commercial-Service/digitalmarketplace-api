@@ -248,7 +248,7 @@ def create_user(
             user_data['role'] = 'supplier'
         else:
             try:
-                organisation_name = supplier_business.get_business_name_from_abn(abn)
+                organisation_name = supplier_business.get_business_name_from_abn(email_address, abn)
                 application = create_application(email_address=email_address, name=name, abn=abn, organisation_name=organisation_name)
                 user_data['application_id'] = application.id
 
