@@ -11,7 +11,7 @@ import requests
 from requests.exceptions import HTTPError
 import re
 from app.tasks import publish_tasks
-def get_business_name_from_abn(abn):
+def get_business_name_from_abn(email_address, abn ):
     #Guid number
     authenticationGuid = '7ef41140-8406-40b4-8bf2-12582b5404ce'
     includeHistoricalDetails = 'N'
@@ -29,23 +29,18 @@ def get_business_name_from_abn(abn):
         organisationName = searchXml[0]
         print("YAYYYYYYY")
         return organisationName
-    
-    # except HTTPError as http_err:
-    #     print('HTTP error occurred: {http_err}')
+
    
     except Exception as ex:
         print("SAD")
-        publish_tasks.abnDown.delay(str(ex))
+        publish_tasks.user.delay(
+            publish_tasks.compress_user(user),
+            'abr_failed',
+            email_address=email_address,
+            abn=abn
+        )
         organisationName = ""
         return organisationName
-
-    # if successful it will continue as planned
-    # xmlText = response.content
-    # searchXml = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
-    # # #takes the first organisation name as there are several such as trading names etc
-    # organisationName = searchXml[0]
-    # print("YAYYYYYYY")
-   
 
     # searchXmlpostCode = re.findall(r'<postcode>(.*?)</postcode>', xmlText)
     # print(searchXmlpostCode)
