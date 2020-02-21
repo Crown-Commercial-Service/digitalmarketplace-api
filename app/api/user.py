@@ -15,6 +15,7 @@ from app.models import (Application, AuditEvent, AuditTypes, Framework, User,
 from app.tasks import publish_tasks
 from app.api.helpers import get_email_domain
 from app.api.business import supplier_business
+from app.api.business.errors import MyAbrError
 
 def add_user(data):
     if data is None:
@@ -247,8 +248,17 @@ def create_user(
         if supplier_code:
             user_data['role'] = 'supplier'
         else:
+            organisation_name = ''
             try:
                 organisation_name = supplier_business.get_business_name_from_abn(email_address, abn)
+            except MyAbrError:
+                publish_tasks.user.delay(
+                    user_data,
+                    'abr_failed',
+                    email_address=email_address,
+                    abn=abn
+                )
+            try:
                 application = create_application(email_address=email_address, name=name, abn=abn, organisation_name=organisation_name)
                 user_data['application_id'] = application.id
 

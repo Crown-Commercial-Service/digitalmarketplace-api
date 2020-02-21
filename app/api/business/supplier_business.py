@@ -8,17 +8,20 @@ from app.api.business.agreement_business import (get_current_agreement,
 from app.api.business.validators import SupplierValidator
 from app.api.services import application_service, key_values_service, suppliers
 import requests
-from requests.exceptions import HTTPError
+from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, ProxyError)
 import re
 from app.tasks import publish_tasks
-def get_business_name_from_abn(email_address, abn ):
+from app.api.business.errors import MyAbrError
+def get_business_name_from_abn(email_address, abn):
     #Guid number
     authenticationGuid = '7ef41140-8406-40b4-8bf2-12582b5404ce'
     includeHistoricalDetails = 'N'
     abn = abn
 
-    url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid
-    # url = 'http://godfgdfgdogle.cs'
+
+    
+    #url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid
+    url = 'http://godfgdfgdogle.cs'
     try:
         response = requests.get(url)
         # if response is succcessful, no exceptions are raised
@@ -30,18 +33,26 @@ def get_business_name_from_abn(email_address, abn ):
         print("YAYYYYYYY")
         return organisationName
 
-   
-    except Exception as ex:
-        print("SAD")
-        publish_tasks.user.delay(
-            publish_tasks.compress_user(user),
-            'abr_failed',
-            email_address=email_address,
-            abn=abn
-        )
-        organisationName = ""
-        return organisationName
+    # Event of a network problem (refused connection, DNS failure)
+    except ConnectionError as ex:
+        raise MyAbrError('Connection Error')
 
+    #Invalid HTTP Reponse
+    except HTTPError as ex:
+        raise MyAbrError('HTTP Error')
+
+    except ProxyError as ex:
+        raise MyAbrError('ProxyError')
+
+    except Timeout as ex:
+        raise MyAbrError('Timeout')
+
+    except SSLError as ex:
+        raise MyAbrError('SSLError')
+
+    # Any other expections
+    except Exception as ex:
+        raise MyAbrError('Some exception raised')
     # searchXmlpostCode = re.findall(r'<postcode>(.*?)</postcode>', xmlText)
     # print(searchXmlpostCode)
     # return organisationName
