@@ -35,3 +35,8 @@ class DomainCriteriaInvalidRateException(Exception):
 class DomainApprovalException(Exception):
     """Raised when the domain approval outcome fails to apply."""
     pass
+
+
+class MyAbrError(Exception):
+    """Raised when unable to get a response from the abr website."""
+    pass
