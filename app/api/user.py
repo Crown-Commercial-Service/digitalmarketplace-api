@@ -251,6 +251,15 @@ def create_user(
             organisation_name = ''
             try:
                 organisation_name = supplier_business.get_business_name_from_abn(email_address, abn)
+                organisation_name = organisation_name[0]
+                print("BUSINESS NAME")
+                print(organisation_name)
+                # print("POSTCODE")
+                # postCode = organisation_name[1]
+                # print(postCode)
+                print('STATE')
+                state = organisation_name[2]
+                print(state)
             except MyAbrError:
                 publish_tasks.user.delay(
                     user_data,
@@ -259,7 +268,7 @@ def create_user(
                     abn=abn
                 )
             try:
-                application = create_application(email_address=email_address, name=name, abn=abn, organisation_name=organisation_name)
+                application = create_application(email_address=email_address, name=name, abn=abn, organisation_name=organisation_name, state=state)
                 user_data['application_id'] = application.id
 
             except (InvalidRequestError, IntegrityError):
