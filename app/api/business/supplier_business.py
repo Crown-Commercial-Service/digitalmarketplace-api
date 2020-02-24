@@ -18,10 +18,8 @@ def get_business_name_from_abn(email_address, abn):
     includeHistoricalDetails = 'N'
     abn = abn
 
-
-    
-    #url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid
-    url = 'http://godfgdfgdogle.cs'
+    url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid
+    #url = 'http://godfgdfgdogle.cs'
     try:
         response = requests.get(url)
         # if response is succcessful, no exceptions are raised
@@ -34,7 +32,7 @@ def get_business_name_from_abn(email_address, abn):
         postCode = searchXmlPostCode[0]
         searchXmlState = re.findall(r'<stateCode>(.*?)</stateCode>', xmlText)
         state = searchXmlState[0]
-        return organisationName
+        return organisationName, postCode, state
 
     # Event of a network problem (refused connection, DNS failure)
     except ConnectionError as ex:
