@@ -27,10 +27,13 @@ def get_business_name_from_abn(email_address, abn):
         # if response is succcessful, no exceptions are raised
         response.raise_for_status()
         xmlText = response.content
-        searchXml = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
+        searchXmlOrganisationName = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
         # #takes the first organisation name as there are several such as trading names etc
-        organisationName = searchXml[0]
-        print("YAYYYYYYY")
+        organisationName = searchXmlOrganisationName[0]
+        searchXmlPostCode = re.findall(r'<postcode>(.*?)</postcode>', xmlText)
+        postCode = searchXmlPostCode[0]
+        searchXmlState = re.findall(r'<stateCode>(.*?)</stateCode>', xmlText)
+        state = searchXmlState[0]
         return organisationName
 
     # Event of a network problem (refused connection, DNS failure)
