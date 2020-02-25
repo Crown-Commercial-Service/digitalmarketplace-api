@@ -3,6 +3,7 @@ from app.api.services import (
 )
 from . import celery
 
+
 @celery.task
 def agency(agency, event_type, **kwargs):
     publish.agency(agency, event_type, **kwargs)

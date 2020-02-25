@@ -15,11 +15,11 @@ from app.api.business.errors import MyAbrError
 
 
 def get_business_name_postCode_state_from_abn(email_address, abn):
-    #Guid number
+    # Guid number
     authenticationGuid = '7ef41140-8406-40b4-8bf2-12582b5404ce'
     includeHistoricalDetails = 'N'
     abn = abn
-    url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid
+    url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails=' + includeHistoricalDetails + '&authenticationGuid=' + authenticationGuid
 
     try:
         response = requests.get(url)
@@ -57,6 +57,7 @@ def get_business_name_postCode_state_from_abn(email_address, abn):
     # Any other expections
     except Exception as ex:
         raise MyAbrError('Some exception raised')
+
 
 def abn_is_used(abn):
     abn = "".join(abn.split())

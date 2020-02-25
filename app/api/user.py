@@ -249,17 +249,17 @@ def create_user(
         if supplier_code:
             user_data['role'] = 'supplier'
         else:
-            organisation_postCode_state = ''
-            # In case the selller's business is outside of australia or does not have an abn, 
+            organisation_post_state = ''
+            # In case the selller's business is outside of australia or does not have an abn,
             # then these fields will provide an empty string to prefill out the form.
             organisation_name = ''
             state = ''
             postCode = ''
             try:
-                organisation_postCode_state = supplier_business.get_business_name_postCode_state_from_abn(email_address, abn)
-                organisation_name = organisation_postCode_state[0]
-                postCode = organisation_postCode_state[1]
-                state = organisation_postCode_state[2]
+                organisation_post_state = supplier_business.get_business_name_postCode_state_from_abn(email_address, abn)
+                organisation_name = organisation_post_state[0]
+                postCode = organisation_post_state[1]
+                state = organisation_post_state[2]
             except MyAbrError:
                 publish_tasks.user.delay(
                     user_data,
