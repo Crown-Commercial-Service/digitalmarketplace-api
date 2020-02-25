@@ -256,7 +256,8 @@ def create_user(
             state = ''
             postCode = ''
             try:
-                organisation_post_state = supplier_business.get_business_name_postCode_state_from_abn(email_address, abn)
+                organisation_post_state = supplier_business.get_business_name_postCode_state_from_abn(email_address, 
+                abn)
                 organisation_name = organisation_post_state[0]
                 postCode = organisation_post_state[1]
                 state = organisation_post_state[2]
@@ -268,7 +269,8 @@ def create_user(
                     abn=abn
                 )
             try:
-                application = create_application(email_address=email_address, name=name, abn=abn, organisation_name=organisation_name, state=state, postCode=postCode)
+                application = create_application(email_address=email_address, name=name, abn=abn, 
+                organisation_name=organisation_name, state=state, postCode=postCode)
                 user_data['application_id'] = application.id
 
             except (InvalidRequestError, IntegrityError):
