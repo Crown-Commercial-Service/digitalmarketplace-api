@@ -12,21 +12,34 @@ from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, 
 import re
 from app.tasks import publish_tasks
 from app.api.business.errors import MyAbrError
+import xml.etree.ElementTree as ET
+from flask import current_app
 
 
 def get_business_name_postCode_state_from_abn(email_address, abn):
     # Guid number
-    authenticationGuid = '7ef41140-8406-40b4-8bf2-12582b5404ce'
+    apiKey = current_app.config['ABR_API_KEY']
     includeHistoricalDetails = 'N'
     abn = abn
     url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + \
-          '&includeHistoricalDetails=' + includeHistoricalDetails + '&authenticationGuid=' + authenticationGuid
+        '&includeHistoricalDetails=' + includeHistoricalDetails + '&authenticationGuid=' + apiKey
 
     try:
         response = requests.get(url)
         # if response is succcessful, no exceptions are raised
         response.raise_for_status()
         xmlText = response.content
+        root = ElementTree.fromstring(xmlText)
+
+        print('sdhfkjsdhf')
+        for child in root.iter('*'):
+            print(child.tag)
+
+        # for child in root.iter('TopologyElement'):
+        #     print(child.attrib['displayName'], child.attrib['loginProvider'])
+
+        raise Exception('asdf')
+
         searchXmlOrganisationName = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
         # takes the first organisation name as there are several such as trading names etc
         organisationName = searchXmlOrganisationName[0]
