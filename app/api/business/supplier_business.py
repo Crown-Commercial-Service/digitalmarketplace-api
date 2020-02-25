@@ -19,9 +19,8 @@ def get_business_name_postCode_state_from_abn(email_address, abn):
     authenticationGuid = '7ef41140-8406-40b4-8bf2-12582b5404ce'
     includeHistoricalDetails = 'N'
     abn = abn
-
     url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails='+ includeHistoricalDetails +'&authenticationGuid='+ authenticationGuid
-    #url = 'http://godfgdfgdogle.cs'
+
     try:
         response = requests.get(url)
         # if response is succcessful, no exceptions are raised
