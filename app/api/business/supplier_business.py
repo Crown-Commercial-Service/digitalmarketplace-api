@@ -12,6 +12,8 @@ from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, 
 import re
 from app.tasks import publish_tasks
 from app.api.business.errors import MyAbrError
+
+
 def get_business_name_postCode_state_from_abn(email_address, abn):
     #Guid number
     authenticationGuid = '7ef41140-8406-40b4-8bf2-12582b5404ce'
@@ -26,12 +28,12 @@ def get_business_name_postCode_state_from_abn(email_address, abn):
         response.raise_for_status()
         xmlText = response.content
         searchXmlOrganisationName = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
-        #takes the first organisation name as there are several such as trading names etc
+        # takes the first organisation name as there are several such as trading names etc
         organisationName = searchXmlOrganisationName[0]
-        #takes the first postcode
+        # takes the first postcode
         searchXmlPostCode = re.findall(r'<postcode>(.*?)</postcode>', xmlText)
         postCode = searchXmlPostCode[0]
-        #takes the first state
+        # takes the first state
         searchXmlState = re.findall(r'<stateCode>(.*?)</stateCode>', xmlText)
         state = searchXmlState[0]
         return organisationName, postCode, state
@@ -40,7 +42,7 @@ def get_business_name_postCode_state_from_abn(email_address, abn):
     except ConnectionError as ex:
         raise MyAbrError('Connection Error')
 
-    #Invalid HTTP Reponse
+    # Invalid HTTP Reponse
     except HTTPError as ex:
         raise MyAbrError('HTTP Error')
 

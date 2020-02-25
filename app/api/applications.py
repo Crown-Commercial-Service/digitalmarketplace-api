@@ -12,10 +12,9 @@ def create_application(email_address=None, name=None, abn=None, organisation_nam
             'email': email_address,
             'abn': abn,
             'name': organisation_name,
-            'addresses': {'0': {'address_line': "", 'postal_code': postCode, 'state':state}}
+            'addresses': {'0': {'address_line': "", 'postal_code': postCode, 'state': state}}
         }
     )
-    # addresses[0]['state]
 
     db.session.add(application)
     db.session.flush()

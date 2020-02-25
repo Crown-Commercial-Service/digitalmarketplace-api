@@ -17,6 +17,7 @@ from app.api.helpers import get_email_domain
 from app.api.business import supplier_business
 from app.api.business.errors import MyAbrError
 
+
 def add_user(data):
     if data is None:
         raise DataError('create_user requires a data arg')
@@ -249,10 +250,11 @@ def create_user(
             user_data['role'] = 'supplier'
         else:
             organisation_postCode_state = ''
-            # In case the selller's business is outside of australia or does not have an abn, then these fields will provide an empty string to prefill out the form
+            # In case the selller's business is outside of australia or does not have an abn, 
+            # then these fields will provide an empty string to prefill out the form.
             organisation_name = ''
             state = ''
-            postCode =''
+            postCode = ''
             try:
                 organisation_postCode_state = supplier_business.get_business_name_postCode_state_from_abn(email_address, abn)
                 organisation_name = organisation_postCode_state[0]
