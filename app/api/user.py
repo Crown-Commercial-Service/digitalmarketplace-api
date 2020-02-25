@@ -248,18 +248,12 @@ def create_user(
         if supplier_code:
             user_data['role'] = 'supplier'
         else:
-            organisation_name = ''
+            organisation_postCode_state = ''
             try:
-                organisation_name = supplier_business.get_business_name_from_abn(email_address, abn)
-                organisation_name = organisation_name[0]
-                print("BUSINESS NAME")
-                print(organisation_name)
-                # print("POSTCODE")
-                # postCode = organisation_name[1]
-                # print(postCode)
-                print('STATE')
-                state = organisation_name[2]
-                print(state)
+                organisation_postCode_state = supplier_business.get_business_name_postCode_state_from_abn(email_address, abn)
+                organisation_name = organisation_postCode_state[0]
+                postCode = organisation_postCode_state[1]
+                state = organisation_postCode_state[2]
             except MyAbrError:
                 publish_tasks.user.delay(
                     user_data,
@@ -268,7 +262,7 @@ def create_user(
                     abn=abn
                 )
             try:
-                application = create_application(email_address=email_address, name=name, abn=abn, organisation_name=organisation_name, state=state)
+                application = create_application(email_address=email_address, name=name, abn=abn, organisation_name=organisation_name, state=state, postCode=postCode)
                 user_data['application_id'] = application.id
 
             except (InvalidRequestError, IntegrityError):
