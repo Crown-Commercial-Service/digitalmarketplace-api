@@ -19,6 +19,11 @@ We will assess the rate and evidence against the criteria you submitted.
 
 If you have any questions or need guidance, please [contact the Marketplace]({{ frontend_address }}/contact-us).
 
+**Review of {{domain_name}} Assessment**
+
+*Maximum Daily Rate (including GST):* {{}}
+*Evidence:* {{}}
+
 Regards,  
 The Digital Marketplace team  
 Digital Transformation Agency  
