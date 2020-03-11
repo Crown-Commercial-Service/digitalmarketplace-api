@@ -17,32 +17,30 @@ run-migrations: virtualenv
 virtualenv:
 	[ -z $$VIRTUAL_ENV ] && [ ! -d venv ] && python3 -m venv venv || true
 
+.PHONY: upgrade-pip
+upgrade-pip: virtualenv
+	${VIRTUALENV_ROOT}/bin/pip install --upgrade pip
+
 .PHONY: requirements
-requirements: virtualenv test-requirements requirements.txt
+requirements: virtualenv upgrade-pip requirements.in
 	${VIRTUALENV_ROOT}/bin/pip install -r requirements.txt
 
 .PHONY: requirements-dev
-requirements-dev: virtualenv requirements-dev.txt
-	${VIRTUALENV_ROOT}/bin/pip install -Ur requirements-dev.txt
+requirements-dev: virtualenv upgrade-pip requirements.txt requirements-dev.txt
+	${VIRTUALENV_ROOT}/bin/pip install -r requirements.txt -r requirements-dev.txt
 
 .PHONY: freeze-requirements
-freeze-requirements: virtualenv requirements-dev requirements-app.txt
-	${VIRTUALENV_ROOT}/bin/python -m dmutils.repoutils.freeze_requirements requirements-app.txt
+freeze-requirements: requirements-dev requirements.in requirements-dev.in
+	${VIRTUALENV_ROOT}/bin/pip-compile requirements.in
+	${VIRTUALENV_ROOT}/bin/pip-compile requirements-dev.in
 
 .PHONY: test
-test: test-requirements test-flake8 test-migrations test-unit
+test: test-flake8 test-migrations test-unit
 
 .PHONY: test-bootstrap
 test-bootstrap: virtualenv
 	dropdb -h ${DATABASE_HOST} --if-exists digitalmarketplace_test
 	createdb -h ${DATABASE_HOST} digitalmarketplace_test
-
-.PHONY: test-requirements
-test-requirements:
-	@diff requirements-app.txt requirements.txt | grep '<' \
-	    && { echo "requirements.txt doesn't match requirements-app.txt."; \
-	         echo "Run 'make freeze-requirements' to update."; exit 1; } \
-	    || { echo "requirements.txt is up to date"; exit 0; }
 
 .PHONY: test-flake8
 test-flake8: virtualenv requirements-dev
