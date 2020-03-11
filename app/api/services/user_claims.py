@@ -23,6 +23,14 @@ class UserClaimService(Service):
             saved = True
         return claim if saved else None
 
+    def get_claim(self, token=None, type=None, email_address=None, claimed=False):
+        query = (
+            db.session.query(UserClaim)
+            .filter(UserClaim.token == token, UserClaim.type == type, UserClaim.email_address == email_address)
+            .filter(UserClaim.claimed.is_(claimed))
+        )
+        return query.first()
+
     # attempts to validate the claim and records the claim as claimed if successful
     def validate_and_update_claim(self, type=None, token=None, email_address=None, age=None):
         claimed = False
