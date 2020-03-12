@@ -18,7 +18,7 @@ down_revision = '1200'
 def upgrade():
     op.create_unique_constraint('uq_brief_responses_id_brief_id', 'brief_responses', ['id', 'brief_id'])
     op.create_unique_constraint(
-        'uq_direct_award_search_result_entries_archived_service_id_search_id',
+        'uq_direct_award_search_result_entries_archived_service_id_searc',
         'direct_award_search_result_entries',
         ['archived_service_id', 'search_id'],
     )
@@ -119,7 +119,7 @@ def downgrade():
     op.drop_table('outcomes')
     op.drop_constraint('uq_direct_award_searches_id_project_id', 'direct_award_searches', type_='unique')
     op.drop_constraint(
-        'uq_direct_award_search_result_entries_archived_service_id_search_id',
+        'uq_direct_award_search_result_entries_archived_service_id_searc',
         'direct_award_search_result_entries',
         type_='unique',
     )
