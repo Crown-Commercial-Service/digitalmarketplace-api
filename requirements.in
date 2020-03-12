@@ -11,7 +11,7 @@ Flask-SQLAlchemy==2.1 # pyup: ignore
 itsdangerous==0.24 # pyup: ignore
 --no-binary=psycopg2
 psycopg2==2.8.4
-SQLAlchemy==1.2.18 # pyup: ignore
+SQLAlchemy>=1.3.0,<=1.4.0 # pyup: ignore
 SQLAlchemy-Utils==0.36.1
 sqlalchemy-json==0.2.3
 
