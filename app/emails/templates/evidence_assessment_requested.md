@@ -2,6 +2,8 @@ Hi,
 
 We have received your request to assess your evidence for {{domain_name}}.
 
+[View the Submitted Evidence]({{ frontend_address }}/login?next=%2F2%2Fseller-dashboard/categories).
+
 **What happens next**
 
 We will assess the rate and evidence against the criteria you submitted.
@@ -19,10 +21,6 @@ We will assess the rate and evidence against the criteria you submitted.
 
 If you have any questions or need guidance, please [contact the Marketplace]({{ frontend_address }}/contact-us).
 
-**Review of {{domain_name}} Assessment**
-
-*Maximum Daily Rate (including GST):* {{}}
-*Evidence:* {{}}
 
 Regards,  
 The Digital Marketplace team  
