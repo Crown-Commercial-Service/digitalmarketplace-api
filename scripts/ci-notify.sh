@@ -7,6 +7,7 @@ PAYLOAD='{"channel": "#marketplace", "icon_emoji": ":lightning:","username": "re
  "text": "'"$GITLOG"'" }] }'
 
 echo $PAYLOAD
+curl -g -X POST --data-urlencode "payload=$PAYLOAD" "$SLACK_MARKETPLACE_SUPPORT_WEBHOOK_URL"
 curl -g -X POST --data-urlencode "payload=$PAYLOAD" "$SLACK_WEBHOOK_URL"
 
 ENVIRONMENT=production
