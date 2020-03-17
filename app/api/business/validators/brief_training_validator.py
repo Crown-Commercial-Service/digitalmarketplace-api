@@ -294,7 +294,10 @@ class TrainingDataValidator(object):
                 {'name': 'securityClearance', 'type': basestring},
                 {'name': 'publish', 'type': bool},
                 {'name': 'sellerSelector', 'type': basestring},
-                {'name': 'comprehensiveTerms', 'type': bool}
+                {'name': 'comprehensiveTerms', 'type': bool},
+                {'name': 'originalClosedAt', 'type': basestring},
+                {'name': 'originalQuestionsClosedAt', 'type': basestring},
+                {'name': 'reasonToWithdraw', 'type': basestring}
             ]
 
             request_keys = self.data.keys()

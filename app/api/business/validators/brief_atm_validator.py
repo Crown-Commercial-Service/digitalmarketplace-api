@@ -204,7 +204,8 @@ class ATMDataValidator(object):
                 {'name': 'publish', 'type': bool},
                 {'name': 'openTo', 'type': basestring},
                 {'name': 'sellerSelector', 'type': basestring},
-                {'name': 'areaOfExpertise', 'type': basestring}
+                {'name': 'areaOfExpertise', 'type': basestring},
+                {'name': 'reasonToWithdraw', 'type': basestring}
             ]
 
             request_keys = self.data.keys()

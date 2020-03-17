@@ -360,7 +360,10 @@ class SpecialistDataValidator(object):
                 {'name': 'areaOfExpertise', 'type': basestring},
                 {'name': 'closedAt', 'type': basestring},
                 {'name': 'publish', 'type': bool},
-                {'name': 'comprehensiveTerms', 'type': bool}
+                {'name': 'comprehensiveTerms', 'type': bool},
+                {'name': 'originalClosedAt', 'type': basestring},
+                {'name': 'originalQuestionsClosedAt', 'type': basestring},
+                {'name': 'reasonToWithdraw', 'type': basestring}
             ]
 
             request_keys = self.data.keys()
