@@ -223,7 +223,7 @@ def update_evidence(evidence_id):
         if current_app.config['JIRA_FEATURES']:
             create_evidence_assessment_in_jira.delay(evidence_id)
         try:
-            send_evidence_assessment_requested_notification(evidence.domain_id, current_user.email_address)
+            send_evidence_assessment_requested_notification(evidence_id, evidence.domain_id, current_user.email_address)
         except Exception as e:
             current_app.logger.warn(
                 'Failed to send requested assessment email for evidence id: {}, {}'.format(evidence_id, e)
