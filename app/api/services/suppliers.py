@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import pytz
-from sqlalchemy import and_, func, literal, or_, select, union
+from sqlalchemy import and_, case, func, literal, or_, select, union
 from sqlalchemy.orm import joinedload, noload, raiseload
 from sqlalchemy.dialects.postgresql import aggregate_order_by
 
@@ -274,7 +274,12 @@ class SuppliersService(Service):
                 Supplier.creation_time,
                 Supplier.data['contact_email'].astext.label('contact_email'),
                 Supplier.data['recruiter'].astext.label('recruiter_status'),
-                Supplier.data['seller_type'].label('seller_type'),
+                case(
+                    whens=[
+                        (Supplier.data['seller_type'].is_(None), '{}')
+                    ],
+                    else_=Supplier.data['seller_type']
+                ).label('seller_type'),
                 Supplier.data['number_of_employees'].label('number_of_employees'),
                 func.string_agg(Domain.name, ',').label('domains')
             )
