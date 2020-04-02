@@ -14,6 +14,8 @@ from app.tasks.jira import sync_application_approvals_with_jira
 from app.tasks.mailchimp import (MailChimpConfigException,
                                  send_document_expiry_campaign,
                                  send_document_expiry_reminder,
+                                 send_labour_hire_expiry_reminder,
+                                 send_labour_hire_licence_expiry_campaign,
                                  send_new_briefs_email,
                                  sync_mailchimp_seller_list)
 from app.tasks.s3 import CreateResponsesZipException, create_responses_zip
@@ -375,6 +377,16 @@ def audit_events(app, suppliers_service):
             db_object=None,
             user=None
         ))
+        db.session.add(AuditEvent(
+            audit_type=audit_types.sent_expiring_licence_email,
+            data={
+                'campaign_title': ('Expiring labour hire licence - {}'
+                                   .format(date.today().isoformat())),
+                'sellers': suppliers_service.get_suppliers_with_expiring_labour_hire_licences()
+            },
+            db_object=None,
+            user=None
+        ))
         yield db.session.query(AuditEvent).all()
 
 
@@ -388,6 +400,24 @@ def suppliers_service(expiry_date, mocker, supplier):
                 {
                     'expiry': expiry_date,
                     'type': 'liability'
+                }
+            ],
+            'email_addresses': [
+                'authorised.rep@digital.gov.au',
+                'business.contact@digital.gov.au',
+                'abc.user@digital.gov.au'
+            ],
+            'name': 'ABC'
+        }
+    ]
+    suppliers.get_suppliers_with_expiring_labour_hire_licences.return_value = [
+        {
+            'code': 123,
+            'labourHire': [
+                {
+                    'state': 'vic',
+                    'expiry': expiry_date,
+                    'licenceNumber': '123456'
                 }
             ],
             'email_addresses': [
@@ -506,3 +536,108 @@ def test_document_expiry_campaign_adds_audit_event_on_success(expiry_date, mocke
     assert audit_event.data['campaign_title'] == ('Expiring documents - {}'
                                                   .format(date.today().isoformat()))
     assert audit_event.data['sellers'] == suppliers_service.get_suppliers_with_expiring_documents()
+
+
+def test_licence_expiry_campaign_is_not_created_when_no_sellers_with_expiring_licences(mocker,
+                                                                                       suppliers_service):
+    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+    client = MagicMock()
+    mailchimp.return_value = client
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    suppliers_service.get_suppliers_with_expiring_labour_hire_licences.return_value = []
+
+    send_labour_hire_expiry_reminder()
+
+    assert not client.campaigns.create.called
+    assert not client.campaigns.content.update.called
+    assert not client.campaigns.actions.schedule.called
+
+
+def test_licence_expiry_campaign_is_not_created_if_audit_event_exists(audit_events, mocker,
+                                                                      supplier, suppliers_service):
+    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+    client = MagicMock()
+    mailchimp.return_value = client
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    send_labour_hire_expiry_reminder()
+
+    assert not client.campaigns.create.called
+    assert not client.campaigns.content.update.called
+    assert not client.campaigns.actions.schedule.called
+
+
+def test_licence_expiry_campaign_success(mocker, supplier, suppliers_service):
+    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+    client = MagicMock()
+    mailchimp.return_value = client
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    client.campaigns.create.return_value = {
+        'id': 123
+    }
+
+    send_labour_hire_expiry_reminder()
+
+    assert client.campaigns.create.called
+    assert client.campaigns.content.update.called
+    assert client.campaigns.actions.schedule.called
+
+
+def test_licence_expiry_campaign_is_created_with_segment_options(mocker, supplier, suppliers_service):
+    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+    client = MagicMock()
+    mailchimp.return_value = client
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    client.campaigns.create.return_value = {
+        'id': 123
+    }
+
+    email_addresses = suppliers_service.get_suppliers_with_expiring_labour_hire_licences()[0]['email_addresses']
+    sellers = suppliers_service.get_suppliers_with_expiring_labour_hire_licences()
+
+    send_labour_hire_licence_expiry_campaign(client, sellers)
+
+    segment_options = client.campaigns.create.call_args[1]['data']['recipients']['segment_opts']
+
+    assert segment_options['match'] == 'any'
+    assert len(segment_options['conditions']) == 3
+    for condition in segment_options['conditions']:
+        assert condition['condition_type'] == 'EmailAddress'
+        assert condition['op'] == 'is'
+        assert condition['field'] == 'EMAIL'
+        assert condition['value'] in email_addresses
+
+
+def test_licence_expiry_campaign_adds_audit_event_on_success(expiry_date, mocker, supplier, suppliers_service):
+    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+    client = MagicMock()
+    mailchimp.return_value = client
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    client.campaigns.create.return_value = {
+        'id': 123
+    }
+
+    assert db.session.query(AuditEvent).count() == 0
+
+    sellers = suppliers_service.get_suppliers_with_expiring_labour_hire_licences()
+    send_labour_hire_licence_expiry_campaign(client, sellers)
+
+    audit_event = db.session.query(AuditEvent).first()
+    assert audit_event.type == audit_types.sent_expiring_licence_email.value
+    assert audit_event.data['campaign_title'] == ('Expiring labour hire licence - {}'
+                                                  .format(date.today().isoformat()))
+    assert audit_event.data['sellers'] == suppliers_service.get_suppliers_with_expiring_labour_hire_licences()

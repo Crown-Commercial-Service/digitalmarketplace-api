@@ -59,7 +59,9 @@ def create_responses_zip_for_closed_briefs():
                     Lot.slug == 'specialist'
                 )
             ),
-            Framework.slug == 'digital-marketplace')
+            Framework.slug == 'digital-marketplace'
+        )
+        .order_by(Brief.id.desc())
         .all()
     )
 

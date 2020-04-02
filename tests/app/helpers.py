@@ -95,6 +95,13 @@ INCOMING_APPLICATION_DATA = {
     "summary": "Summary",
     "website": "http://website",
     "linkedin": "",
+    "recruiter": "both",
+    "labourHire": {
+        "vic": {
+            "expiry": "2050-01-01",
+            "licenceNumber": "vic licence number"
+        }
+    },
     "addresses": {
         "0": {
             "address_line": "Add",
