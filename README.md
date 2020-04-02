@@ -56,7 +56,7 @@ make test
 To only run the Python tests:
 
 ```
-make test-python
+make test-unit
 ```
 
 To run the `flake8` linter:
