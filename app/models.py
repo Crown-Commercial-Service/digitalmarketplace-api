@@ -2390,6 +2390,16 @@ class Brief(db.Model):
         return data
 
 
+class BriefHistory(db.Model):
+    __tablename__ = 'brief_history'
+
+    id = db.Column(db.Integer, primary_key=True)
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), index=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True, nullable=False)
+    edited_at = db.Column(DateTime, index=True, default=utcnow, nullable=False)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
+
+
 class BriefUser(db.Model):
     __tablename__ = 'brief_user'
 

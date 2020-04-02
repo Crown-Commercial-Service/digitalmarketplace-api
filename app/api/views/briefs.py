@@ -5,6 +5,7 @@ import os
 import botocore
 import pendulum
 import rollbar
+import copy
 from flask import Response, current_app, jsonify, request
 from flask_login import current_user, login_required
 from pendulum.parsing.exceptions import ParserError
@@ -14,9 +15,9 @@ from app.api import api
 from app.api.business import (brief_overview_business, brief_training_business,
                               supplier_business)
 from app.api.business.agreement_business import use_old_work_order_creator
-from app.api.business.brief import BriefUserStatus, brief_business
+from app.api.business.brief import BriefUserStatus, brief_business, brief_edit_business
 from app.api.business.errors import (BriefError, NotFoundError,
-                                     UnauthorisedError, ValidationError)
+                                     UnauthorisedError)
 from app.api.business.validators import (ATMDataValidator, RFXDataValidator,
                                          SpecialistDataValidator,
                                          SupplierValidator,
@@ -25,9 +26,9 @@ from app.api.csv import generate_brief_responses_csv
 from app.api.helpers import (abort, exception_logger, forbidden,
                              get_email_domain, is_current_user_in_brief,
                              not_found, notify_team, permissions_required,
-                             role_required)
+                             role_required, server_error)
 from app.api.services import (agency_service, audit_service, audit_types,
-                              brief_question_service,
+                              brief_history_service, brief_question_service,
                               brief_response_download_service,
                               brief_responses_service, briefs, domain_service,
                               evidence_service, frameworks_service,
@@ -463,6 +464,9 @@ def get_brief(brief_id):
         if not is_invited:
             brief_serialized['clarificationQuestions'] = []
 
+    last_edited_at = brief_history_service.get_last_edited_date(brief.id)
+    only_sellers_edited = brief_edit_business.only_sellers_were_edited(brief.id)
+
     return jsonify(brief=brief_serialized,
                    brief_response_count=brief_response_count,
                    invited_seller_count=invited_seller_count,
@@ -493,6 +497,8 @@ def get_brief(brief_id):
                    has_responded=has_responded,
                    has_supplier_errors=has_supplier_errors,
                    has_signed_current_agreement=has_signed_current_agreement,
+                   last_edited_at=last_edited_at,
+                   only_sellers_edited=only_sellers_edited,
                    domains=domains)
 
 
@@ -620,27 +626,28 @@ def update_brief(brief_id):
         ):
             return forbidden('Unauthorised to edit drafts')
 
+    data_to_validate = copy.deepcopy(data)
     if brief.lot.slug == 'rfx':
         # validate the RFX JSON request data
-        errors = RFXDataValidator(data).validate(publish=publish)
+        errors = RFXDataValidator(data_to_validate).validate(publish=publish)
         if len(errors) > 0:
             abort(', '.join(errors))
 
     if brief.lot.slug == 'training2':
         # validate the training JSON request data
-        errors = TrainingDataValidator(data).validate(publish=publish)
+        errors = TrainingDataValidator(data_to_validate).validate(publish=publish)
         if len(errors) > 0:
             abort(', '.join(errors))
 
     if brief.lot.slug == 'atm':
         # validate the ATM JSON request data
-        errors = ATMDataValidator(data).validate(publish=publish)
+        errors = ATMDataValidator(data_to_validate).validate(publish=publish)
         if len(errors) > 0:
             abort(', '.join(errors))
 
     if brief.lot.slug == 'specialist':
         # validate the specialist JSON request data
-        errors = SpecialistDataValidator(data).validate(publish=publish)
+        errors = SpecialistDataValidator(data_to_validate).validate(publish=publish)
         if len(errors) > 0:
             abort(', '.join(errors))
 
@@ -747,6 +754,40 @@ def close_opportunity_early(brief_id):
         abort(e.message)
 
     return jsonify(brief.serialize(with_users=False))
+
+
+@api.route('/brief/<int:brief_id>/edit', methods=['PATCH'])
+@exception_logger
+@login_required
+@permissions_required('publish_opportunities')
+@role_required('buyer')
+def edit_opportunity(brief_id):
+    edits = get_json_from_request()
+
+    try:
+        brief = brief_edit_business.edit_opportunity(current_user.id, brief_id, edits)
+    except NotFoundError as e:
+        not_found(e.message)
+    except UnauthorisedError as e:
+        forbidden(e.message)
+    except ValidationError as e:
+        abort(e.message)
+    except BriefError as e:
+        abort(e.message)
+
+    return jsonify(brief.serialize(with_users=False))
+
+
+@api.route('/brief/<int:brief_id>/history', methods=['GET'])
+@exception_logger
+@login_required
+def get_opportunity_history(brief_id):
+    try:
+        edits = brief_edit_business.get_opportunity_history(brief_id)
+    except NotFoundError as e:
+        not_found(e.message)
+
+    return jsonify(edits)
 
 
 @api.route('/brief/<int:brief_id>/withdraw', methods=['POST'])
@@ -1063,10 +1104,14 @@ def upload_brief_rfx_attachment_file(brief_id, slug):
     if not briefs.has_permission_to_brief(current_user.id, brief.id):
         return forbidden('Unauthorised to update brief')
 
-    return jsonify({"filename": s3_upload_file_from_request(request, slug,
-                                                            os.path.join(brief.framework.slug, 'attachments',
-                                                                         'brief-' + str(brief_id)))
-                    })
+    try:
+        filename = s3_upload_file_from_request(
+            request, slug, os.path.join(brief.framework.slug, 'attachments', 'brief-' + str(brief_id))
+        )
+    except Exception as e:
+        abort(str(e))
+
+    return jsonify({"filename": filename})
 
 
 @api.route('/brief/<int:brief_id>/respond/documents')
@@ -1138,12 +1183,22 @@ def download_brief_attachment(brief_id, slug):
     """
     brief = briefs.get(brief_id)
 
+    if not brief:
+        return not_found('File not found')
+
+    all_documents = (
+        brief.data.get('attachments', []) +
+        brief.data.get('requirementsDocument', []) +
+        brief.data.get('responseTemplate', [])
+    )
+
     if (
         hasattr(current_user, 'role') and
         (
             current_user.role == 'buyer' or (
                 current_user.role == 'supplier' and
-                _can_do_brief_response(brief_id, update_only=True)
+                _can_do_brief_response(brief_id, update_only=True) and
+                slug in all_documents
             )
         )
     ):
