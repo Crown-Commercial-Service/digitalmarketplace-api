@@ -292,8 +292,12 @@ def request_access(data):
     if data.get('permission') not in permission_types:
         raise ValidationError('Invalid permission')
 
-    permission = str(data.get('permission')).replace('_', ' ')
-    send_request_access_email(permission)
+    permission = str(data.get('permission'))
+    permission_text = (
+        'publish and edit live opportunities' if permission == 'publish_opportunities' else permission.replace('_', ' ')
+    )
+
+    send_request_access_email(permission_text)
 
 
 def search_team_members(current_user, agency_id, keywords=None, exclude=None):
