@@ -780,10 +780,14 @@ def edit_opportunity(brief_id):
 
 @api.route('/brief/<int:brief_id>/history', methods=['GET'])
 @exception_logger
-@login_required
 def get_opportunity_history(brief_id):
+    show_documents = False
+    if current_user.is_authenticated and current_user.role == 'supplier' and _can_do_brief_response(brief_id):
+        show_documents = True
+    elif current_user.is_authenticated and current_user.role == 'buyer':
+        show_documents = True
     try:
-        edits = brief_edit_business.get_opportunity_history(brief_id)
+        edits = brief_edit_business.get_opportunity_history(brief_id, show_documents)
     except NotFoundError as e:
         not_found(e.message)
 

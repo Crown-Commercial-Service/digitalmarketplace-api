@@ -391,7 +391,7 @@ def get_changes_made_to_opportunity(source, previous):
     return data
 
 
-def get_opportunity_history(brief_id):
+def get_opportunity_history(brief_id, show_documents=False):
     brief = brief_service.get(brief_id)
     if not brief:
         raise NotFoundError('Opportunity {} does not exist'.format(brief_id))
@@ -412,6 +412,15 @@ def get_opportunity_history(brief_id):
 
         if edit_data:
             edit_data['editedAt'] = change.edited_at
+            if 'sellers' in edit_data:
+                del edit_data['sellers']
+            if not show_documents:
+                if 'attachments' in edit_data:
+                    del edit_data['attachments']
+                if 'requirementsDocument' in edit_data:
+                    del edit_data['requirementsDocument']
+                if 'responseTemplate' in edit_data:
+                    del edit_data['responseTemplate']
             edits.append(edit_data)
 
     response['edits'] = edits
