@@ -124,12 +124,26 @@ def get_evidence(evidence_id):
         evidence.domain.id,
         current_user.supplier_code
     )
+
     if previous_evidence and previous_evidence.status == 'rejected':
         previous_assessment = evidence_assessment_service.get_assessment_for_rejected_evidence(previous_evidence.id)
         if previous_assessment:
             data['failed_criteria'] = previous_assessment.data.get('failed_criteria', {})
             data['previous_evidence_id'] = previous_evidence.id
 
+
+    return jsonify(data)
+
+
+@api.route('/evidence/<int:evidence_id>/view', methods=['GET'])
+@login_required
+@role_required('supplier')
+def get_domain_and_evidence(evidence_id):
+    evidence = evidence_service.get_evidence_by_id(evidence_id)
+    if not evidence or current_user.supplier_code != evidence.supplier_code:
+        not_found("No evidence for id '%s' found" % (evidence_id))
+
+    data = evidence.serialize()
     return jsonify(data)
 
 
