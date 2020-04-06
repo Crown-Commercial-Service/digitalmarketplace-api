@@ -787,7 +787,7 @@ def get_opportunity_history(brief_id):
     elif current_user.is_authenticated and current_user.role == 'buyer':
         show_documents = True
     try:
-        edits = brief_edit_business.get_opportunity_history(brief_id, show_documents)
+        edits = brief_edit_business.get_opportunity_history(brief_id, show_documents, include_sellers=False)
     except NotFoundError as e:
         not_found(e.message)
 
