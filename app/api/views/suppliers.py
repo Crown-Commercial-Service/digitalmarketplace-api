@@ -5,6 +5,7 @@ from app.utils import get_json_from_request
 from app.api.suppliers import get_supplier
 from app.api.helpers import role_required, is_current_supplier
 from app.api.services import suppliers, domain_service
+import json
 
 
 @api.route('/suppliers/<int:code>', methods=['GET'], endpoint='get_supplier')
@@ -152,10 +153,15 @@ def get_suppliers():
     keyword = request.args.get('keyword') or ''
     category = request.args.get('category') or ''
     all_suppliers = request.args.get('all') or ''
+    exclude = json.loads(request.args.get('exclude')) if request.args.get('exclude') else []
+    supplier_codes_to_exclude = [int(code) for code in exclude]
+
     if keyword:
         results = suppliers.get_suppliers_by_name_keyword(keyword,
                                                           framework_slug='digital-marketplace',
-                                                          category=category)
+                                                          category=category,
+                                                          exclude=supplier_codes_to_exclude)
+
         supplier_results = []
         for result in results:
             if all_suppliers:

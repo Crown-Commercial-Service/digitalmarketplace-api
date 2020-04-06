@@ -141,6 +141,7 @@
                                 {% endif %}
                             </th>
                         {% endif %}
+                        <th scope="col">Labour hire licence</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -182,6 +183,16 @@
                         {% if brief.data.securityClearance == 'mustHave'%}
                             <td>{{ response.data.get('securityClearance', 'Unknown') }}</td>
                         {% endif %}
+                        <td>
+                            {% if supplier_labour_hire.get(response.supplier.code) %}
+                                {% for licence in supplier_labour_hire.get(response.supplier.code, []) %}
+                                    <p>
+                                        <b>{{ licence.get('state') }}</b>: {{ licence.get('licenceNumber') }}<br/>
+                                        Expiry: {{ licence.get('expiry') }}
+                                    </p>
+                                {% endfor %}
+                            {% endif%}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

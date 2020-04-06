@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 import pytest
+import pendulum
 
 from app.api.services import suppliers
 from app.models import Supplier, User, db, utcnow
@@ -12,9 +13,27 @@ class TestSuppliersService(BaseApplicationTest):
         super(TestSuppliersService, self).setup()
 
     @pytest.fixture()
-    def supplier(self, app):
+    def supplier(self, app, request):
+        params = request.param if hasattr(request, 'param') else {}
         expiry_date = date.today() + timedelta(days=10)
         expiry = '{}-{}-{}'.format(expiry_date.year, expiry_date.month, expiry_date.day)
+        labourHire = (
+            params['labourHire'] if 'labourHire' in params else
+            {
+                'vic': {
+                    'expiry': expiry,
+                    'licenceNumber': 'V123456'
+                },
+                'qld': {
+                    'expiry': expiry,
+                    'licenceNumber': 'Q123456'
+                },
+                'sa': {
+                    'expiry': expiry,
+                    'licenceNumber': 'S123456'
+                }
+            }
+        )
 
         with app.app_context():
             db.session.add(Supplier(id=1, code=1, name='Seller 1', data={
@@ -27,7 +46,8 @@ class TestSuppliersService(BaseApplicationTest):
                     'workers': {
                         'expiry': expiry
                     }
-                }
+                },
+                'labourHire': labourHire
             }))
             yield db.session.query(Supplier).first()
 
@@ -115,6 +135,68 @@ class TestSuppliersService(BaseApplicationTest):
         suppliers_with_expired_documents = suppliers.get_suppliers_with_expiring_documents(days=10)
 
         email_addresses = suppliers_with_expired_documents[0]['email_addresses']
+        assert len(email_addresses) == 2
+        assert 'user1@digital.gov.au' in email_addresses
+        assert 'user2@digital.gov.au' in email_addresses
+
+    def test_get_expired_licences_returns_empty_array_when_no_expired_licences(self, supplier, users):
+        suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=2)
+        assert len(suppliers_with_expired_licences) == 0
+
+    def test_get_expired_licences_returns_sa_and_vic_and_qld(self, supplier, users):
+        expiry_date = date.today() + timedelta(days=10)
+        expiry = '{}-{}-{}'.format(expiry_date.year, expiry_date.month, expiry_date.day)
+
+        suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
+        assert len(suppliers_with_expired_licences[0]['labour_hire_licences']) == 3
+
+    @pytest.mark.parametrize(
+        'supplier', [
+            {
+                'labourHire': {
+                    'vic': {
+                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d'),
+                        'licenceNumber': 'V123456'
+                    }
+                }
+            }
+        ], indirect=True
+    )
+    def test_get_expired_licences_returns_vic_only(self, supplier, users):
+        expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d')
+
+        suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
+        assert suppliers_with_expired_licences[0]['labour_hire_licences'] == [
+            {
+                'expiry': expiry,
+                'state': 'vic',
+                'licenceNumber': 'V123456'
+            }
+        ]
+
+    def test_get_expired_licences_returns_all_supplier_email_addresses(self, supplier, users):
+        expiry_date = date.today() + timedelta(days=10)
+        expiry = '{}-{}-{}'.format(expiry_date.year, expiry_date.month, expiry_date.day)
+
+        suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
+
+        email_addresses = suppliers_with_expired_licences[0]['email_addresses']
+        assert len(email_addresses) == 4
+        assert 'authorised.rep@digital.gov.au' in email_addresses
+        assert 'business.contact@digital.gov.au' in email_addresses
+        assert 'user1@digital.gov.au' in email_addresses
+        assert 'user2@digital.gov.au' in email_addresses
+
+    def test_get_expired_licences_removes_duplicate_email_addresses(self, supplier, users):
+        expiry_date = date.today() + timedelta(days=10)
+        expiry = '{}-{}-{}'.format(expiry_date.year, expiry_date.month, expiry_date.day)
+
+        supplier.data['contact_email'] = 'user1@digital.gov.au'
+        supplier.data['email'] = 'user1@digital.gov.au'
+
+        suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
+
+        email_addresses = suppliers_with_expired_licences[0]['email_addresses']
         assert len(email_addresses) == 2
         assert 'user1@digital.gov.au' in email_addresses
         assert 'user2@digital.gov.au' in email_addresses
