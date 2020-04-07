@@ -143,11 +143,22 @@ def get_domain_and_evidence(evidence_id):
     if not evidence or current_user.supplier_code != evidence.supplier_code:
         not_found("No evidence for id '%s' found" % (evidence_id))
 
-    data={}
+    data = {}
     data = evidence.serialize()
     domain_name = evidence.domain.name
     data['domain_name'] = domain_name
 
+    #collecting all the critieria names and ids from domain
+    criteria_from_domain = {}
+    domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
+    # jsonify(domain={'id': result.id, 'name': result.name})
+    for criteria in domain_criteria:
+        criteria_from_domain[str(criteria.id)] = criteria.name
+        domain={'id':str(criteria.id), 'name': criteria.name}
+        print(domain)
+
+    print(domain)    
+    data['domain_criteria']=criteria_from_domain
     return jsonify(data)
 
 
