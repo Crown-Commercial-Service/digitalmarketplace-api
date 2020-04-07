@@ -157,6 +157,8 @@ def get_domain_and_evidence(evidence_id):
     #collecting all the critieria names and ids from domain
     criteria_from_domain = {}
     test = []
+    keys =["id", "name"]
+    # https://stackoverflow.com/questions/16345456/defining-multiple-dictionaries-within-a-loop-in-python
     for criteria in domain_criteria:
         # criteria_from_domain[criteria.id] = criteria.name
         criteria_from_domain['id'] = criteria.id
