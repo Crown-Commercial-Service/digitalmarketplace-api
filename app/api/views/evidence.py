@@ -148,17 +148,26 @@ def get_domain_and_evidence(evidence_id):
     domain_name = evidence.domain.name
     data['domain_name'] = domain_name
 
+    # domain = domain_service.get_by_name_or_id(evidence.domain.id, show_legacy=False)
+    # if not domain:
+    #     abort('Unknown domain id')
+    # print('DOMAIN')
+    # print(domain)
+    domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
     #collecting all the critieria names and ids from domain
     criteria_from_domain = {}
-    domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
-    # jsonify(domain={'id': result.id, 'name': result.name})
+    test = []
     for criteria in domain_criteria:
-        criteria_from_domain[str(criteria.id)] = criteria.name
-        domain={'id':str(criteria.id), 'name': criteria.name}
-        print(domain)
+        # criteria_from_domain[criteria.id] = criteria.name
+        criteria_from_domain['id'] = criteria.id
+        criteria_from_domain['name'] = criteria.name
+        test.append(criteria_from_domain)
 
-    print(domain)    
-    data['domain_criteria']=criteria_from_domain
+    # test = test.append(criteria_from_domain)
+    print("TEST")
+    print(test)
+    data['domain_criteria']=test
+    # print(data)
     return jsonify(data)
 
 
