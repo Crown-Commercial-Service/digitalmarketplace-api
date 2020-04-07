@@ -143,17 +143,10 @@ def get_domain_and_evidence(evidence_id):
     if not evidence or current_user.supplier_code != evidence.supplier_code:
         not_found("No evidence for id '%s' found" % (evidence_id))
 
+    data={}
     data = evidence.serialize()
-    # print("HELLO")
-    # domain_id = evidence.domain.id
-    # domain = domain_service.get_by_name_or_id(domain_id, show_legacy=False)
-    # print("PLEASE WORK DOMAIN")
-    # if not domain:
-    #     return not_found('Domain does not exist')
-
-    # test = jsonify(domain.serialize())
-    # print("end test")
-    # print(jsonify(domain))
+    domain_name = evidence.domain.name
+    data['domain_name'] = domain_name
 
     return jsonify(data)
 
