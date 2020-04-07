@@ -165,29 +165,28 @@ def generate_brief_responses_csv(brief, responses):
                 else:
                     answers.update({key: ''})
 
+            states = {
+                'qld': 'Queensland',
+                'vic': 'Victoria',
+                'sa': 'South Australia'
+            }
+
             labourHire = r.supplier.data.get('labourHire', {})
-            if len(labourHire.keys()) > 0:
-                states_long = {
-                    'qld': 'Queensland',
-                    'vic': 'Victoria',
-                    'sa': 'South Australia'
-                }
-                for state in labourHire:
-                    if 'licenceNumber' in labourHire[state] and 'expiry' in labourHire[state] and state in states_long:
-                        answers.update(
-                            {
-                                '%s Labour hire licence' % (states_long[state]): labourHire[state]['licenceNumber']
-                            }
+
+            for state in states:
+                licence_number = ''
+                licence_expiry = ''
+                if state in labourHire:
+                    if 'licenceNumber' in labourHire[state]:
+                        licence_number = labourHire[state]['licenceNumber']
+                    if 'expiry' in labourHire[state]:
+                        licence_expiry = (
+                            pendulum.parse(
+                                labourHire[state]['expiry']
+                            ).format('DD MMMM YYYY', formatter='alternative')
                         )
-                        answers.update(
-                            {
-                                '%s Labour hire licence expiry' % (states_long[state]): (
-                                    pendulum.parse(
-                                        labourHire[state]['expiry']
-                                    ).format('DD MMMM YYYY', formatter='alternative')
-                                )
-                            }
-                        )
+                answers.update({'%s Labour hire licence' % (states[state]): licence_number})
+                answers.update({'%s Labour hire licence expiry' % (states[state]): licence_expiry})
 
         if brief.lot.slug == 'atm':
             criteriaResponses = {}
