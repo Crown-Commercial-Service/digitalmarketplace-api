@@ -175,7 +175,7 @@ def signup():
     json_payload = request.get_json()
     name = json_payload.get('name', None)
     email_address = json_payload.get('email_address', None)
-    abn = json_payload.get('abn', None)
+    abn = json_payload.get('abn', '')
     user_type = json_payload.get('user_type', None)
     employment_status = json_payload.get('employment_status', None)
     line_manager_name = json_payload.get('line_manager_name', None)
