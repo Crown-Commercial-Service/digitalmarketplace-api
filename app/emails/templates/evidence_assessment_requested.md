@@ -21,7 +21,6 @@ We will assess the rate and evidence against the criteria you submitted.
 
 If you have any questions or need guidance, please [contact the Marketplace]({{ frontend_address }}/contact-us).
 
-
 Regards,  
 The Digital Marketplace team  
 Digital Transformation Agency  
