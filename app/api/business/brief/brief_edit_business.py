@@ -118,7 +118,7 @@ def edit_opportunity(user_id, brief_id, edits):
         sellers_to_contact = brief_service.get_sellers_to_notify(brief, brief_business.is_open_to_all(brief))
 
     sellers_to_invite = {}
-    if 'sellers' in edits and sellers_were_edited(brief.data.get('sellers', {}), edits['sellers']):
+    if 'sellers' in edits and sellers_were_edited(edits['sellers'], brief.data.get('sellers', {})):
         sellers_to_invite = get_sellers_to_invite(brief, edits['sellers'])
         edit_sellers(brief, sellers_to_invite)
         edit_seller_selector(brief, sellers_to_invite)
@@ -166,7 +166,7 @@ def edit_opportunity(user_id, brief_id, edits):
     if (
         brief.lot.slug != 'atm' and
         'sellers' in edits and
-        sellers_were_edited(brief.data.get('sellers', {}), edits['sellers']) and
+        sellers_were_edited(edits['sellers'], brief.data.get('sellers', {})) and
         not validator.validate_sellers()
     ):
         message = (
@@ -391,7 +391,7 @@ def get_changes_made_to_opportunity(source, previous):
     return data
 
 
-def get_opportunity_history(brief_id, show_documents=False):
+def get_opportunity_history(brief_id, show_documents=False, include_sellers=True):
     brief = brief_service.get(brief_id)
     if not brief:
         raise NotFoundError('Opportunity {} does not exist'.format(brief_id))
@@ -412,7 +412,7 @@ def get_opportunity_history(brief_id, show_documents=False):
 
         if edit_data:
             edit_data['editedAt'] = change.edited_at
-            if 'sellers' in edit_data:
+            if not include_sellers and 'sellers' in edit_data:
                 del edit_data['sellers']
             if not show_documents:
                 if 'attachments' in edit_data:
@@ -430,12 +430,13 @@ def get_opportunity_history(brief_id, show_documents=False):
 
 def only_sellers_were_edited(brief_id):
     history = get_opportunity_history(brief_id)
-    return all(
-        'closingDate' not in edit and
-        'title' not in edit and
-        'summary' not in edit and
-        'attachments' not in edit and
-        'requirementsDocument' not in edit and
-        'responseTemplate' not in edit
-        for edit in history['edits']
-    )
+    only_sellers_edited = False
+
+    for edit in history['edits']:
+        for key, value in edit.iteritems():
+            if key != 'editedAt' and key != 'sellers':
+                return False
+            elif key == 'sellers':
+                only_sellers_edited = True
+
+    return only_sellers_edited
