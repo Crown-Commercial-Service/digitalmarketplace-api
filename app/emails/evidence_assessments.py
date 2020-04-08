@@ -3,7 +3,7 @@ from app.api.services import domain_service, suppliers, users
 from .util import render_email_template, send_or_handle_error
 
 
-def send_evidence_assessment_requested_notification(domain_id, user_email):
+def send_evidence_assessment_requested_notification(evidence_id, domain_id, user_email):
     template_filename = 'evidence_assessment_requested.md'
 
     frontend_address = current_app.config['FRONTEND_ADDRESS']
@@ -20,6 +20,7 @@ def send_evidence_assessment_requested_notification(domain_id, user_email):
         template_filename,
         frontend_address=frontend_address,
         domain_name=domain.name,
+        evidence_id=evidence_id,
         current_user_email=user_email
     )
 
