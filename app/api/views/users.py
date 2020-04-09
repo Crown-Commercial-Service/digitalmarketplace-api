@@ -189,8 +189,6 @@ def signup():
         return jsonify(message='Invalid email address format'), 400
 
     if user_type == 'seller' or user_type == 'applicant':
-        # remove any non numeric characters from the ABN and ensure it is unique
-        abn = re.sub(r'[^\d]', '', abn)
         if not abn:
             return jsonify(message='You must provide an ABN value'), 400
         if supplier_business.abn_is_used(abn):
