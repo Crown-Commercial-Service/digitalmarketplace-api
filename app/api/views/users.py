@@ -368,9 +368,15 @@ def add(token):
     password = json_payload.get('password', None)
     if not password:
         return jsonify(message='You must provide a password for your new user account'), 400
-    claim = user_claims_service.find(type='signup', token=token, email_address=email_address,
-                                     claimed=False).one_or_none()
+    claim = user_claims_service.get_claim(type='signup', token=token, email_address=email_address, claimed=False)
+    headers = {}
+    for x in request.headers:
+        headers[x[0]] = x[1]
     if not claim:
+        current_app.logger.info('login.signup.fail: 1 {email_address}', extra={'email_address': email_address})
+        current_app.logger.info(
+            'login.signup.headers: {headers}', extra={'headers': headers}
+        )
         return jsonify(message='Invalid token'), 400
     user = create_user(
         user_type=claim.data['user_type'],
@@ -384,8 +390,19 @@ def add(token):
     try:
         claim = user_claims_service.validate_and_update_claim(type='signup', token=token, email_address=email_address)
         if not claim:
+            current_app.logger.info('login.signup.fail: 2 {email_address}', extra={'email_address': email_address})
+            current_app.logger.info(
+                'login.signup.headers: {headers}', extra={'headers': headers}
+            )
             return jsonify(message='Invalid token'), 400
     except Exception as error:
+        current_app.logger.info(
+            'login.signup.fail: 3 {email_address} {exception}',
+            extra={'email_address': email_address, 'exception': str(error)}
+        )
+        current_app.logger.info(
+            'login.signup.headers: {headers}', extra={'headers': headers}
+        )
         return jsonify(message='Invalid token'), 400
 
     publish_tasks.user_claim.delay(

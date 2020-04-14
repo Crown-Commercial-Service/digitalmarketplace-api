@@ -4,6 +4,7 @@ from .application import ApplicationService
 from .assessments import AssessmentsService
 from .audit import AuditService, AuditTypes
 from .brief_clarification_question import BriefClarificationQuestionService
+from .brief_history import BriefHistoryService
 from .brief_question import BriefQuestionService
 from .brief_response_download import BriefResponseDownloadService
 from .brief_responses import BriefResponsesService
@@ -53,6 +54,7 @@ user_claims_service = UserClaimService()
 evidence_service = EvidenceService()
 evidence_assessment_service = EvidenceAssessmentService()
 work_order_service = WorkOrderService()
+brief_history_service = BriefHistoryService()
 brief_question_service = BriefQuestionService()
 brief_clarification_question_service = BriefClarificationQuestionService()
 brief_response_download_service = BriefResponseDownloadService()

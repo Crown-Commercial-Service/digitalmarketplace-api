@@ -93,4 +93,4 @@ def user(app):
 
         db.session.commit()
 
-        yield Supplier.query.first()
+        yield User.query.first()

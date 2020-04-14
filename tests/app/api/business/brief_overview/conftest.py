@@ -9,7 +9,7 @@ from app.models import (Brief, BriefResponse, Framework, Lot, Supplier, User,
 
 
 @pytest.fixture()
-def briefs(app, users):
+def overview_briefs(app, users):
     now = pendulum.now('utc')
     framework = frameworks_service.find(slug='digital-marketplace').one_or_none()
     atm_lot = lots_service.find(slug='atm').one_or_none()
@@ -20,7 +20,7 @@ def briefs(app, users):
     with app.app_context():
         db.session.add(
             Brief(
-                id=1,
+                id=5,
                 data={},
                 framework=framework,
                 lot=specialist_lot,
@@ -31,7 +31,7 @@ def briefs(app, users):
         )
 
         published_atm = Brief(
-            id=2,
+            id=6,
             data={},
             framework=framework,
             lot=atm_lot,
@@ -45,11 +45,11 @@ def briefs(app, users):
         db.session.add(published_atm)
 
         published_rfx_open_to_one = Brief(
-            id=3,
+            id=7,
             data={
                 'sellerSelector': 'oneSeller',
                 'sellers': {
-                    '123': {
+                    '2': {
                         'name': 'FriendFace'
                     }
                 }
@@ -66,11 +66,11 @@ def briefs(app, users):
         db.session.add(published_rfx_open_to_one)
 
         published_training_open_to_one = Brief(
-            id=4,
+            id=8,
             data={
                 'sellerSelector': 'oneSeller',
                 'sellers': {
-                    '123': {
+                    '2': {
                         'name': 'FriendFace'
                     }
                 }
@@ -87,12 +87,12 @@ def briefs(app, users):
         db.session.add(published_training_open_to_one)
 
         published_specialist_open_to_some = Brief(
-            id=5,
+            id=9,
             data={
                 'numberOfSuppliers': '3',
                 'sellerSelector': 'someSellers',
                 'sellers': {
-                    '123': {
+                    '2': {
                         'name': 'FriendFace'
                     }
                 }
@@ -109,7 +109,7 @@ def briefs(app, users):
         db.session.add(published_specialist_open_to_some)
 
         closed_specialist = Brief(
-            id=6,
+            id=10,
             data={},
             framework=framework,
             lot=specialist_lot,
@@ -124,7 +124,7 @@ def briefs(app, users):
         db.session.add(closed_specialist)
 
         withdrawn_specialist = Brief(
-            id=7,
+            id=11,
             data={},
             framework=framework,
             lot=specialist_lot,
@@ -144,57 +144,57 @@ def briefs(app, users):
 
 
 @pytest.fixture()
-def brief_responses(app, briefs, suppliers):
+def brief_responses(app, overview_briefs, suppliers):
     with app.app_context():
         now = pendulum.now('utc')
 
         db.session.add(
             BriefResponse(
                 id=1,
-                brief_id=3,
+                brief_id=7,
                 data={},
                 submitted_at=now,
-                supplier_code=123
+                supplier_code=2
             )
         )
 
         db.session.add(
             BriefResponse(
                 id=2,
-                brief_id=4,
+                brief_id=8,
                 data={},
                 submitted_at=now,
-                supplier_code=123
+                supplier_code=2
             )
         )
 
         db.session.add(
             BriefResponse(
                 id=3,
-                brief_id=5,
+                brief_id=9,
                 data={},
                 submitted_at=now,
-                supplier_code=123
+                supplier_code=2
             )
         )
 
         db.session.add(
             BriefResponse(
                 id=4,
-                brief_id=5,
+                brief_id=9,
                 data={},
                 submitted_at=now,
-                supplier_code=123
+                supplier_code=2
             )
         )
 
         db.session.add(
             BriefResponse(
                 id=5,
-                brief_id=5,
+                brief_id=9,
                 data={},
                 submitted_at=now,
-                supplier_code=123
+                supplier_code=2
             )
         )
 
@@ -207,8 +207,8 @@ def suppliers(app):
     with app.app_context():
         db.session.add(
             Supplier(
-                id=1,
-                code=123,
+                id=2,
+                code=2,
                 name='FriendFace',
                 is_recruiter=False,
                 data={}
@@ -217,8 +217,8 @@ def suppliers(app):
 
         db.session.add(
             Supplier(
-                id=2,
-                code=456,
+                id=3,
+                code=3,
                 name='FriendFlutter',
                 is_recruiter=False,
                 data={}
@@ -235,7 +235,7 @@ def users(app):
     with app.app_context():
         db.session.add(
             User(
-                id=1,
+                id=3,
                 name='Maurice Moss',
                 email_address='moss@ri.gov.au',
                 password='mossman',

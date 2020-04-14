@@ -24,7 +24,11 @@ from .briefs import (
     send_brief_response_withdrawn_email,
     send_brief_clarification_to_buyer,
     send_brief_clarification_to_seller,
-    send_opportunity_closed_early_email
+    send_opportunity_closed_early_email,
+    send_opportunity_edited_email_to_buyers,
+    send_opportunity_edited_email_to_seller,
+    send_opportunity_withdrawn_email_to_buyers,
+    send_opportunity_withdrawn_email_to_seller
 )  # noqa
 from .dreamail import (
     send_dreamail

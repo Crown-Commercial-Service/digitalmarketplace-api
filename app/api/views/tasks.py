@@ -7,6 +7,7 @@ from app.tasks.brief_tasks import (create_responses_zip_for_closed_briefs,
                                    process_closed_briefs, update_brief_metrics)
 from app.tasks.jira import sync_application_approvals_with_jira
 from app.tasks.mailchimp import (send_document_expiry_reminder,
+                                 send_labour_hire_expiry_reminder,
                                  send_new_briefs_email,
                                  sync_mailchimp_seller_list)
 from app.tasks.supplier_tasks import update_supplier_metrics
@@ -157,6 +158,22 @@ def send_document_expiry_reminder_email():
         description: string
     """
     res = send_document_expiry_reminder.delay()
+    return jsonify(res.id)
+
+
+@api.route('/tasks/send-licence-expiry-reminder', methods=['POST'])
+@role_required('admin')
+def send_labour_hire_expiry_reminder_email():
+    """Send labour hire licence expiry reminder
+    ---
+    tags:
+      - tasks
+    responses:
+      200:
+        type: string
+        description: string
+    """
+    res = send_labour_hire_expiry_reminder.delay()
     return jsonify(res.id)
 
 

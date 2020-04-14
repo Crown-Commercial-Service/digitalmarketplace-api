@@ -23,7 +23,7 @@ def test_can_get_errors_with_no_recruiter():
     assert len(errors) == 1
 
 
-def test_can_get_errors_for_recruiter():
+def test_no_errors_for_valid_recruiter():
     application = Application(
         data={
             'recruiter': 'yes'

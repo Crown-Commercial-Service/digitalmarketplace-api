@@ -183,25 +183,16 @@
                         {% if brief.data.securityClearance == 'mustHave'%}
                             <td>{{ response.data.get('securityClearance', 'Unknown') }}</td>
                         {% endif %}
-                        {% if response.supplier.data.get('recruiter', '') == 'no'%}
-                            <td>
-                                N/A
-                            </td>
-                        {% else %}
-                            <td>
-                                {% if supplier_labour_hire.get(response.supplier.code) %}
-                                    {% for licence in supplier_labour_hire.get(response.supplier.code, []) %}
-                                        <p>
-                                            <b>{{ licence.get('state') }}</b><br/>
-                                            Licence Number: {{ licence.get('licenceNumber') }}<br />
-                                            Expiry: {{ licence.get('expiry') }}
-                                        </p>
-                                    {% endfor %}
-                                {% else %}
-                                    No labour hire licence
-                                {% endif%}
-                            </td>
-                        {% endif %}
+                        <td>
+                            {% if supplier_labour_hire.get(response.supplier.code) %}
+                                {% for licence in supplier_labour_hire.get(response.supplier.code, []) %}
+                                    <p>
+                                        <b>{{ licence.get('state') }}</b>: {{ licence.get('licenceNumber') }}<br/>
+                                        Expiry: {{ licence.get('expiry') }}
+                                    </p>
+                                {% endfor %}
+                            {% endif%}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

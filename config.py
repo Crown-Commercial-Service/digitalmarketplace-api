@@ -16,6 +16,10 @@ CELERYBEAT_SCHEDULE = {
         'task': 'app.tasks.mailchimp.send_document_expiry_reminder',
         'schedule': crontab(hour=6, minute=0)
     },
+    'send_labour_hire_expiry_reminder': {
+        'task': 'app.tasks.mailchimp.send_labour_hire_expiry_reminder',
+        'schedule': crontab(hour=6, minute=30)
+    },
     'process_closed_briefs': {
         'task': 'app.tasks.brief_tasks.process_closed_briefs',
         'schedule': crontab(hour=6, minute=0)
@@ -175,10 +179,11 @@ class Config:
     BUYER_CREATION_TOKEN_SALT = 'BuyerCreation'
     SUPPLIER_INVITE_TOKEN_SALT = 'SupplierInviteEmail'
 
-    GENERIC_EMAIL_DOMAINS = ['bigpond.com', 'digital.gov.au', 'gmail.com', 'hotmail.com', 'icloud.com',
-                             'iinet.net.au', 'internode.on.net', 'live.com.au', 'me.com', 'msn.com',
+    GENERIC_EMAIL_DOMAINS = ['bigpond.com', 'bigpond.net.au', 'digital.gov.au', 'gmail.com', 'hotmail.com',
+                             'icloud.com', 'iinet.net.au', 'internode.on.net', 'live.com.au', 'me.com', 'msn.com',
                              'optusnet.com.au', 'outlook.com', 'outlook.com.au', 'ozemail.com.au',
-                             'tpg.com.au', 'y7mail.com', 'yahoo.com', 'yahoo.com.au', 'grapevine.com.au']
+                             'tpg.com.au', 'y7mail.com', 'yahoo.com', 'yahoo.com.au', 'grapevine.com.au',
+                             'mail.com']
 
     FRONTEND_ADDRESS = 'https://dm-dev.apps.y.cld.gov.au'
     ADMIN_ADDRESS = 'https://dm-dev-admin.apps.y.cld.gov.au'

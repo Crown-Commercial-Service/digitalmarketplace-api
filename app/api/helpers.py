@@ -10,10 +10,12 @@ from flask import abort as flask_abort
 from flask import current_app, jsonify, make_response, render_template_string, request
 from flask_login import current_user, login_user
 from werkzeug.exceptions import HTTPException
+from sqlalchemy.exc import DBAPIError
 
 from app.models import Agency, BriefUser, User, db
 from app.tasks.email import send_email
 from app.authentication import get_api_key_from_request
+from app.api.business.errors import DBError
 from dmutils.csrf import get_csrf_token
 from dmutils.email import (ONE_DAY_IN_SECONDS, EmailError,
                            parse_fernet_timestamp)
@@ -245,6 +247,12 @@ def abort(message):
     return flask_abort(make_response(jsonify(message=message), 400))
 
 
+def server_error(message):
+    if isinstance(message, basestring):
+        current_app.logger.error(message)
+    return flask_abort(make_response(jsonify(message=message), 500))
+
+
 def forbidden(message):
     return flask_abort(make_response(jsonify(message=message), 403))
 
@@ -372,4 +380,8 @@ class Service(object):
         db.session.add(model)
 
     def commit_changes(self):
-        db.session.commit()
+        try:
+            db.session.commit()
+        except DBAPIError as e:
+            db.session.rollback()
+            raise DBError(str(e))

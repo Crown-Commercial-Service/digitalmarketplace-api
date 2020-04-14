@@ -2,16 +2,54 @@
 import pendulum
 from app.api.services import domain_service, suppliers
 
+whitelist_fields = [
+    {'name': 'id', 'type': int},
+    {'name': 'title', 'type': basestring},
+    {'name': 'organisation', 'type': basestring},
+    {'name': 'location', 'type': list},
+    {'name': 'summary', 'type': basestring},
+    {'name': 'industryBriefing', 'type': basestring},
+    {'name': 'internalReference', 'type': basestring},
+    {'name': 'sellerCategory', 'type': basestring},
+    {'name': 'sellers', 'type': dict},
+    {'name': 'attachments', 'type': list},
+    {'name': 'requirementsDocument', 'type': list},
+    {'name': 'responseTemplate', 'type': list},
+    {'name': 'evaluationType', 'type': list},
+    {'name': 'includeWeightingsEssential', 'type': bool},
+    {'name': 'essentialRequirements', 'type': list},
+    {'name': 'includeWeightingsNiceToHave', 'type': bool},
+    {'name': 'niceToHaveRequirements', 'type': list},
+    {'name': 'proposalType', 'type': list},
+    {'name': 'evaluationCriteria', 'type': list},
+    {'name': 'includeWeightings', 'type': bool},
+    {'name': 'closedAt', 'type': basestring},
+    {'name': 'contactNumber', 'type': basestring},
+    {'name': 'startDate', 'type': basestring},
+    {'name': 'contractLength', 'type': basestring},
+    {'name': 'contractExtensions', 'type': basestring},
+    {'name': 'budgetRange', 'type': basestring},
+    {'name': 'workingArrangements', 'type': basestring},
+    {'name': 'securityClearance', 'type': basestring},
+    {'name': 'publish', 'type': bool},
+    {'name': 'sellerSelector', 'type': basestring},
+    {'name': 'comprehensiveTerms', 'type': bool},
+    {'name': 'areaOfExpertise', 'type': basestring},
+    {'name': 'originalClosedAt', 'type': basestring},
+    {'name': 'originalQuestionsClosedAt', 'type': basestring},
+    {'name': 'reasonToWithdraw', 'type': basestring}
+]
+
 
 class RFXDataValidator(object):
     def __init__(self, data):
         self.data = data
 
-    def validate_closed_at(self):
+    def validate_closed_at(self, minimum_days=2):
         if 'closedAt' not in self.data or not self.data['closedAt']:
             return False
         parsed = pendulum.parse(self.data['closedAt']).in_timezone('Australia/Canberra').start_of('day')
-        if parsed < pendulum.now('Australia/Canberra').add(days=2).start_of('day'):
+        if parsed < pendulum.now('Australia/Canberra').add(days=minimum_days).start_of('day'):
             return False
         return True
 
@@ -287,48 +325,13 @@ class RFXDataValidator(object):
             if publish:
                 errors = errors + self.validate_required()
 
-            # allowed fields and types
-            whitelist = [
-                {'name': 'id', 'type': int},
-                {'name': 'title', 'type': basestring},
-                {'name': 'organisation', 'type': basestring},
-                {'name': 'location', 'type': list},
-                {'name': 'summary', 'type': basestring},
-                {'name': 'industryBriefing', 'type': basestring},
-                {'name': 'internalReference', 'type': basestring},
-                {'name': 'sellerCategory', 'type': basestring},
-                {'name': 'sellers', 'type': dict},
-                {'name': 'attachments', 'type': list},
-                {'name': 'requirementsDocument', 'type': list},
-                {'name': 'responseTemplate', 'type': list},
-                {'name': 'evaluationType', 'type': list},
-                {'name': 'includeWeightingsEssential', 'type': bool},
-                {'name': 'essentialRequirements', 'type': list},
-                {'name': 'includeWeightingsNiceToHave', 'type': bool},
-                {'name': 'niceToHaveRequirements', 'type': list},
-                {'name': 'proposalType', 'type': list},
-                {'name': 'evaluationCriteria', 'type': list},
-                {'name': 'includeWeightings', 'type': bool},
-                {'name': 'closedAt', 'type': basestring},
-                {'name': 'contactNumber', 'type': basestring},
-                {'name': 'startDate', 'type': basestring},
-                {'name': 'contractLength', 'type': basestring},
-                {'name': 'contractExtensions', 'type': basestring},
-                {'name': 'budgetRange', 'type': basestring},
-                {'name': 'workingArrangements', 'type': basestring},
-                {'name': 'securityClearance', 'type': basestring},
-                {'name': 'publish', 'type': bool},
-                {'name': 'sellerSelector', 'type': basestring},
-                {'name': 'comprehensiveTerms', 'type': bool}
-            ]
-
             request_keys = self.data.keys()
-            whitelisted_keys = [key['name'] for key in whitelist]
+            whitelisted_keys = [key['name'] for key in whitelist_fields]
             for key in request_keys:
                 if key not in whitelisted_keys:
                     errors.append('Unexpected field "%s"' % key)
 
-            for key in whitelist:
+            for key in whitelist_fields:
                 if key['name'] in request_keys and not isinstance(self.data.get(key['name'], None), key['type']):
                     errors.append('Field "%s" is invalid, unexpected type' % key['name'])
 

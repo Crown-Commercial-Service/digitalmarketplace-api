@@ -258,15 +258,17 @@ class SupplierValidator(object):
 
                         if now > expiry_date.date():
                             errors.append({
-                                'message': 'Your {} labour hire has expired'.format(state_to_long_name(state)),
+                                'message': 'Your {} labour hire licence has expired.'.format(state_to_long_name(state)),
                                 'severity': 'warning',
-                                'step': 'recruiter'
+                                'step': 'recruiter',
+                                'id': 'S014'
                             })
                     except ValueError:
                         errors.append({
                             'message': '"{}" is an invalid date format'.format(expiry),
                             'severity': 'error',
-                            'step': 'recruiter'
+                            'step': 'recruiter',
+                            'id': 'S014'
                         })
         return errors
 

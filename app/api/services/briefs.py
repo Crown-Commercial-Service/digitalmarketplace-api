@@ -3,27 +3,14 @@ from sqlalchemy import and_, case, desc, func, or_, union
 from sqlalchemy.orm import joinedload, noload
 from sqlalchemy.sql.expression import case as sql_case
 from sqlalchemy.sql.functions import concat
-from sqlalchemy.types import Numeric, Integer
+from sqlalchemy.types import Integer, Numeric
 
 from app import db
 from app.api.helpers import Service
-from app.models import (
-    AuditEvent,
-    Brief,
-    BriefAssessor,
-    BriefClarificationQuestion,
-    BriefQuestion,
-    BriefResponse,
-    BriefUser,
-    Framework,
-    Lot,
-    Supplier,
-    Team,
-    TeamBrief,
-    TeamMember,
-    User,
-    WorkOrder
-)
+from app.models import (AuditEvent, Brief, BriefAssessor,
+                        BriefClarificationQuestion, BriefQuestion,
+                        BriefResponse, BriefUser, Framework, Lot, Supplier,
+                        Team, TeamBrief, TeamMember, User, WorkOrder)
 from dmutils.filters import timesince
 
 
@@ -123,7 +110,16 @@ class BriefsService(Service):
             )
         )
         if status:
-            query = query.filter(Brief.status == status)
+            if status == 'closed':
+                query = query.filter(
+                    or_(
+                        Brief.status == 'closed',
+                        Brief.status == 'withdrawn'
+                    )
+                )
+            else:
+                query = query.filter(Brief.status == status)
+
         results = (
             query
             .outerjoin(brief_response_subquery, brief_response_subquery.columns.brief_id == Brief.id)
@@ -167,6 +163,7 @@ class BriefsService(Service):
                           Brief.data['organisation'].astext.label('company'),
                           Brief.data['location'].label('location'),
                           Brief.data['sellerSelector'].astext.label('openTo'),
+                          Brief.status,
                           func.count(BriefResponse.id).label('submissions'),
                           Lot.slug.label('lot'))
                    .outerjoin(
@@ -178,6 +175,10 @@ class BriefsService(Service):
                    .group_by(Brief.id, Lot.id))
 
         lots = db.session.query(Lot).all()
+
+        if 'closed' in status_filters:
+            status_filters.append('withdrawn')
+
         if status_filters:
             cond = or_(*[Brief.status == x for x in status_filters])
             query = query.filter(cond)
@@ -242,7 +243,6 @@ class BriefsService(Service):
 
         query = (query
                  .filter(Brief.published_at.isnot(None))
-                 .filter(Brief.withdrawn_at.is_(None))
                  .order_by(Brief.published_at.desc()))
 
         results = query.all()
@@ -625,7 +625,7 @@ class BriefsService(Service):
         brief.data['originalClosedAt'] = brief.closed_at.to_iso8601_string(extended=True)
 
         # To pass validation, questions_closed_at needs to be before closed_at
-        brief.data['closed_at'] = now.to_date_string()
+        brief.data['closedAt'] = now.in_timezone('Australia/Canberra').to_date_string()
         brief.questions_closed_at = now.subtract(seconds=1)
         brief.closed_at = now
         brief.updated_at = now
@@ -633,3 +633,91 @@ class BriefsService(Service):
         self.save(brief)
 
         return brief
+
+    def withdraw_opportunity(self, brief, withdrawal_reason):
+        now = pendulum.now('utc')
+        brief.withdrawn_at = now
+        brief.updated_at = now
+        brief.data['reasonToWithdraw'] = withdrawal_reason
+
+        self.save(brief)
+
+        return brief
+
+    def get_sellers_to_notify(self, brief, open_to_all):
+        from app.api.services import audit_types
+
+        submitted_response_email_addresses = (
+            db
+            .session
+            .query(BriefResponse.data['respondToEmailAddress'].astext.label('email_address'))
+            .filter(
+                BriefResponse.brief_id == brief.id,
+                BriefResponse.status == 'submitted'
+            )
+        )
+
+        draft_responses = (
+            db
+            .session
+            .query(BriefResponse.id)
+            .filter(
+                BriefResponse.brief_id == brief.id,
+                BriefResponse.status == 'draft'
+            )
+            .subquery()
+        )
+
+        draft_response_audit_events = (
+            db
+            .session
+            .query(
+                AuditEvent.user.label('email_address'),
+                AuditEvent.object_id
+            )
+            .filter(AuditEvent.type == audit_types.create_brief_response.value)
+            .subquery()
+        )
+
+        draft_response_email_addresses = (
+            db
+            .session
+            .query(draft_response_audit_events.c.email_address)
+            .join(draft_responses, draft_responses.c.id == draft_response_audit_events.c.object_id)
+        )
+
+        questioners = (
+            db
+            .session
+            .query(BriefQuestion.data['created_by'].astext.label('email_address'))
+            .filter(BriefQuestion.brief_id == brief.id)
+        )
+
+        invited_seller_email_addresses = []
+
+        if not open_to_all:
+            invited_seller_codes = brief.data.get('sellers', {}).keys()
+            invited_sellers = (
+                db
+                .session
+                .query(Supplier)
+                .filter(Supplier.code.in_(invited_seller_codes))
+                .all()
+            )
+
+            for seller in invited_sellers:
+                if 'contact_email' in seller.data:
+                    invited_seller_email_addresses.append(seller.data['contact_email'])
+                elif 'email' in seller.data:
+                    invited_seller_email_addresses.append(seller.data['email'])
+
+        all_email_addresses = (
+            union(
+                submitted_response_email_addresses,
+                draft_response_email_addresses,
+                questioners
+            ).alias('result')
+        )
+
+        result = db.session.query(all_email_addresses.c.email_address).all()
+        return set([r for (r,) in result] + invited_seller_email_addresses)

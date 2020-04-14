@@ -1,77 +1,56 @@
 import json
 import mimetypes
 import os
+
 import botocore
-import rollbar
 import pendulum
-from pendulum.parsing.exceptions import ParserError
+import rollbar
+import copy
 from flask import Response, current_app, jsonify, request
 from flask_login import current_user, login_required
+from pendulum.parsing.exceptions import ParserError
 from sqlalchemy.exc import DataError
 
 from app.api import api
-from app.api.csv import generate_brief_responses_csv
-from app.api.business.validators import (
-    SupplierValidator,
-    RFXDataValidator,
-    ATMDataValidator,
-    TrainingDataValidator,
-    SpecialistDataValidator
-)
-from app.api.business.brief import BriefUserStatus
-from app.api.business import (
-    supplier_business,
-    brief_overview_business,
-    brief_training_business
-)
+from app.api.business import (brief_overview_business, brief_training_business,
+                              supplier_business)
 from app.api.business.agreement_business import use_old_work_order_creator
-from app.api.helpers import (
-    abort,
-    forbidden,
-    not_found,
-    role_required,
-    is_current_user_in_brief,
-    permissions_required,
-    get_email_domain,
-    exception_logger
-)
-from app.api.services import (agency_service,
-                              audit_service,
-                              audit_types,
-                              brief_responses_service,
+from app.api.business.brief import BriefUserStatus, brief_business, brief_edit_business
+from app.api.business.errors import (BriefError, NotFoundError,
+                                     UnauthorisedError)
+from app.api.business.validators import (ATMDataValidator, RFXDataValidator,
+                                         SpecialistDataValidator,
+                                         SupplierValidator,
+                                         TrainingDataValidator)
+from app.api.csv import generate_brief_responses_csv
+from app.api.helpers import (abort, exception_logger, forbidden,
+                             get_email_domain, is_current_user_in_brief,
+                             not_found, notify_team, permissions_required,
+                             role_required, server_error)
+from app.api.services import (agency_service, audit_service, audit_types,
+                              brief_history_service, brief_question_service,
                               brief_response_download_service,
-                              brief_question_service,
-                              briefs,
-                              domain_service,
-                              frameworks_service,
-                              key_values_service,
-                              lots_service,
-                              suppliers,
-                              users,
-                              evidence_service,
-                              work_order_service)
-from app.emails import (
-    send_brief_response_received_email,
-    render_email_template,
-    send_seller_invited_to_rfx_email,
-    send_seller_invited_to_training_email,
-    send_specialist_brief_seller_invited_email,
-    send_specialist_brief_published_email,
-    send_specialist_brief_response_received_email,
-    send_brief_clarification_to_buyer,
-    send_brief_clarification_to_seller
-)
-from app.api.helpers import notify_team
+                              brief_responses_service, briefs, domain_service,
+                              evidence_service, frameworks_service,
+                              key_values_service, lots_service, suppliers,
+                              users, work_order_service)
+from app.emails import (render_email_template,
+                        send_brief_clarification_to_buyer,
+                        send_brief_clarification_to_seller,
+                        send_brief_response_received_email,
+                        send_seller_invited_to_rfx_email,
+                        send_seller_invited_to_training_email,
+                        send_specialist_brief_published_email,
+                        send_specialist_brief_response_received_email,
+                        send_specialist_brief_seller_invited_email)
 from app.tasks import publish_tasks
 from dmapiclient.audit import AuditTypes
 from dmutils.file import s3_download_file, s3_upload_file_from_request
 
-from ...models import (AuditEvent, Brief, BriefResponse, Framework, Supplier,
-                       ValidationError, Lot, User, Domain, db, WorkOrder,
-                       BriefQuestion, BriefResponseDownload)
+from ...models import (AuditEvent, Brief, BriefQuestion, BriefResponse,
+                       BriefResponseDownload, Domain, Framework, Lot, Supplier,
+                       User, ValidationError, WorkOrder, db)
 from ...utils import get_json_from_request
-
-from app.api.business.errors import BriefError, NotFoundError, UnauthorisedError
 
 
 def _can_do_brief_response(brief_id, update_only=False):
@@ -485,6 +464,9 @@ def get_brief(brief_id):
         if not is_invited:
             brief_serialized['clarificationQuestions'] = []
 
+    last_edited_at = brief_history_service.get_last_edited_date(brief.id)
+    only_sellers_edited = brief_edit_business.only_sellers_were_edited(brief.id)
+
     return jsonify(brief=brief_serialized,
                    brief_response_count=brief_response_count,
                    invited_seller_count=invited_seller_count,
@@ -515,6 +497,8 @@ def get_brief(brief_id):
                    has_responded=has_responded,
                    has_supplier_errors=has_supplier_errors,
                    has_signed_current_agreement=has_signed_current_agreement,
+                   last_edited_at=last_edited_at,
+                   only_sellers_edited=only_sellers_edited,
                    domains=domains)
 
 
@@ -642,27 +626,28 @@ def update_brief(brief_id):
         ):
             return forbidden('Unauthorised to edit drafts')
 
+    data_to_validate = copy.deepcopy(data)
     if brief.lot.slug == 'rfx':
         # validate the RFX JSON request data
-        errors = RFXDataValidator(data).validate(publish=publish)
+        errors = RFXDataValidator(data_to_validate).validate(publish=publish)
         if len(errors) > 0:
             abort(', '.join(errors))
 
     if brief.lot.slug == 'training2':
         # validate the training JSON request data
-        errors = TrainingDataValidator(data).validate(publish=publish)
+        errors = TrainingDataValidator(data_to_validate).validate(publish=publish)
         if len(errors) > 0:
             abort(', '.join(errors))
 
     if brief.lot.slug == 'atm':
         # validate the ATM JSON request data
-        errors = ATMDataValidator(data).validate(publish=publish)
+        errors = ATMDataValidator(data_to_validate).validate(publish=publish)
         if len(errors) > 0:
             abort(', '.join(errors))
 
     if brief.lot.slug == 'specialist':
         # validate the specialist JSON request data
-        errors = SpecialistDataValidator(data).validate(publish=publish)
+        errors = SpecialistDataValidator(data_to_validate).validate(publish=publish)
         if len(errors) > 0:
             abort(', '.join(errors))
 
@@ -760,12 +745,74 @@ def update_brief(brief_id):
 @role_required('buyer')
 def close_opportunity_early(brief_id):
     try:
-        brief = brief_overview_business.close_opportunity_early(current_user, brief_id)
+        brief = brief_overview_business.close_opportunity_early(current_user.id, brief_id)
     except NotFoundError as e:
         not_found(e.message)
     except UnauthorisedError as e:
         forbidden(e.message)
     except BriefError as e:
+        abort(e.message)
+
+    return jsonify(brief.serialize(with_users=False))
+
+
+@api.route('/brief/<int:brief_id>/edit', methods=['PATCH'])
+@exception_logger
+@login_required
+@permissions_required('publish_opportunities')
+@role_required('buyer')
+def edit_opportunity(brief_id):
+    edits = get_json_from_request()
+
+    try:
+        brief = brief_edit_business.edit_opportunity(current_user.id, brief_id, edits)
+    except NotFoundError as e:
+        not_found(e.message)
+    except UnauthorisedError as e:
+        forbidden(e.message)
+    except ValidationError as e:
+        abort(e.message)
+    except BriefError as e:
+        abort(e.message)
+
+    return jsonify(brief.serialize(with_users=False))
+
+
+@api.route('/brief/<int:brief_id>/history', methods=['GET'])
+@exception_logger
+def get_opportunity_history(brief_id):
+    show_documents = False
+    if current_user.is_authenticated and current_user.role == 'supplier' and _can_do_brief_response(brief_id):
+        show_documents = True
+    elif current_user.is_authenticated and current_user.role == 'buyer':
+        show_documents = True
+    try:
+        edits = brief_edit_business.get_opportunity_history(brief_id, show_documents, include_sellers=False)
+    except NotFoundError as e:
+        not_found(e.message)
+
+    return jsonify(edits)
+
+
+@api.route('/brief/<int:brief_id>/withdraw', methods=['POST'])
+@exception_logger
+@login_required
+@permissions_required('publish_opportunities')
+@role_required('buyer')
+def withdraw_opportunity(brief_id):
+    data = get_json_from_request()
+
+    try:
+        brief = brief_overview_business.withdraw_opportunity(
+            current_user.id,
+            brief_id,
+            data.get('reasonToWithdraw', '')
+        )
+    except NotFoundError as e:
+        not_found(e.message)
+    except UnauthorisedError as e:
+        forbidden(e.message)
+    except (BriefError, ValidationError) as e:
         abort(e.message)
 
     return jsonify(brief.serialize(with_users=False))
@@ -1004,6 +1051,7 @@ def get_brief_responses(brief_id):
     return jsonify(brief=brief.serialize(with_users=False, with_author=False),
                    briefResponses=brief_responses,
                    canCloseOpportunity=brief_overview_business.can_close_opportunity_early(brief),
+                   isOpenToAll=brief_business.is_open_to_all(brief),
                    oldWorkOrderCreator=old_work_order_creator,
                    questionsAsked=questions_asked,
                    briefResponseDownloaded=brief_response_downloaded,
@@ -1060,10 +1108,14 @@ def upload_brief_rfx_attachment_file(brief_id, slug):
     if not briefs.has_permission_to_brief(current_user.id, brief.id):
         return forbidden('Unauthorised to update brief')
 
-    return jsonify({"filename": s3_upload_file_from_request(request, slug,
-                                                            os.path.join(brief.framework.slug, 'attachments',
-                                                                         'brief-' + str(brief_id)))
-                    })
+    try:
+        filename = s3_upload_file_from_request(
+            request, slug, os.path.join(brief.framework.slug, 'attachments', 'brief-' + str(brief_id))
+        )
+    except Exception as e:
+        abort(str(e))
+
+    return jsonify({"filename": filename})
 
 
 @api.route('/brief/<int:brief_id>/respond/documents')
@@ -1135,12 +1187,22 @@ def download_brief_attachment(brief_id, slug):
     """
     brief = briefs.get(brief_id)
 
+    if not brief:
+        return not_found('File not found')
+
+    all_documents = (
+        brief.data.get('attachments', []) +
+        brief.data.get('requirementsDocument', []) +
+        brief.data.get('responseTemplate', [])
+    )
+
     if (
         hasattr(current_user, 'role') and
         (
             current_user.role == 'buyer' or (
                 current_user.role == 'supplier' and
-                _can_do_brief_response(brief_id, update_only=True)
+                _can_do_brief_response(brief_id, update_only=True) and
+                slug in all_documents
             )
         )
     ):

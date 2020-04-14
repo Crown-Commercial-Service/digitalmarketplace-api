@@ -1,18 +1,10 @@
-from app.api.services import (
-    audit_service,
-    audit_types,
-    briefs,
-    brief_clarification_question_service,
-    brief_question_service
-)
-from app.api.business.errors import (
-    NotFoundError,
-    ValidationError,
-    UnauthorisedError
-)
-from app.models import (
-    BriefClarificationQuestion
-)
+from app.api.business.brief import brief_business
+from app.api.business.errors import (NotFoundError, UnauthorisedError,
+                                     ValidationError)
+from app.api.services import (audit_service, audit_types,
+                              brief_clarification_question_service,
+                              brief_question_service, briefs)
+from app.models import BriefClarificationQuestion
 
 
 def get_counts(brief_id, questions=None, answers=None):
@@ -30,15 +22,6 @@ def get_counts(brief_id, questions=None, answers=None):
         "questions": questionsCount,
         "answers": answersCount
     }
-
-
-def is_open_to_all(brief):
-    if brief.lot.slug == 'atm' or (
-        brief.lot.slug == 'specialist' and brief.data.get('openTo') == 'all'
-    ):
-        return True
-
-    return False
 
 
 def get_question(current_user, brief_id, question_id):
@@ -62,10 +45,12 @@ def get_question(current_user, brief_id, question_id):
         "brief": {
             "title": brief.data.get('title'),
             "id": brief.id,
+            "lot": brief.lot.slug,
             "questionsCloseAt": brief.questions_closed_at,
             "closedAt": brief.closed_at,
             "internalReference": brief.data.get('internalReference'),
-            "isOpenToAll": is_open_to_all(brief)
+            "isOpenToAll": brief_business.is_open_to_all(brief),
+            "status": brief.status
         }
     }
 
@@ -85,9 +70,11 @@ def get_questions(current_user, brief_id):
         "brief": {
             "title": brief.data.get('title'),
             "id": brief.id,
+            "lot": brief.lot.slug,
             "closedAt": brief.closed_at,
             "internalReference": brief.data.get('internalReference'),
-            "isOpenToAll": is_open_to_all(brief)
+            "isOpenToAll": brief_business.is_open_to_all(brief),
+            "status": brief.status
         },
         "questionCount": get_counts(brief_id, questions=questions)
     }
@@ -107,7 +94,7 @@ def get_answers(brief_id):
             "id": brief.id,
             "closedAt": brief.closed_at,
             "internalReference": brief.data.get('internalReference'),
-            "isOpenToAll": is_open_to_all(brief)
+            "isOpenToAll": brief_business.is_open_to_all(brief)
         },
         "questionCount": get_counts(brief_id, answers=answers)
     }
