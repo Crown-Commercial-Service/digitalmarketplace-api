@@ -56,8 +56,7 @@ class SuppliersService(Service):
             )
             .filter(func.replace(Supplier.abn, ' ', '') == abn)
             .filter(Supplier.status != 'deleted')
-            .limit(1)
-            .one_or_none()
+            .all()
         )
 
     def get_suppliers_by_name_keyword(self, keyword, framework_slug=None, category=None):
