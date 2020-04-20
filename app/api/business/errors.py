@@ -41,6 +41,6 @@ class DomainApprovalException(Exception):
     pass
 
 
-class MyAbrError(Exception):
+class AbrError(Exception):
     """Raised when unable to get a response from the abr website."""
     pass

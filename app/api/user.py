@@ -15,7 +15,7 @@ from app.models import (Application, AuditEvent, AuditTypes, Framework, User,
 from app.tasks import publish_tasks
 from app.api.helpers import get_email_domain
 from app.api.business import supplier_business
-from app.api.business.errors import MyAbrError
+from app.api.business.errors import AbrError
 
 
 def add_user(data):
