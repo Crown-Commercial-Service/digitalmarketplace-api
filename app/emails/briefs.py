@@ -7,6 +7,7 @@ from flask import current_app
 from .util import render_email_template, send_or_handle_error, escape_markdown
 
 import rollbar
+import pendulum
 
 
 def send_brief_response_received_email(supplier, brief, brief_response, supplier_user=None, is_update=False):
@@ -796,6 +797,160 @@ def send_opportunity_closed_early_email(brief, current_user):
         user='',
         data={
             "to_addresses": ', '.join(to_addresses),
+            "email_body": email_body,
+            "subject": subject
+        },
+        db_object=brief
+    )
+
+
+def send_opportunity_edited_email_to_buyers(brief, current_user, edit):
+    # to circumvent circular dependencies
+    from app.api.business.brief import brief_edit_business
+    from app.api.services import audit_service, audit_types
+
+    to_addresses = get_brief_emails(brief)
+
+    summary = ''
+    seller_questions_message = ''
+    timezone = 'Australia/Canberra'
+    changes = brief_edit_business.get_changes_made_to_opportunity(brief, edit)
+
+    if 'closingDate' in changes:
+        seller_questions_message = (
+            'The last day sellers can ask questions is now {}. '.format(
+                brief.questions_closed_at.in_timezone(timezone).format('%-d %B %Y')
+            ) +
+            'You must answer all relevant questions while the opportunity is live.'
+        )
+
+        summary = '* Closing date changed from {} to {}\n'.format(
+            pendulum.parse(edit.data['closed_at'], tz=timezone).format('%-d %B %Y'),
+            brief.closed_at.in_timezone(timezone).format('%-d %B %Y')
+        )
+
+    if 'title' in changes:
+        summary += "* Title changed from '{}' to '{}'\n".format(
+            escape_markdown(edit.data['title']), escape_markdown(brief.data['title'])
+        )
+
+    if 'sellers' in changes:
+        new_sellers = []
+        for key, value in changes['sellers']['newValue'].items():
+            if key not in changes['sellers']['oldValue']:
+                new_sellers.append(value['name'])
+
+        number_of_sellers_invited = len(new_sellers)
+        seller_or_sellers = 'seller' if number_of_sellers_invited == 1 else 'sellers'
+        summary += '* {} more {} invited to apply:\n'.format(number_of_sellers_invited, seller_or_sellers)
+
+        sorted_sellers = sorted(new_sellers, key=lambda s: s.lower())
+        for seller in sorted_sellers:
+            summary += '    * {}\n'.format(
+                escape_markdown(seller)
+            )
+
+    if 'summary' in changes:
+        summary += '* Summary was updated\n'
+
+    def generate_document_changes(old, new):
+        text = ''
+        removed = [x for x in old if x not in new]
+        added = [x for x in new if x not in old]
+        if len(removed) > 0:
+            for x in removed:
+                text += '* ' + escape_markdown(x) + ' removed\n'
+        if len(added) > 0:
+            for x in added:
+                text += '* ' + escape_markdown(x) + ' added\n'
+        return text
+
+    if 'attachments' in changes:
+        summary += generate_document_changes(changes['attachments']['oldValue'], changes['attachments']['newValue'])
+
+    if 'responseTemplate' in changes:
+        summary += generate_document_changes(
+            changes['responseTemplate']['oldValue'], changes['responseTemplate']['newValue']
+        )
+
+    if 'requirementsDocument' in changes:
+        summary += generate_document_changes(
+            changes['requirementsDocument']['oldValue'], changes['requirementsDocument']['newValue']
+        )
+
+    email_body = render_email_template(
+        'opportunity_edited_buyers.md',
+        brief_id=brief.id,
+        edit_summary=summary,
+        framework=brief.framework.slug,
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        seller_questions_message=seller_questions_message,
+        title=escape_markdown(brief.data['title']),
+        user=escape_markdown(current_user.name)
+    )
+
+    subject = "Updates made to '{}' opportunity".format(brief.data['title'])
+
+    send_or_handle_error(
+        to_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors=audit_types.opportunity_edited
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_opportunity_edited_email_to_buyers,
+        user='',
+        data={
+            "to_addresses": ', '.join(to_addresses),
+            "email_body": email_body,
+            "subject": subject
+        },
+        db_object=brief
+    )
+
+
+def send_opportunity_edited_email_to_seller(brief, email_address, buyer):
+    # to circumvent circular dependencies
+    from app.api.services import audit_service, audit_types
+
+    candidate_message = ''
+    if brief.lot.slug == 'specialist':
+        candidate_message = "candidate's "
+
+    formatted_closing_date = (
+        brief.closed_at.in_timezone('Australia/Canberra').format('%A %-d %B %Y at %-I:%M%p (in Canberra)')
+    )
+
+    email_body = render_email_template(
+        'opportunity_edited_sellers.md',
+        brief_id=brief.id,
+        buyer=buyer,
+        candidate_message=candidate_message,
+        closing_date=formatted_closing_date,
+        framework=brief.framework.slug,
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        title=escape_markdown(brief.data['title'])
+    )
+
+    subject = "Changes made to '{}' opportunity".format(brief.data['title'])
+
+    send_or_handle_error(
+        email_address,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors=audit_types.opportunity_edited
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_opportunity_edited_email_to_seller,
+        user='',
+        data={
+            "to_addresses": email_address,
             "email_body": email_body,
             "subject": subject
         },

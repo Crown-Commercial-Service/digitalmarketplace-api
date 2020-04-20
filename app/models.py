@@ -2390,6 +2390,16 @@ class Brief(db.Model):
         return data
 
 
+class BriefHistory(db.Model):
+    __tablename__ = 'brief_history'
+
+    id = db.Column(db.Integer, primary_key=True)
+    brief_id = db.Column(db.Integer, db.ForeignKey('brief.id'), index=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True, nullable=False)
+    edited_at = db.Column(DateTime, index=True, default=utcnow, nullable=False)
+    data = db.Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
+
+
 class BriefUser(db.Model):
     __tablename__ = 'brief_user'
 
@@ -2955,6 +2965,20 @@ class Application(db.Model):
                 self.data.pop('representative', None)
                 self.data.pop('phone', None)
                 self.data.pop('email', None)
+
+                if self.data.get('recruiter') == 'no':
+                    self.data['labourHire'] = {}
+                else:
+                    to_remove = []
+                    for state, state_value in self.data.get('labourHire', {}).iteritems():
+                        if not (
+                            state_value.get('expiry') and
+                            state_value.get('licenceNumber')
+                        ):
+                            to_remove.append(state)
+                    for r in to_remove:
+                        self.data.get('labourHire', {}).pop(r)
+
             else:
                 supplier = Supplier()
             supplier.update_from_json(self.data)

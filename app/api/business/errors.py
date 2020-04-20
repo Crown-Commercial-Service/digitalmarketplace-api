@@ -22,6 +22,10 @@ class TeamError(Exception):
     pass
 
 
+class DBError(Exception):
+    pass
+
+
 class DomainCriteriaInvalidDomainException(Exception):
     """Raised when an invalid domain id is passed to DomainCriteria"""
     pass

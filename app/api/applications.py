@@ -4,15 +4,13 @@ from helpers import notify_team
 from app.tasks import publish_tasks
 
 
-def create_application(email_address=None, name=None, abn=None, organisation_name=None, state=None, postCode=None):
+def create_application(email_address=None, name=None, abn=None):
     application = Application(
         status='saved',
         data={
             'framework': 'digital-marketplace',
             'email': email_address,
-            'abn': abn,
-            'name': organisation_name,
-            'addresses': {'0': {'address_line': "", 'postal_code': postCode, 'state': state}}
+            'abn': abn
         }
     )
 

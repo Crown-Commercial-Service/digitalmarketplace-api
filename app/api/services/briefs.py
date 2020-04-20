@@ -625,7 +625,7 @@ class BriefsService(Service):
         brief.data['originalClosedAt'] = brief.closed_at.to_iso8601_string(extended=True)
 
         # To pass validation, questions_closed_at needs to be before closed_at
-        brief.data['closed_at'] = now.to_date_string()
+        brief.data['closedAt'] = now.in_timezone('Australia/Canberra').to_date_string()
         brief.questions_closed_at = now.subtract(seconds=1)
         brief.closed_at = now
         brief.updated_at = now

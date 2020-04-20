@@ -193,6 +193,70 @@ def send_document_expiry_campaign(client, sellers):
     )
 
 
+def send_labour_hire_licence_expiry_campaign(client, sellers):
+    folder_id = getenv('MAILCHIMP_MARKETPLACE_FOLDER_ID')
+    if not folder_id:
+        raise MailChimpConfigException('Failed to get MAILCHIMP_MARKETPLACE_FOLDER_ID from the environment variables.')
+
+    list_id = getenv('MAILCHIMP_SELLER_LIST_ID')
+    if not list_id:
+        raise MailChimpConfigException('Failed to get MAILCHIMP_SELLER_LIST_ID from the environment variables.')
+
+    title = 'Expiring labour hire licence - {}'.format(pendulum.today().to_date_string())
+
+    sent_expiring_licence_audit_event = audit_service.filter(
+        AuditEvent.type == audit_types.sent_expiring_licence_email.value,
+        AuditEvent.data['campaign_title'].astext == title
+    ).one_or_none()
+
+    if (sent_expiring_licence_audit_event > 0):
+        return
+
+    conditions = []
+    for seller in sellers:
+        for email_address in seller['email_addresses']:
+            conditions.append({
+                'condition_type': 'EmailAddress',
+                'op': 'is',
+                'field': 'EMAIL',
+                'value': email_address
+            })
+
+    recipients = {
+        'list_id': list_id,
+        'segment_opts': {
+            'match': 'any',
+            'conditions': conditions
+        }
+    }
+
+    settings = {
+        'folder_id': folder_id,
+        'preview_text': 'Please update your labour hire licence details',
+        'subject_line': 'Your labour hire licence details are soon to expire or have expired',
+        'title': title
+    }
+
+    campaign = create_campaign(client, recipients, settings)
+
+    template = template_env.get_template('mailchimp_licence_expiry.html')
+    email_body = template.render(current_year=pendulum.today().year)
+    update_campaign_content(client, campaign['id'], email_body)
+
+    schedule_campaign(client, campaign['id'],
+                      pendulum.now('Australia/Sydney').at(10, 0, 0).in_timezone('UTC'))
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_expiring_licence_email,
+        data={
+            'campaign_title': title,
+            'sellers': sellers
+        },
+        db_object=None,
+        user=None
+    )
+
+
 @celery.task
 def send_document_expiry_reminder():
     # Find sellers with documents 28 days from expiry, 14 days from expiry, on expiry and 28 days after expiry
@@ -210,6 +274,27 @@ def send_document_expiry_reminder():
     except Exception as e:
         current_app.logger.error(
             'An error occurred while creating the expiring documents campaign, aborting: {}'.format(e))
+        rollbar.report_exc_info()
+
+
+@celery.task
+def send_labour_hire_expiry_reminder():
+    # Find sellers with labour hire licences 28 days from expiry, 14 days from expiry, on expiry and 28 days after
+    # expiry
+    sellers = (suppliers.get_suppliers_with_expiring_labour_hire_licences(days=28) +
+               suppliers.get_suppliers_with_expiring_labour_hire_licences(days=14) +
+               suppliers.get_suppliers_with_expiring_labour_hire_licences(days=0) +
+               suppliers.get_suppliers_with_expiring_labour_hire_licences(days=-28))
+
+    if not sellers:
+        return
+
+    try:
+        client = get_client()
+        send_labour_hire_licence_expiry_campaign(client, sellers)
+    except Exception as e:
+        current_app.logger.error(
+            'An error occurred while creating the expiring labour hire licence campaign, aborting: {}'.format(e))
         rollbar.report_exc_info()
 
 

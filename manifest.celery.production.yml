@@ -2,7 +2,7 @@ command: ./scripts/cf_run_celery_app.sh
 buildpack: python2_buildpack
 health-check-type: process
 instances: 1
-memory: 1G
+memory: 2G
 disk_quota: 512M
 services:
 - pgdb-96-prod

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import pytz
-from sqlalchemy import and_, func, literal, or_, select, union
+from sqlalchemy import and_, case, func, literal, or_, select, union
 from sqlalchemy.orm import joinedload, noload, raiseload
 from sqlalchemy.dialects.postgresql import aggregate_order_by
 
@@ -56,11 +56,10 @@ class SuppliersService(Service):
             )
             .filter(func.replace(Supplier.abn, ' ', '') == abn)
             .filter(Supplier.status != 'deleted')
-            .limit(1)
-            .one_or_none()
+            .all()
         )
 
-    def get_suppliers_by_name_keyword(self, keyword, framework_slug=None, category=None):
+    def get_suppliers_by_name_keyword(self, keyword, framework_slug=None, category=None, exclude=None):
         query = (db.session.query(Supplier)
                  .filter(Supplier.name.ilike('%{}%'.format(keyword.encode('utf-8'))))
                  .filter(Supplier.status != 'deleted')
@@ -79,6 +78,9 @@ class SuppliersService(Service):
         if category:
             query = query.outerjoin(SupplierDomain)
             query = query.filter(SupplierDomain.domain_id == category).filter(SupplierDomain.status == 'assessed')
+        if exclude:
+            query = query.filter(Supplier.code.notin_(exclude))
+
         query.order_by(Supplier.name.asc()).limit(20)
         return query.all()
 
@@ -234,6 +236,62 @@ class SuppliersService(Service):
 
         return [r._asdict() for r in results]
 
+    def get_suppliers_with_expiring_labour_hire_licences(self, days):
+        today = datetime.now(pytz.timezone('Australia/Sydney'))
+
+        # Find out which of the supplier's licenses have expired or are expiring soon
+        vic_expiry = (select([Supplier.code, Supplier.name, literal('vic').label('state'),
+                             Supplier.data['labourHire']['vic']['licenceNumber'].astext.label('licenceNumber'),
+                             Supplier.data['labourHire']['vic']['expiry'].astext.label('expiry')])
+                      .where(and_(Supplier.data['labourHire']['vic']['expiry'].isnot(None),
+                             func.to_date(Supplier.data['labourHire']['vic']['expiry'].astext, 'YYYY-MM-DD') ==
+                             (today.date() + timedelta(days=days)))))
+        qld_expiry = (select([Supplier.code, Supplier.name, literal('qld').label('state'),
+                              Supplier.data['labourHire']['qld']['licenceNumber'].astext.label('licenceNumber'),
+                              Supplier.data['labourHire']['qld']['expiry'].astext.label('expiry')])
+                      .where(and_(Supplier.data['labourHire']['qld']['expiry'].isnot(None),
+                                  func.to_date(Supplier.data['labourHire']['qld']['expiry'].astext, 'YYYY-MM-DD') ==
+                                  (today.date() + timedelta(days=days)))))
+        sa_expiry = (select([Supplier.code, Supplier.name, literal('sa').label('state'),
+                             Supplier.data['labourHire']['sa']['licenceNumber'].astext.label('licenceNumber'),
+                             Supplier.data['labourHire']['sa']['expiry'].astext.label('expiry')])
+                     .where(and_(Supplier.data['labourHire']['sa']['expiry'].isnot(None),
+                                 func.to_date(Supplier.data['labourHire']['sa']['expiry'].astext, 'YYYY-MM-DD') ==
+                                 (today.date() + timedelta(days=days)))))
+
+        expiry_dates = union(vic_expiry, qld_expiry, sa_expiry).alias('expiry_dates')
+
+        # Aggregate the licence details so they can be returned with the results
+        licences = (db.session.query(expiry_dates.columns.code, expiry_dates.columns.name,
+                                     func.json_agg(
+                                         func.json_build_object(
+                                             'state', expiry_dates.columns.state,
+                                             'licenceNumber', expiry_dates.columns.licenceNumber,
+                                             'expiry', expiry_dates.columns.expiry)).label('labour_hire_licences'))
+                    .group_by(expiry_dates.columns.code, expiry_dates.columns.name)
+                    .subquery('expired_labour_hire_licences'))
+
+        # Find email addresses associated with the supplier
+        email_addresses = self.get_supplier_contacts_union()
+
+        # Aggregate the email addresses so they can be returned with the results
+        aggregated_emails = (db.session.query(email_addresses.columns.code,
+                                              func.json_agg(
+                                                  email_addresses.columns.email_address
+                                              ).label('email_addresses'))
+                             .group_by(email_addresses.columns.code)
+                             .subquery())
+
+        # Combine the list of email addresses and licences
+        results = (db.session.query(licences.columns.code, licences.columns.name, licences.columns.labour_hire_licences,
+                                    aggregated_emails.columns.email_addresses)
+                   .join(aggregated_emails,
+                         licences.columns.code == aggregated_emails.columns.code)
+                   .order_by(licences.columns.code)
+                   .all())
+
+        return [r._asdict() for r in results]
+
     def get_suppliers_with_unassessed_domains_and_all_case_studies_rejected(self):
         case_study_query = (
             db.session.query(
@@ -291,9 +349,15 @@ class SuppliersService(Service):
                 Supplier.creation_time,
                 Supplier.data['contact_email'].astext.label('contact_email'),
                 Supplier.data['recruiter'].astext.label('recruiter_status'),
-                Supplier.data['seller_type'].label('seller_type'),
+                case(
+                    whens=[
+                        (Supplier.data['seller_type'].is_(None), '{}')
+                    ],
+                    else_=Supplier.data['seller_type']
+                ).label('seller_type'),
                 Supplier.data['number_of_employees'].label('number_of_employees'),
-                func.string_agg(Domain.name, ',').label('domains')
+                func.string_agg(Domain.name, ',').label('domains'),
+                Supplier.data['labourHire'].label('labour_hire')
             )
             .join(SupplierDomain, Domain)
             .filter(

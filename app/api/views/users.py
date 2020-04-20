@@ -175,7 +175,7 @@ def signup():
     json_payload = request.get_json()
     name = json_payload.get('name', None)
     email_address = json_payload.get('email_address', None)
-    abn = json_payload.get('abn', None)
+    abn = json_payload.get('abn', '')
     user_type = json_payload.get('user_type', None)
     employment_status = json_payload.get('employment_status', None)
     line_manager_name = json_payload.get('line_manager_name', None)
@@ -191,15 +191,12 @@ def signup():
     if user_type == 'seller' or user_type == 'applicant':
         if not abn:
             return jsonify(message='You must provide an ABN value'), 400
-        # allow a value of N/A, otherwise remove any non numeric characters from the ABN and ensure it is unique
-        if not abn == 'N/A':
-            abn = re.sub(r'[^\d]', '', abn)
-            if supplier_business.abn_is_used(abn):
-                return jsonify(
-                    email_address=email_address,
-                    abn=abn,
-                    message='There is already a seller account with ABN %s' % (abn)
-                ), 409
+        if supplier_business.abn_is_used(abn):
+            return jsonify(
+                email_address=email_address,
+                abn=abn,
+                message='There is already a seller account with ABN %s' % (abn)
+            ), 409
 
     if user is not None:
         send_user_existing_password_reset_email(user.name, email_address)

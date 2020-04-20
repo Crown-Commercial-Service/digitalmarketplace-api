@@ -4,6 +4,7 @@ import csvx
 from io import StringIO
 from collections import OrderedDict as od
 import json
+import pendulum
 
 
 def csv_cell_sanitize(text):
@@ -164,6 +165,29 @@ def generate_brief_responses_csv(brief, responses):
                 else:
                     answers.update({key: ''})
 
+            states = {
+                'qld': 'Queensland',
+                'vic': 'Victoria',
+                'sa': 'South Australia'
+            }
+
+            labourHire = r.supplier.data.get('labourHire', {})
+
+            for state in states:
+                licence_number = ''
+                licence_expiry = ''
+                if state in labourHire:
+                    if 'licenceNumber' in labourHire[state]:
+                        licence_number = labourHire[state]['licenceNumber']
+                    if 'expiry' in labourHire[state]:
+                        licence_expiry = (
+                            pendulum.parse(
+                                labourHire[state]['expiry']
+                            ).format('DD MMMM YYYY', formatter='alternative')
+                        )
+                answers.update({'%s Labour hire licence' % (states[state]): licence_number})
+                answers.update({'%s Labour hire licence expiry' % (states[state]): licence_expiry})
+
         if brief.lot.slug == 'atm':
             criteriaResponses = {}
             evaluationCriteriaResponses = r.data.get('criteria', {})
@@ -206,6 +230,30 @@ def generate_seller_catalogue_csv(seller_catalogue):
             number_of_employees = number_of_employees + ' employees'
 
         answers.update({'Number of employees': number_of_employees})
+
+        licence_vic_number = ''
+        licence_vic_expiry = ''
+        licence_qld_number = ''
+        licence_qld_expiry = ''
+        licence_sa_number = ''
+        licence_sa_expiry = ''
+        if r['labour_hire'] and 'vic' in r['labour_hire']:
+            licence_vic_number = r['labour_hire']['vic']['licenceNumber']
+            licence_vic_expiry = r['labour_hire']['vic']['expiry']
+        if r['labour_hire'] and 'qld' in r['labour_hire']:
+            licence_qld_number = r['labour_hire']['qld']['licenceNumber']
+            licence_qld_expiry = r['labour_hire']['qld']['expiry']
+        if r['labour_hire'] and 'sa' in r['labour_hire']:
+            licence_sa_number = r['labour_hire']['sa']['licenceNumber']
+            licence_sa_expiry = r['labour_hire']['sa']['expiry']
+
+        answers.update({'Labour hire VIC licence': licence_vic_number})
+        answers.update({'Labour hire VIC expiry': licence_vic_expiry})
+        answers.update({'Labour hire QLD licence': licence_qld_number})
+        answers.update({'Labour hire QLD expiry': licence_qld_expiry})
+        answers.update({'Labour hire SA licence': licence_sa_number})
+        answers.update({'Labour hire SA expiry': licence_sa_expiry})
+
         for k, v in answers.items():
             answers[k] = csv_cell_sanitize(v)
 
