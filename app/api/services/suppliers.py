@@ -43,6 +43,22 @@ class SuppliersService(Service):
             .one_or_none()
         )
 
+    def get_supplier_by_abn(self, abn):
+        return (
+            db
+            .session
+            .query(
+                Supplier
+            )
+            .options(
+                joinedload(Supplier.domains)
+                .joinedload(SupplierDomain.domain)
+            )
+            .filter(func.replace(Supplier.abn, ' ', '') == abn)
+            .filter(Supplier.status != 'deleted')
+            .all()
+        )
+
     def get_suppliers_by_name_keyword(self, keyword, framework_slug=None, category=None, exclude=None):
         query = (db.session.query(Supplier)
                  .filter(Supplier.name.ilike('%{}%'.format(keyword.encode('utf-8'))))
