@@ -393,10 +393,6 @@ def get_brief(brief_id):
             supplier_brief_response_is_draft = True if supplier_brief_responses[0]['status'] == 'draft' else False
 
     invited_seller_count = len(invited_sellers)
-    open_to_all = (
-        brief.lot.slug in ['atm', 'specialist'] and
-        brief.data.get('openTo', '') == 'all'
-    )
     open_to_category = brief.lot.slug == 'atm' and brief.data.get('openTo', '') == 'category'
     is_applicant = user_role == 'applicant'
 
@@ -487,7 +483,7 @@ def get_brief(brief_id):
                    is_awaiting_application_assessment=is_awaiting_application_assessment,
                    is_awaiting_domain_assessment=is_awaiting_domain_assessment,
                    has_been_assessed_for_brief=has_been_assessed_for_brief,
-                   open_to_all=open_to_all,
+                   open_to_all=brief_business.is_open_to_all(brief),
                    open_to_category=open_to_category,
                    is_brief_owner=is_brief_owner,
                    is_buyer=is_buyer,
