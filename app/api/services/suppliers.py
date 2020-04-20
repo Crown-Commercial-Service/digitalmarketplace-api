@@ -379,7 +379,7 @@ class SuppliersService(Service):
 
         return [r._asdict() for r in results]
 
-    def get_business_info_by_abn(email_address, abn):
+    def get_business_info_by_abn(self, email_address, abn):
         apiKey = current_app.config['ABR_API_KEY']
         includeHistoricalDetails = 'N'
         abn = abn
