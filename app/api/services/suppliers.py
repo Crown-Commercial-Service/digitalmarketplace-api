@@ -427,6 +427,4 @@ class SuppliersService(Service):
         # a dict to store these pre-filled info
         business_info_abn_dict = {'organisation_name': organisation_name, 'postcode':postcode, 'state': state}
         business_info_abn = json.dumps(business_info_abn_dict)
-        print(business_info_abn_dict)
-
         return business_info_abn
