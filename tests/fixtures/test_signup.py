@@ -1,6 +1,7 @@
 import json
 import pytest
 import mock
+import copy
 
 from app.models import db, Agency, AgencyDomain
 from app.api.services import user_claims_service
@@ -9,7 +10,8 @@ from nose.tools import assert_equal
 test_seller = {
     'name': 'matt',
     'email_address': 'email+s@company.com',
-    'user_type': 'seller'
+    'user_type': 'seller',
+    'abn': '123456'
 }
 
 gov_au_buyer = {
@@ -97,6 +99,17 @@ def test_send_seller_type_signup_invite_email(user_claim, client, mocker):
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
+def test_seller_signup_fail_missing_abn(user_claim, client):
+    test_seller_no_abn = copy.copy(test_seller)
+    del test_seller_no_abn['abn']
+    response = client.post(
+        '/2/signup',
+        data=json.dumps(test_seller_no_abn),
+        content_type='application/json')
+    assert response.status_code == 400
+
+
+@mock.patch('app.tasks.publish_tasks.user_claim')
 def test_send_buyer_type_signup_invite_email(user_claim, client, mocker):
     send_email = mocker.patch('app.api.views.users.send_account_activation_email')
     response = client.post(
@@ -180,34 +193,49 @@ def test_signup_fails_without_required_fields(user_claim, client, supplier_user)
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_duplicate_supplier_with_same_domain(user_claim, client, supplier_user):
+def test_supplier_with_same_domain(user_claim, client, supplier_user):
     response = client.post(
         '/2/signup',
         data=json.dumps({
             'email_address': 'm@examplecompany.biz',
             'name': 'Jeff Labowski',
-            'user_type': 'seller'
+            'user_type': 'seller',
+            'abn': '56789'
+        }),
+        content_type='application/json')
+    assert response.status_code == 200
+
+
+@mock.patch('app.tasks.publish_tasks.user_claim')
+def test_duplicate_supplier_with_same_abn(user_claim, client, suppliers, supplier_user):
+    response = client.post(
+        '/2/signup',
+        data=json.dumps({
+            'email_address': 'm@examplecompany.biz',
+            'name': 'Jeff Labowski',
+            'user_type': 'seller',
+            'abn': '1'
         }),
         content_type='application/json')
     assert response.status_code == 409
     data = json.loads(response.data)
-
-    assert_equal(data['message'], 'An account with this email domain already exists')
+    assert_equal(data['message'], 'There is already a seller account with ABN 1')
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_duplicate_application_with_same_domain(user_claim, client, application_user):
+def test_duplicate_application_with_same_abn(user_claim, client, application_user):
     response = client.post(
         '/2/signup',
         data=json.dumps({
             'email_address': 'm@don.com',
             'name': 'Jeff Labowski',
-            'user_type': 'seller'
+            'user_type': 'seller',
+            'abn': '123456'
         }),
         content_type='application/json')
     assert response.status_code == 409
     data = json.loads(response.data)
-    assert_equal(data['message'], 'An account with this email domain already exists')
+    assert_equal(data['message'], 'There is already a seller account with ABN 123456')
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
@@ -218,7 +246,8 @@ def test_generic_domain(user_claim, client):
             'email_address': 'm@gmail.com',
             'name': 'Jeff Labowski',
             'user_type': 'seller',
-            'url': '/2'
+            'url': '/2',
+            'abn': '56789'
         }),
         content_type='application/json')
     assert response._status_code == 200
