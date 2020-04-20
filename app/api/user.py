@@ -255,7 +255,7 @@ def create_user(
             state = ''
             postcode = ''
             try:
-                business_info_values = suppliers.get_business_info_by_abn(email_address,abn)
+                business_info_values = suppliers.get_business_info_by_abn(email_address, abn)
                 business_info_values = json.loads(business_info_values)
 
                 organisation_name = business_info_values["organisation_name"]

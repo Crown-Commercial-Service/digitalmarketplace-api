@@ -23,6 +23,7 @@ from flask import current_app
 import xml.etree.ElementTree as ElementTree
 import json
 
+
 class SuppliersService(Service):
     __model__ = Supplier
 
@@ -384,7 +385,7 @@ class SuppliersService(Service):
         includeHistoricalDetails = 'N'
         abn = abn
         url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails=' + includeHistoricalDetails + '&authenticationGuid=' + apiKey
-        
+
         try:
             response = requests.get(url)
             response.raise_for_status()
@@ -425,6 +426,6 @@ class SuppliersService(Service):
         state = search_xml_state[0]
 
         # a dict to store these pre-filled info
-        business_info_abn_dict = {'organisation_name': organisation_name, 'postcode':postcode, 'state': state}
+        business_info_abn_dict = {'organisation_name': organisation_name, 'postcode': postcode, 'state': state}
         business_info_abn = json.dumps(business_info_abn_dict)
         return business_info_abn

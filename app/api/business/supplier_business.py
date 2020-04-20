@@ -8,6 +8,7 @@ from app.api.business.agreement_business import (get_current_agreement,
 from app.api.business.validators import SupplierValidator
 from app.api.services import application_service, key_values_service, suppliers
 
+
 def abn_is_used(abn):
     abn = "".join(abn.split())
     supplier = suppliers.get_supplier_by_abn(abn)
