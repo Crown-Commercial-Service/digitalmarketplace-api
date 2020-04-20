@@ -249,12 +249,6 @@ def create_user(
         if supplier_code:
             user_data['role'] = 'supplier'
         else:
-            organisation_post_state = ''
-            # In case the selller's business is outside of australia or does not have an abn,
-            # then these fields will provide an empty string to prefill out the form.
-            organisation_name = ''
-            state = ''
-            postCode = ''
             try:
                 application = create_application(email_address=email_address, name=name, abn=abn)
                 user_data['application_id'] = application.id
