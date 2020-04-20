@@ -16,6 +16,7 @@ from app.tasks import publish_tasks
 from app.api.helpers import get_email_domain
 from app.api.business import supplier_business
 import json
+from app.api.business.errors import AbrError
 
 
 def add_user(data):
@@ -256,14 +257,24 @@ def create_user(
             try:
                 business_info_values = supplier_business.get_business_info_by_abn(email_address,abn)
                 business_info_values = json.loads(business_info_values)
-                
+
                 organisation_name = business_info_values["organisation_name"]
                 state = business_info_values["state"]
                 postcode = business_info_values["postcode"]
-                # adding the abn business info into the seller application
+
+            # If ABR API is down, it will publish a slack message
+            except AbrError:
+                publish_tasks.user.delay(
+                    user_data,
+                    'abr_failed',
+                    email_address=email_address,
+                    abn=abn
+                )
+
+            # adding the abn business info into the seller application
+            try:
                 application = create_application(email_address=email_address, name=name, abn=abn, organisation_name=organisation_name, postcode=postcode, state=state)
                 user_data['application_id'] = application.id
-
             except (InvalidRequestError, IntegrityError):
                 return jsonify(message="An application with this email address already exists"), 409
 
