@@ -410,7 +410,7 @@ class SuppliersService(Service):
 
         # Any other expections
         except Exception as ex:
-            raise AbrError('Some exception raised')
+            raise AbrError('Failed exception raised')
 
         # takes the first organisationName
         search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
