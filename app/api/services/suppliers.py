@@ -384,7 +384,8 @@ class SuppliersService(Service):
         apiKey = current_app.config['ABR_API_KEY']
         includeHistoricalDetails = 'N'
         abn = abn
-        url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString=' + abn + '&includeHistoricalDetails=' + includeHistoricalDetails + '&authenticationGuid=' + apiKey
+        link = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
+        url = link + abn + '&includeHistoricalDetails=' + includeHistoricalDetails + '&authenticationGuid=' + apiKey
 
         try:
             response = requests.get(url)
