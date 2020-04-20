@@ -273,7 +273,9 @@ def create_user(
 
             # adding the abn business info into the seller application
             try:
-                application = create_application(email_address=email_address, name=name, abn=abn, organisation_name=organisation_name, postcode=postcode, state=state)
+                application = create_application(
+                    email_address=email_address, name=name, abn=abn, organisation_name=organisation_name, 
+                    postcode=postcode, state=state)
                 user_data['application_id'] = application.id
             except (InvalidRequestError, IntegrityError):
                 return jsonify(message="An application with this email address already exists"), 409
