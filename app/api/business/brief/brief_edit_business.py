@@ -429,7 +429,7 @@ def get_opportunity_history(brief_id, show_documents=False, include_sellers=True
 
 
 def only_sellers_were_edited(brief_id):
-    history = get_opportunity_history(brief_id)
+    history = get_opportunity_history(brief_id, show_documents=True)
     only_sellers_edited = False
 
     for edit in history['edits']:
