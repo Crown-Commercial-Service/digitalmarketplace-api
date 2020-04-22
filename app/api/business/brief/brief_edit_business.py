@@ -398,6 +398,7 @@ def get_opportunity_history(brief_id, show_documents=False, include_sellers=True
 
     response = {
         'brief': {
+            'framework': brief.framework.slug,
             'id': brief.id,
             'title': brief.data['title'] if 'title' in brief.data else ''
         }
