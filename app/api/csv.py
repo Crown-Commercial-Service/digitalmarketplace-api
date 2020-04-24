@@ -237,15 +237,22 @@ def generate_seller_catalogue_csv(seller_catalogue):
         licence_qld_expiry = ''
         licence_sa_number = ''
         licence_sa_expiry = ''
-        if r['labour_hire'] and 'vic' in r['labour_hire']:
-            licence_vic_number = r['labour_hire']['vic']['licenceNumber']
-            licence_vic_expiry = r['labour_hire']['vic']['expiry']
-        if r['labour_hire'] and 'qld' in r['labour_hire']:
-            licence_qld_number = r['labour_hire']['qld']['licenceNumber']
-            licence_qld_expiry = r['labour_hire']['qld']['expiry']
-        if r['labour_hire'] and 'sa' in r['labour_hire']:
-            licence_sa_number = r['labour_hire']['sa']['licenceNumber']
-            licence_sa_expiry = r['labour_hire']['sa']['expiry']
+        if 'labour_hire' in r and r['labour_hire']:
+            if 'vic' in r['labour_hire']:
+                if 'licenceNumber' in r['labour_hire']['vic']:
+                    licence_vic_number = r['labour_hire']['vic']['licenceNumber']
+                if 'expiry' in r['labour_hire']['vic']:
+                    licence_vic_expiry = r['labour_hire']['vic']['expiry']
+            if 'qld' in r['labour_hire']:
+                if 'licenceNumber' in r['labour_hire']['qld']:
+                    licence_qld_number = r['labour_hire']['qld']['licenceNumber']
+                if 'expiry' in r['labour_hire']['qld']:
+                    licence_qld_expiry = r['labour_hire']['qld']['expiry']
+            if 'sa' in r['labour_hire']:
+                if 'licenceNumber' in r['labour_hire']['sa']:
+                    licence_sa_number = r['labour_hire']['sa']['licenceNumber']
+                if 'expiry' in r['labour_hire']['sa']:
+                    licence_sa_expiry = r['labour_hire']['sa']['expiry']
 
         answers.update({'Labour hire VIC licence': licence_vic_number})
         answers.update({'Labour hire VIC expiry': licence_vic_expiry})

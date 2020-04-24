@@ -213,7 +213,9 @@ def check_supplier_role(role, supplier_code):
         raise("'supplier_code' is only valid for users with 'supplier' role, not '{}'".format(role))
 
 
-def create_user(user_type=None, name=None, email_address=None, password=None, framework=None, supplier_code=None):
+def create_user(
+    user_type=None, name=None, email_address=None, password=None, framework=None, supplier_code=None, abn=None
+):
     if not user_type or not name or not email_address or not password or not framework:
         return jsonify(
             application_id=user.application_id,
@@ -246,7 +248,7 @@ def create_user(user_type=None, name=None, email_address=None, password=None, fr
             user_data['role'] = 'supplier'
         else:
             try:
-                application = create_application(email_address=email_address, name=name)
+                application = create_application(email_address=email_address, name=name, abn=abn)
                 user_data['application_id'] = application.id
 
             except (InvalidRequestError, IntegrityError):

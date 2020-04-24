@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from app.api.helpers import Service
 from app.models import Application, db
 
@@ -18,3 +19,15 @@ class ApplicationService(Service):
         results = query.order_by(Application.id).all()
 
         return [r for (r, ) in results]
+
+    def get_applications_by_abn(self, abn):
+        return (
+            db
+            .session
+            .query(
+                Application
+            )
+            .filter(func.replace(Application.data['abn'].astext.label('abn'), ' ', '') == abn)
+            .filter(Application.status != 'deleted')
+            .all()
+        )

@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from urllib import quote, unquote_plus
 
@@ -6,11 +7,12 @@ from flask_login import current_user, login_required, login_user, logout_user
 
 from app import db, encryption
 from app.api import api
-from app.api.business import team_business
+from app.api.business import team_business, supplier_business
 from app.api.helpers import (allow_api_key_auth, get_email_domain,
                              get_root_url, role_required, user_info)
 from app.api.services import (agency_service, api_key_service,
-                              key_values_service, user_claims_service)
+                              key_values_service, user_claims_service,
+                              suppliers)
 from app.api.user import create_user, is_duplicate_user, update_user_details
 from app.emails.users import (send_account_activation_email,
                               send_account_activation_manager_email,
@@ -173,6 +175,7 @@ def signup():
     json_payload = request.get_json()
     name = json_payload.get('name', None)
     email_address = json_payload.get('email_address', None)
+    abn = json_payload.get('abn', '')
     user_type = json_payload.get('user_type', None)
     employment_status = json_payload.get('employment_status', None)
     line_manager_name = json_payload.get('line_manager_name', None)
@@ -185,19 +188,22 @@ def signup():
     if '<' in email_address or '>' in email_address or email_address.count('@') > 1:
         return jsonify(message='Invalid email address format'), 400
 
+    if user_type == 'seller' or user_type == 'applicant':
+        if not abn:
+            return jsonify(message='You must provide an ABN value'), 400
+        if supplier_business.abn_is_used(abn):
+            return jsonify(
+                email_address=email_address,
+                abn=abn,
+                message='There is already a seller account with ABN %s' % (abn)
+            ), 409
+
     if user is not None:
         send_user_existing_password_reset_email(user.name, email_address)
         return jsonify(
             email_address=email_address,
             message="Email invite sent successfully"
         ), 200
-
-    if user_type == 'seller' or user_type == 'applicant':
-        if is_duplicate_user(email_address):
-            return jsonify(
-                email_address=email_address,
-                message='An account with this email domain already exists'
-            ), 409
 
     if user_type == 'buyer' and not has_whitelisted_email_domain(get_email_domain(email_address)):
         return jsonify(
@@ -211,6 +217,8 @@ def signup():
         'framework': framework,
         'employment_status': employment_status
     }
+    if abn:
+        user_data['abn'] = abn
     claim = user_claims_service.make_claim(type='signup', email_address=email_address, data=user_data)
     if not claim:
         return jsonify(message="There was an issue completing the signup process."), 500
@@ -376,7 +384,8 @@ def add(token):
         email_address=email_address,
         password=password,
         framework=claim.data['framework'],
-        supplier_code=claim.data.get('supplier_code', None)
+        supplier_code=claim.data.get('supplier_code', None),
+        abn=claim.data.get('abn', None)
     )
     try:
         claim = user_claims_service.validate_and_update_claim(type='signup', token=token, email_address=email_address)

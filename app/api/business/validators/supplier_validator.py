@@ -248,7 +248,7 @@ class SupplierValidator(object):
                         'message': (
                             'Licence number and expiry must be both filled for {}'.format(state_to_long_name(state))
                         ),
-                        'severity': 'error',
+                        'severity': 'warning',
                         'step': 'recruiter'
                     })
 
