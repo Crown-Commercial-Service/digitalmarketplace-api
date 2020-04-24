@@ -414,7 +414,7 @@ def get_opportunity_history(brief_id, show_documents=False, include_sellers=True
             edit_data['editedAt'] = change.edited_at
             if not include_sellers and 'sellers' in edit_data:
                 del edit_data['sellers']
-            if not show_documents:
+            if not brief_business.is_open_to_all(brief) and not show_documents:
                 if 'attachments' in edit_data:
                     del edit_data['attachments']
                 if 'requirementsDocument' in edit_data:
@@ -429,7 +429,7 @@ def get_opportunity_history(brief_id, show_documents=False, include_sellers=True
 
 
 def only_sellers_were_edited(brief_id):
-    history = get_opportunity_history(brief_id)
+    history = get_opportunity_history(brief_id, show_documents=True)
     only_sellers_edited = False
 
     for edit in history['edits']:
