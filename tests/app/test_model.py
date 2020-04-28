@@ -1131,6 +1131,14 @@ class TestApplication(BaseApplicationTest):
             yield application
 
     @pytest.fixture()
+    def existing_application(self, app, supplier):
+        with app.app_context():
+            application = Application(data=INCOMING_APPLICATION_DATA, supplier=supplier)
+            db.session.add(application)
+            db.session.commit()
+            yield application
+
+    @pytest.fixture()
     def applicant(self, app, new_application):
         with app.app_context():
             applicant = User(
@@ -1149,6 +1157,27 @@ class TestApplication(BaseApplicationTest):
             db.session.add(applicant)
             db.session.commit()
             yield applicant
+
+    @pytest.fixture()
+    def supplier_user(self, app, existing_application, supplier):
+        with app.app_context():
+            user = User(
+                email_address='email@digital.gov.au',
+                name='name',
+                role='supplier',
+                password='password',
+                active=True,
+                failed_login_count=0,
+                created_at=utcnow(),
+                updated_at=utcnow(),
+                password_changed_at=utcnow(),
+                application=existing_application,
+                supplier=supplier
+            )
+
+            db.session.add(user)
+            db.session.commit()
+            yield user
 
     @mock.patch('app.jiraapi.JIRA')
     @pytest.mark.parametrize('test_data', [
@@ -1214,6 +1243,72 @@ class TestApplication(BaseApplicationTest):
             assert new_application.status == 'approved'
 
             labour_hire = new_application.data.get('labourHire')
+            assert labour_hire == {}
+
+    @mock.patch('app.jiraapi.JIRA')
+    @pytest.mark.parametrize('test_data', [
+        {
+            'recruiter': 'no',
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '', 'licenceNumber': ''},
+                'vic': {'licenceNumber': ''}
+            }
+        },
+        {
+            'recruiter': 'no',
+            'labourHire': {
+                'qld': {'expiry': None},
+                'sa': {'expiry': None, 'licenceNumber': None},
+                'vic': {'licenceNumber': None}
+            }
+        },
+        {
+            'recruiter': 'yes',
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '', 'licenceNumber': ''},
+                'vic': {'licenceNumber': ''}
+            }
+        },
+        {
+            'recruiter': 'yes',
+            'labourHire': {
+                'qld': {'expiry': None},
+                'sa': {'expiry': None, 'licenceNumber': None},
+                'vic': {'licenceNumber': None}
+            }
+        },
+        {
+            'recruiter': 'both',
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '', 'licenceNumber': ''},
+                'vic': {'licenceNumber': ''}
+            }
+        },
+        {
+            'recruiter': 'both',
+            'labourHire': {
+                'qld': {'expiry': None},
+                'sa': {'expiry': None, 'licenceNumber': None},
+                'vic': {'licenceNumber': None}
+            }
+        }
+    ])
+    def test_labour_hire_data_is_removed_for_existing_seller_application(self, jira, app, existing_application,
+                                                                         supplier_user, test_data):
+        with app.app_context():
+            existing_application.data['recruiter'] = test_data['recruiter']
+            existing_application.data['labourHire'] = test_data['labourHire']
+
+            assert existing_application.status == 'saved'
+            existing_application.submit_for_approval()
+            assert existing_application.status == 'submitted'
+            existing_application.set_approval(approved=True)
+            assert existing_application.status == 'approved'
+
+            labour_hire = existing_application.data.get('labourHire')
             assert labour_hire == {}
 
     @mock.patch('app.jiraapi.JIRA')
