@@ -1119,7 +1119,13 @@ class TestApplication(BaseApplicationTest):
         with app.app_context():
             self.setup_dummy_suppliers(1)
             db.session.commit()
-            supplier = Supplier.query.filter(Supplier.code == 0).first()
+            supplier = (
+                db.session
+                  .query(Supplier)
+                  .filter(Supplier.code == 0)
+                  .first()
+            )
+
             yield supplier
 
     @pytest.fixture()
