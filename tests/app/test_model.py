@@ -1416,6 +1416,33 @@ class TestApplication(BaseApplicationTest):
             assert labour_hire == {}
 
     @mock.patch('app.jiraapi.JIRA')
+    @pytest.mark.parametrize('test_data', [
+        {
+            'recruiter': 'no',
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '2040-10-22', 'licenceNumber': '123'},
+                'vic': {'licenceNumber': ''}
+            }
+        }
+    ])
+    def test_labour_hire_data_is_removed_for_non_recruiter_existing_seller_application(self, jira, app,
+                                                                                       existing_application,
+                                                                                       supplier_user, test_data):
+        with app.app_context():
+            existing_application.data['recruiter'] = test_data['recruiter']
+            existing_application.data['labourHire'] = test_data['labourHire']
+
+            assert existing_application.status == 'saved'
+            existing_application.submit_for_approval()
+            assert existing_application.status == 'submitted'
+            existing_application.set_approval(approved=True)
+            assert existing_application.status == 'approved'
+
+            labour_hire = existing_application.data.get('labourHire')
+            assert labour_hire == {}
+
+    @mock.patch('app.jiraapi.JIRA')
     def test_new_seller_application(self, jira, app):
         with app.test_request_context('/hello'):
             application = Application(data=INCOMING_APPLICATION_DATA)
