@@ -1350,6 +1350,44 @@ class TestApplication(BaseApplicationTest):
                 }
             }
 
+    @mock.patch('app.jiraapi.JIRA')
+    @pytest.mark.parametrize('test_data', [
+        {
+            'recruiter': 'yes',
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '2040-10-22', 'licenceNumber': '123'},
+                'vic': {'licenceNumber': ''}
+            }
+        },
+        {
+            'recruiter': 'both',
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '2040-10-22', 'licenceNumber': '123'},
+                'vic': {'licenceNumber': ''}
+            }
+        }
+    ])
+    def test_labour_hire_data_is_retained_for_existing_seller_application(self, jira, app, existing_application,
+                                                                          supplier_user, test_data):
+        with app.app_context():
+            existing_application.data['recruiter'] = test_data['recruiter']
+            existing_application.data['labourHire'] = test_data['labourHire']
+
+            assert existing_application.status == 'saved'
+            existing_application.submit_for_approval()
+            assert existing_application.status == 'submitted'
+            existing_application.set_approval(approved=True)
+            assert existing_application.status == 'approved'
+
+            labour_hire = existing_application.data.get('labourHire')
+            assert labour_hire == {
+                'sa': {
+                    'expiry': '2040-10-22',
+                    'licenceNumber': '123'
+                }
+            }
 
     @mock.patch('app.jiraapi.JIRA')
     def test_new_seller_application(self, jira, app):
