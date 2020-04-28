@@ -1115,6 +1115,100 @@ class TestApplication(BaseApplicationTest):
             supplier = Supplier.query.filter(Supplier.code == 0).first()
             yield supplier
 
+    @pytest.fixture()
+    def new_application(self):
+        self.setup()
+        with self.app.app_context():
+            application = Application(data=INCOMING_APPLICATION_DATA)
+            db.session.add(application)
+            db.session.commit()
+            yield application
+
+    @pytest.fixture()
+    def applicant(self, new_application):
+        with self.app.app_context():
+            applicant = User(
+                email_address='email@digital.gov.au',
+                name='name',
+                role='applicant',
+                password='password',
+                active=True,
+                failed_login_count=0,
+                created_at=utcnow(),
+                updated_at=utcnow(),
+                password_changed_at=utcnow(),
+                application=new_application
+            )
+
+            db.session.add(applicant)
+            db.session.commit()
+            yield applicant
+
+    @mock.patch('app.jiraapi.JIRA')
+    @pytest.mark.parametrize('test_data', [
+        {
+            'recruiter': 'no',
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '', 'licenceNumber': ''},
+                'vic': {'licenceNumber': ''}
+            }
+        },
+        {
+            'recruiter': 'no',
+            'labourHire': {
+                'qld': {'expiry': None},
+                'sa': {'expiry': None, 'licenceNumber': None},
+                'vic': {'licenceNumber': None}
+            }
+        },
+        {
+            'recruiter': 'yes',
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '', 'licenceNumber': ''},
+                'vic': {'licenceNumber': ''}
+            }
+        },
+        {
+            'recruiter': 'yes',
+            'labourHire': {
+                'qld': {'expiry': None},
+                'sa': {'expiry': None, 'licenceNumber': None},
+                'vic': {'licenceNumber': None}
+            }
+        },
+        {
+            'recruiter': 'both',
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '', 'licenceNumber': ''},
+                'vic': {'licenceNumber': ''}
+            }
+        },
+        {
+            'recruiter': 'both',
+            'labourHire': {
+                'qld': {'expiry': None},
+                'sa': {'expiry': None, 'licenceNumber': None},
+                'vic': {'licenceNumber': None}
+            }
+        }
+    ])
+    def test_labour_hire_data_is_removed_for_new_seller_application(self, jira, new_application, applicant, test_data):
+        with self.app.app_context():
+            new_application.data['recruiter'] = test_data['recruiter']
+            new_application.data['labourHire'] = test_data['labourHire']
+
+            assert new_application.status == 'saved'
+            new_application.submit_for_approval()
+            assert new_application.status == 'submitted'
+            new_application.set_approval(approved=True)
+            assert new_application.status == 'approved'
+
+            labour_hire = new_application.data.get('labourHire')
+            assert labour_hire == {}
+
     @mock.patch('app.jiraapi.JIRA')
     def test_new_seller_application(self, jira):
         with self.app.test_request_context('/hello'):
