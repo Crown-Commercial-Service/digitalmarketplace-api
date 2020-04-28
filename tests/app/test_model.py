@@ -1245,6 +1245,10 @@ class TestApplication(BaseApplicationTest):
             labour_hire = new_application.data.get('labourHire')
             assert labour_hire == {}
 
+            supplier = new_application.supplier
+            supplier_labour_hire = supplier.data.get('labourHire')
+            assert supplier_labour_hire == {}
+
     @mock.patch('app.jiraapi.JIRA')
     @pytest.mark.parametrize('test_data', [
         {
@@ -1311,6 +1315,10 @@ class TestApplication(BaseApplicationTest):
             labour_hire = existing_application.data.get('labourHire')
             assert labour_hire == {}
 
+            supplier = existing_application.supplier
+            supplier_labour_hire = supplier.data.get('labourHire')
+            assert supplier_labour_hire == {}
+
     @mock.patch('app.jiraapi.JIRA')
     @pytest.mark.parametrize('test_data', [
         {
@@ -1342,13 +1350,19 @@ class TestApplication(BaseApplicationTest):
             new_application.set_approval(approved=True)
             assert new_application.status == 'approved'
 
-            labour_hire = new_application.data.get('labourHire')
-            assert labour_hire == {
+            expected = {
                 'sa': {
                     'expiry': '2040-10-22',
                     'licenceNumber': '123'
                 }
             }
+
+            labour_hire = new_application.data.get('labourHire')
+            assert labour_hire == expected
+
+            supplier = new_application.supplier
+            supplier_labour_hire = supplier.data.get('labourHire')
+            assert supplier_labour_hire == expected
 
     @mock.patch('app.jiraapi.JIRA')
     @pytest.mark.parametrize('test_data', [
@@ -1381,13 +1395,19 @@ class TestApplication(BaseApplicationTest):
             existing_application.set_approval(approved=True)
             assert existing_application.status == 'approved'
 
-            labour_hire = existing_application.data.get('labourHire')
-            assert labour_hire == {
+            expected = {
                 'sa': {
                     'expiry': '2040-10-22',
                     'licenceNumber': '123'
                 }
             }
+
+            labour_hire = existing_application.data.get('labourHire')
+            assert labour_hire == expected
+
+            supplier = existing_application.supplier
+            supplier_labour_hire = supplier.data.get('labourHire')
+            assert supplier_labour_hire == expected
 
     @mock.patch('app.jiraapi.JIRA')
     @pytest.mark.parametrize('test_data', [
@@ -1415,6 +1435,10 @@ class TestApplication(BaseApplicationTest):
             labour_hire = new_application.data.get('labourHire')
             assert labour_hire == {}
 
+            supplier = new_application.supplier
+            supplier_labour_hire = supplier.data.get('labourHire')
+            assert supplier_labour_hire == {}
+
     @mock.patch('app.jiraapi.JIRA')
     @pytest.mark.parametrize('test_data', [
         {
@@ -1441,6 +1465,10 @@ class TestApplication(BaseApplicationTest):
 
             labour_hire = existing_application.data.get('labourHire')
             assert labour_hire == {}
+
+            supplier = existing_application.supplier
+            supplier_labour_hire = supplier.data.get('labourHire')
+            assert supplier_labour_hire == {}
 
     @mock.patch('app.jiraapi.JIRA')
     def test_new_seller_application(self, jira, app):
