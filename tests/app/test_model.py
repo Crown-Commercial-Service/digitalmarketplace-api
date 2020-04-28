@@ -1105,17 +1105,15 @@ class TestWorkOrder(BaseApplicationTest):
 class TestApplication(BaseApplicationTest):
     def setup(self):
         super(TestApplication, self).setup()
+
+    @pytest.fixture()
+    def supplier(self):
+        self.setup()
         with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            lot = framework.get_lot('digital-outcomes')
-
-            self.setup_dummy_user(role='applicant')
-            self.user = User.query.first()
-            db.session.add(self.user)
-
             self.setup_dummy_suppliers(1)
             db.session.commit()
-            self.supplier = Supplier.query.filter(Supplier.code == 0).first()
+            supplier = Supplier.query.filter(Supplier.code == 0).first()
+            yield supplier
 
     @mock.patch('app.jiraapi.JIRA')
     def test_new_seller_application(self, jira):
@@ -1184,9 +1182,9 @@ class TestApplication(BaseApplicationTest):
             assert len(app.supplier.contacts) == 1
 
     @mock.patch('app.jiraapi.JIRA')
-    def test_existing_seller_application(self, jira):
+    def test_existing_seller_application(self, jira, supplier):
         with self.app.test_request_context('/hello'):
-            app = Application(data=INCOMING_APPLICATION_DATA, supplier=self.supplier)
+            app = Application(data=INCOMING_APPLICATION_DATA, supplier=supplier)
             user = User(
                 email_address='email@digital.gov.au',
                 name='name',
@@ -1198,7 +1196,7 @@ class TestApplication(BaseApplicationTest):
                 updated_at=utcnow(),
                 password_changed_at=utcnow(),
                 application=app,
-                supplier=self.supplier
+                supplier=supplier
             )
 
             db.session.add(app)
@@ -1240,9 +1238,9 @@ class TestApplication(BaseApplicationTest):
             assert app_from_existing.supplier.code == supplier.code
             assert app_from_existing.supplier == supplier
 
-    def test_application_and_supplier_domains(self):
+    def test_application_and_supplier_domains(self, supplier):
         with self.app.test_request_context('/hello'):
-            supp = self.supplier
+            supp = supplier
             db.session.add(supp)
 
             supp.update_from_json(
