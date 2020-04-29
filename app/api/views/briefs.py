@@ -1133,16 +1133,14 @@ def download_brief_responses(brief_id):
         user_id=current_user.id
     ))
     if brief.lot.slug in ['digital-professionals', 'training', 'rfx', 'training2', 'atm', 'specialist']:
-        try:
-            file = s3_download_file(
+        response = Response(
+            s3_download_file(
+                current_app.config.get('S3_BUCKET_NAME'),
                 'brief-{}-resumes.zip'.format(brief_id),
                 os.path.join(brief.framework.slug, 'archives', 'brief-{}'.format(brief_id))
-            )
-        except botocore.exceptions.ClientError as e:
-            rollbar.report_exc_info()
-            not_found("Brief documents not found for brief id '{}'".format(brief_id))
-
-        response = Response(file, mimetype='application/zip')
+            ),
+            mimetype='application/zip'
+        )
         response.headers['Content-Disposition'] = 'attachment; filename="opportunity-{}-responses.zip"'.format(brief_id)
     elif brief.lot.slug == 'digital-outcome':
         responses = BriefResponse.query.filter(
@@ -1202,10 +1200,15 @@ def download_brief_attachment(brief_id, slug):
             )
         )
     ):
-        file = s3_download_file(slug, os.path.join(brief.framework.slug, 'attachments',
-                                                   'brief-' + str(brief_id)))
         mimetype = mimetypes.guess_type(slug)[0] or 'binary/octet-stream'
-        return Response(file, mimetype=mimetype)
+        return Response(
+            s3_download_file(
+                current_app.config.get('S3_BUCKET_NAME'),
+                slug,
+                os.path.join(brief.framework.slug, 'attachments', 'brief-' + str(brief_id))
+            ),
+            mimetype=mimetype
+        )
     else:
         return not_found('File not found')
 
@@ -1225,12 +1228,17 @@ def download_brief_response_file(brief_id, supplier_code, slug):
             current_user.supplier_code == supplier_code
         )
     ):
-        file = s3_download_file(slug, os.path.join(brief.framework.slug, 'documents',
-                                                   'brief-' + str(brief_id),
-                                                   'supplier-' + str(supplier_code)))
-
         mimetype = mimetypes.guess_type(slug)[0] or 'binary/octet-stream'
-        return Response(file, mimetype=mimetype)
+        return Response(
+            s3_download_file(
+                current_app.config.get('S3_BUCKET_NAME'),
+                slug,
+                os.path.join(
+                    brief.framework.slug, 'documents', 'brief-' + str(brief_id), 'supplier-' + str(supplier_code)
+                )
+            ),
+            mimetype=mimetype
+        )
     else:
         return forbidden("Unauthorised to view brief or brief does not exist")
 
