@@ -21,6 +21,7 @@ flake8==3.7.9             # via -r requirements-dev.in
 freezegun==0.3.15         # via -r requirements-dev.in
 hypothesis==5.5.4         # via -r requirements-dev.in
 idna==2.9                 # via -c requirements.txt, requests
+importlib-metadata==1.6.0  # via jsonschema, pluggy, pytest
 isodate==0.6.0            # via alchemyjsonschema
 jsonschema==3.2.0         # via -c requirements.txt, alchemyjsonschema
 magicalimport==0.9.1      # via alchemyjsonschema
@@ -28,7 +29,7 @@ mccabe==0.6.1             # via flake8
 mock==4.0.1               # via -r requirements-dev.in
 more-itertools==8.2.0     # via pytest
 packaging==20.1           # via pytest
-pip-tools==4.5.1          # via -r requirements-dev.in
+pip-tools==5.1.0          # via -r requirements-dev.in
 pluggy==0.13.1            # via pytest
 py==1.8.1                 # via pytest
 pycodestyle==2.5.0        # via flake8
@@ -49,6 +50,8 @@ strict-rfc3339==0.7       # via -c requirements.txt, alchemyjsonschema
 testfixtures==6.13.0      # via -r requirements-dev.in
 urllib3==1.25.8           # via -c requirements.txt, requests
 wcwidth==0.1.8            # via pytest
+zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
+# pip
 # setuptools
