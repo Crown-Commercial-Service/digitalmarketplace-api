@@ -313,3 +313,21 @@ class TeamService(Service):
         )
 
         return [r._asdict() for r in result]
+
+    def get_teams_by_agency_id(self, agency_id, team_id=None):
+        query = (
+            db
+            .session
+            .query(Team)
+            .join(TeamMember)
+            .join(User)
+            .filter(
+                TeamMember.user_id == User.id,
+                User.agency_id == agency_id
+            )
+        )
+
+        if team_id:
+            query = query.filter(Team.id == team_id)
+
+        return query.all()

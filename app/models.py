@@ -109,6 +109,7 @@ class Agency(db.Model):
     ), nullable=False, default='other')
     whitelisted = db.Column(db.Boolean, nullable=False, default=True)
     reports = db.Column(db.Boolean, nullable=False, default=True)
+    must_join_team = db.Column(db.Boolean, nullable=False, default=False)
     domains = db.relationship('AgencyDomain', cascade="all, delete-orphan")
 
 
@@ -1559,7 +1560,8 @@ class UserClaim(db.Model):
         db.Enum(
             *[
                 'signup',
-                'password_reset'
+                'password_reset',
+                'join_team'
             ],
             name='user_claim_type_enum'
         ),
