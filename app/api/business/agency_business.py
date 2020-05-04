@@ -31,6 +31,9 @@ def update(agency_id, agency, updated_by):
     if agency.get('reports', None) is not None:
         existing.reports = agency.get('reports')
 
+    if agency.get('must_join_team', None) is not None:
+        existing.must_join_team = agency.get('must_join_team')
+
     if agency.get('state'):
         existing.state = agency.get('state')
 

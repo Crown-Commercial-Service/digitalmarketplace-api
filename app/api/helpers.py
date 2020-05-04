@@ -98,6 +98,21 @@ def permissions_required(*permissions):
     return permissions_decorator
 
 
+def must_be_in_team_check(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        from app.api.services import agency_service
+        must_join_team = False
+        try:
+            must_join_team = agency_service.agency_requires_team_membership(current_user.agency_id)
+            if must_join_team and not current_user.is_part_of_team():
+                return jsonify(message='You must join a team to perform this action'), 403
+        except Exception as e:
+            pass
+        return func(*args, **kwargs)
+    return decorated_view
+
+
 def is_current_supplier(func):
     @wraps(func)
     def decorated_view(code, *args, **kwargs):
@@ -138,54 +153,59 @@ def generate_random_token(length=32):
 def user_info(user):
     from app.api.services import agency_service
     try:
-        user_type = current_user.role
+        user_type = user.role
     except AttributeError:
         user_type = 'anonymous'
 
     try:
-        email_address = current_user.email_address
+        email_address = user.email_address
     except AttributeError:
         email_address = None
 
     try:
-        supplier_code = current_user.supplier_code
+        supplier_code = user.supplier_code
     except AttributeError:
         supplier_code = None
 
     try:
-        notification_count = current_user.notification_count
+        notification_count = user.notification_count
     except AttributeError:
         notification_count = None
 
     try:
-        framework = current_user.frameworks[0].framework.slug if current_user.frameworks else 'digital-marketplace'
+        framework = user.frameworks[0].framework.slug if user.frameworks else 'digital-marketplace'
     except AttributeError:
         framework = None
 
     try:
-        is_authenticated = current_user.is_authenticated
+        is_authenticated = user.is_authenticated
     except AttributeError:
         is_authenticated = False
 
     try:
-        teams = current_user.teams
+        teams = user.teams
     except AttributeError:
         teams = []
 
     try:
-        is_part_of_team = current_user.is_part_of_team()
+        is_part_of_team = user.is_part_of_team()
     except AttributeError:
         is_part_of_team = False
 
     try:
-        is_team_lead = current_user.is_team_lead()
+        is_team_lead = user.is_team_lead()
     except AttributeError:
         is_team_lead = False
 
     domains = None
+    must_join_team = None
     try:
-        agency_id = current_user.agency_id
-        domains = agency_service.get_agency_domains(agency_id)
+        agency_id = user.agency_id
+        if agency_id:
+            agency = agency_service.get_agency(agency_id)
+            if agency:
+                domains = [x['domain'] for x in agency.get('domains', [])]
+                must_join_team = agency.get('must_join_team', None)
     except AttributeError:
         agency_id = None
 
@@ -198,6 +218,7 @@ def user_info(user):
         "framework": framework,
         "notificationCount": notification_count,
         "teams": teams,
+        "mustJoinTeam": must_join_team,
         "isPartOfTeam": is_part_of_team,
         "isTeamLead": is_team_lead,
         "agencyId": agency_id,

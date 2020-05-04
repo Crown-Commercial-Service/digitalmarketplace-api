@@ -26,7 +26,7 @@ from app.api.csv import generate_brief_responses_csv
 from app.api.helpers import (abort, exception_logger, forbidden,
                              get_email_domain, is_current_user_in_brief,
                              not_found, notify_team, permissions_required,
-                             role_required, server_error)
+                             role_required, must_be_in_team_check)
 from app.api.services import (agency_service, audit_service, audit_types,
                               brief_history_service, brief_question_service,
                               brief_response_download_service,
@@ -174,6 +174,7 @@ def _notify_team_brief_published(brief_title, brief_org, user_name, user_email, 
 @api.route('/brief/rfx', methods=['POST'])
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 @permissions_required('create_drafts')
 def create_rfx_brief():
     """Create RFX brief (role=buyer)
@@ -231,6 +232,7 @@ def create_rfx_brief():
 @exception_logger
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 @permissions_required('create_drafts')
 def create_training_brief():
     brief = brief_training_business.create(current_user)
@@ -240,6 +242,7 @@ def create_training_brief():
 @api.route('/brief/atm', methods=['POST'])
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 @permissions_required('create_drafts')
 def create_atm_brief():
     """Create ATM brief (role=buyer)
@@ -296,6 +299,7 @@ def create_atm_brief():
 @api.route('/brief/specialist', methods=['POST'])
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 @permissions_required('create_drafts')
 def create_specialist_brief():
     """Create Specialist brief (role=buyer)
@@ -501,6 +505,7 @@ def get_brief(brief_id):
 @api.route('/brief/<int:brief_id>', methods=['PATCH'])
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 def update_brief(brief_id):
     """Update RFX brief (role=buyer)
     ---
@@ -739,6 +744,7 @@ def update_brief(brief_id):
 @login_required
 @permissions_required('publish_opportunities')
 @role_required('buyer')
+@must_be_in_team_check
 def close_opportunity_early(brief_id):
     try:
         brief = brief_overview_business.close_opportunity_early(current_user.id, brief_id)
@@ -757,6 +763,7 @@ def close_opportunity_early(brief_id):
 @login_required
 @permissions_required('publish_opportunities')
 @role_required('buyer')
+@must_be_in_team_check
 def edit_opportunity(brief_id):
     edits = get_json_from_request()
 
@@ -795,6 +802,7 @@ def get_opportunity_history(brief_id):
 @login_required
 @permissions_required('publish_opportunities')
 @role_required('buyer')
+@must_be_in_team_check
 def withdraw_opportunity(brief_id):
     data = get_json_from_request()
 
@@ -817,6 +825,7 @@ def withdraw_opportunity(brief_id):
 @api.route('/brief/<int:brief_id>', methods=['DELETE'])
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 def delete_brief(brief_id):
     """Delete brief (role=buyer)
     ---
@@ -1069,6 +1078,7 @@ def upload_brief_response_file(brief_id, supplier_code, slug):
 @api.route('/brief/<int:brief_id>/attachments/<slug>', methods=['POST'])
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 def upload_brief_rfx_attachment_file(brief_id, slug):
     """Add brief attachments (role=buyer)
     ---
@@ -1117,6 +1127,7 @@ def upload_brief_rfx_attachment_file(brief_id, slug):
 @api.route('/brief/<int:brief_id>/respond/documents')
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 @permissions_required('download_responses')
 def download_brief_responses(brief_id):
     brief = Brief.query.filter(
@@ -1133,16 +1144,14 @@ def download_brief_responses(brief_id):
         user_id=current_user.id
     ))
     if brief.lot.slug in ['digital-professionals', 'training', 'rfx', 'training2', 'atm', 'specialist']:
-        try:
-            file = s3_download_file(
+        response = Response(
+            s3_download_file(
+                current_app.config.get('S3_BUCKET_NAME'),
                 'brief-{}-resumes.zip'.format(brief_id),
                 os.path.join(brief.framework.slug, 'archives', 'brief-{}'.format(brief_id))
-            )
-        except botocore.exceptions.ClientError as e:
-            rollbar.report_exc_info()
-            not_found("Brief documents not found for brief id '{}'".format(brief_id))
-
-        response = Response(file, mimetype='application/zip')
+            ),
+            mimetype='application/zip'
+        )
         response.headers['Content-Disposition'] = 'attachment; filename="opportunity-{}-responses.zip"'.format(brief_id)
     elif brief.lot.slug == 'digital-outcome':
         responses = BriefResponse.query.filter(
@@ -1202,10 +1211,15 @@ def download_brief_attachment(brief_id, slug):
             )
         )
     ):
-        file = s3_download_file(slug, os.path.join(brief.framework.slug, 'attachments',
-                                                   'brief-' + str(brief_id)))
         mimetype = mimetypes.guess_type(slug)[0] or 'binary/octet-stream'
-        return Response(file, mimetype=mimetype)
+        return Response(
+            s3_download_file(
+                current_app.config.get('S3_BUCKET_NAME'),
+                slug,
+                os.path.join(brief.framework.slug, 'attachments', 'brief-' + str(brief_id))
+            ),
+            mimetype=mimetype
+        )
     else:
         return not_found('File not found')
 
@@ -1225,12 +1239,17 @@ def download_brief_response_file(brief_id, supplier_code, slug):
             current_user.supplier_code == supplier_code
         )
     ):
-        file = s3_download_file(slug, os.path.join(brief.framework.slug, 'documents',
-                                                   'brief-' + str(brief_id),
-                                                   'supplier-' + str(supplier_code)))
-
         mimetype = mimetypes.guess_type(slug)[0] or 'binary/octet-stream'
-        return Response(file, mimetype=mimetype)
+        return Response(
+            s3_download_file(
+                current_app.config.get('S3_BUCKET_NAME'),
+                slug,
+                os.path.join(
+                    brief.framework.slug, 'documents', 'brief-' + str(brief_id), 'supplier-' + str(supplier_code)
+                )
+            ),
+            mimetype=mimetype
+        )
     else:
         return forbidden("Unauthorised to view brief or brief does not exist")
 
@@ -1502,6 +1521,7 @@ def get_notification_template(brief_id, template):
 @api.route('/brief/<int:brief_id>/award-seller', methods=['POST'])
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 @permissions_required('create_work_orders')
 def award_brief_to_seller(brief_id):
     """Award a brief to a seller (role=buyer)

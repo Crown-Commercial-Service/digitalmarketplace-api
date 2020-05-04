@@ -187,3 +187,156 @@ def send_request_access_email(permission):
         db_object=team,
         user=current_user.email_address
     )
+
+
+def send_request_to_join_team_leaders_email(team_id, token):
+    team = team_service.find(
+        id=team_id,
+        status='completed'
+    ).one_or_none()
+
+    if not team:
+        return
+
+    to_addresses = [tm.user.email_address for tm in team.team_members if tm.is_team_lead]
+
+    if len(to_addresses) == 0:
+        return
+
+    email_body = render_email_template(
+        'request_to_join.md',
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        name=escape_markdown(current_user.name),
+        requester_email=escape_markdown(current_user.email_address),
+        team=escape_markdown(team.name),
+        team_id=team.id,
+        token=token
+    )
+
+    subject = '{} has requested to join your team'.format(current_user.name)
+
+    send_or_handle_error(
+        to_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='request to join email'
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_request_to_join_team,
+        data={
+            'to_address': to_addresses,
+            'subject': subject,
+            'email_body': email_body
+        },
+        db_object=team,
+        user=current_user.email_address
+    )
+
+
+def send_request_to_join_requester_email(email_address, team_id):
+    team = team_service.find(
+        id=team_id,
+        status='completed'
+    ).one_or_none()
+
+    if not team:
+        return
+
+    to_addresses = [email_address]
+
+    email_body = render_email_template(
+        'request_to_join_requester.md',
+        frontend_url=current_app.config['FRONTEND_ADDRESS'],
+        team=escape_markdown(team.name)
+    )
+
+    subject = 'You requested to join a team on the Digital Marketplace'
+
+    send_or_handle_error(
+        to_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='request to join requester email'
+    )
+
+
+def send_decline_request_to_join_team_leaders_email(team_id, requester_name, requester_email, reason):
+    team = team_service.find(
+        id=team_id,
+        status='completed'
+    ).one_or_none()
+
+    if not team:
+        return
+
+    to_addresses = [tm.user.email_address for tm in team.team_members if tm.is_team_lead]
+
+    if len(to_addresses) == 0:
+        return
+
+    email_body = render_email_template(
+        'request_to_join_declined.md',
+        lead_name=escape_markdown(current_user.name),
+        requester_name=escape_markdown(requester_name),
+        requester_email=escape_markdown(requester_email),
+        reason=escape_markdown(reason),
+        team=escape_markdown(team.name)
+    )
+
+    extra = '' if requester_name.endswith('s') else 's'
+    subject = "{}'{} request to join {} has been declined".format(requester_name, extra, team.name)
+
+    send_or_handle_error(
+        to_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='request to join email'
+    )
+
+    audit_service.log_audit_event(
+        audit_type=audit_types.sent_request_to_join_team_decline,
+        data={
+            'to_address': to_addresses,
+            'subject': subject,
+            'email_body': email_body
+        },
+        db_object=team,
+        user=current_user.email_address
+    )
+
+
+def send_decline_request_to_join_requester_email(email_address, team_id, lead_name, reason):
+    team = team_service.find(
+        id=team_id,
+        status='completed'
+    ).one_or_none()
+
+    if not team:
+        return
+
+    to_addresses = [email_address]
+
+    email_body = render_email_template(
+        'request_to_join_declined_requester.md',
+        team=escape_markdown(team.name),
+        reason=escape_markdown(reason),
+        lead_name=escape_markdown(lead_name)
+    )
+
+    subject = "Your request to join the '{}' team".format(team.name)
+
+    send_or_handle_error(
+        to_addresses,
+        email_body,
+        subject,
+        current_app.config['DM_GENERIC_NOREPLY_EMAIL'],
+        current_app.config['DM_GENERIC_SUPPORT_NAME'],
+        event_description_for_errors='request to join email'
+    )

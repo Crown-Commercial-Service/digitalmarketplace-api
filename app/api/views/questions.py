@@ -8,7 +8,8 @@ from app.api.helpers import (
     not_found,
     role_required,
     permissions_required,
-    exception_logger
+    exception_logger,
+    must_be_in_team_check
 )
 from app.api.business.errors import (
     NotFoundError,
@@ -22,6 +23,7 @@ from ...utils import get_json_from_request
 @exception_logger
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 def get_questions(brief_id):
     result = None
     try:
@@ -38,6 +40,7 @@ def get_questions(brief_id):
 @exception_logger
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 def get_question(brief_id):
     result = None
     question_id = request.args.get('questionId', None)
@@ -55,6 +58,7 @@ def get_question(brief_id):
 @exception_logger
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 def get_answers(brief_id):
     result = None
     try:
@@ -69,6 +73,7 @@ def get_answers(brief_id):
 @exception_logger
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 @permissions_required('answer_seller_questions')
 def publish_answer(brief_id):
     data = get_json_from_request()
