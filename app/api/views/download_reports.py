@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from app.api import api
 from app.api.business.download_report_business import get_result
 from app.api.helpers import (exception_logger, permissions_required,
-                             role_required)
+                             role_required, must_be_in_team_check)
 
 from ...utils import get_json_from_request
 
@@ -13,6 +13,7 @@ from ...utils import get_json_from_request
 @exception_logger
 @login_required
 @role_required('buyer')
+@must_be_in_team_check
 @permissions_required('download_reports')
 def download_reports():
     start_date = request.args.get('startDate', '')
