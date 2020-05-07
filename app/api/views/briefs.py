@@ -758,6 +758,25 @@ def close_opportunity_early(brief_id):
     return jsonify(brief.serialize(with_users=False))
 
 
+@api.route('/brief/<int:brief_id>/edit', methods=['GET'])
+@exception_logger
+@login_required
+@permissions_required('publish_opportunities')
+@role_required('buyer')
+@must_be_in_team_check
+def get_opportunity_to_edit(brief_id):
+    try:
+        data = brief_edit_business.get_opportunity_to_edit(current_user.id, brief_id)
+    except NotFoundError as e:
+        not_found(e.message)
+    except UnauthorisedError as e:
+        forbidden(e.message)
+    except BriefError as e:
+        abort(e.message)
+
+    return jsonify(data)
+
+
 @api.route('/brief/<int:brief_id>/edit', methods=['PATCH'])
 @exception_logger
 @login_required
