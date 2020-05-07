@@ -245,7 +245,7 @@ def edit_draft_service(draft_id):
 
 
 @main.route('/draft-services', methods=['GET'])
-def list_draft_services():
+def list_draft_services_by_supplier():
     supplier_id = get_int_or_400(request.args, 'supplier_id')
     service_id = request.args.get('service_id')
     framework_slug = request.args.get('framework')
