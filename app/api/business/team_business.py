@@ -7,9 +7,14 @@ from app.api.business.errors import (NotFoundError, TeamError,
 from app.api.business.validators import TeamValidator
 from app.api.services import (agency_service, audit_service, audit_types,
                               team_member_permission_service,
-                              team_member_service, team_service, users)
+                              team_member_service, team_service, users,
+                              user_claims_service)
 from app.emails.teams import (send_removed_team_member_notification_emails,
                               send_request_access_email,
+                              send_request_to_join_team_leaders_email,
+                              send_request_to_join_requester_email,
+                              send_decline_request_to_join_team_leaders_email,
+                              send_decline_request_to_join_requester_email,
                               send_team_lead_notification_emails,
                               send_team_member_notification_emails)
 from app.models import Team, TeamMember, TeamMemberPermission, permission_types
@@ -195,6 +200,15 @@ def update_team_leads_and_members(team, data):
     if incoming_team_members:
         incoming_team_member_ids = [int(team_member_id) for team_member_id in incoming_team_members]
 
+    # set any active join requests for the incoming users to this team as approved and done
+    incoming_user_emails = []
+    for user_id in incoming_team_lead_ids + incoming_team_member_ids:
+        user = users.get_by_id(user_id)
+        if user:
+            incoming_user_emails.append(user.email_address)
+    for email_address in incoming_user_emails:
+        clear_all_join_requests(email_address, team.id)
+
     current_team_members = [tm.user_id for tm in team.team_members]
     new_team_leads = []
     new_team_members = []
@@ -300,6 +314,69 @@ def request_access(data):
     send_request_access_email(permission_text)
 
 
+def request_to_join(user_email_address, team_id, agency_id):
+    team = team_service.get_team(team_id)
+    if not team:
+        raise NotFoundError('Team {} does not exist'.format(team_id))
+    if not get_teams_by_agency(agency_id, team_id):
+        raise UnauthorisedError('Can not request to join this team')
+
+    claim = user_claims_service.make_claim(
+        type='join_team',
+        email_address=user_email_address,
+        data={
+            "team_id": team_id,
+            "team_name": team['name'],
+            "agency_id": agency_id,
+            "user_id": current_user.id,
+            "user_name": current_user.name,
+            "approved": False
+        }
+    )
+    if not claim:
+        raise ValidationError('Could not create join team request')
+
+    send_request_to_join_team_leaders_email(team_id, claim.token)
+    send_request_to_join_requester_email(user_email_address, team_id)
+
+
+def get_join_requests(email_address, team_id=None):
+    claims = user_claims_service.get_active_claims(email_address=email_address, type='join_team', team_id=team_id)
+    return claims
+
+
+def get_join_request(token):
+    claim = user_claims_service.get_claim(token=token, claimed=False, type='join_team')
+    return claim
+
+
+def decline_join_request(join_request, reason, team_id):
+    # get all active join requests for this user and team, and deny them
+    claims = get_join_requests(join_request.email_address, team_id)
+    for claim in claims:
+        claim.claimed = True
+        claim.data['approved'] = False
+        user_claims_service.save(claim)
+
+    send_decline_request_to_join_team_leaders_email(
+        join_request.data['team_id'], join_request.data['user_name'], join_request.email_address, reason
+    )
+    send_decline_request_to_join_requester_email(
+        join_request.email_address, join_request.data['team_id'], current_user.name, reason
+    )
+
+    return join_request
+
+
+def clear_all_join_requests(email_address, team_id):
+    # sets all join requests for a specific user and team combination to approved
+    claims = get_join_requests(email_address, team_id)
+    for claim in claims:
+        claim.claimed = True
+        claim.data['approved'] = True
+        user_claims_service.save(claim)
+
+
 def search_team_members(current_user, agency_id, keywords=None, exclude=None):
     return team_service.search_team_members(current_user, agency_id, keywords, exclude)
 
@@ -317,4 +394,4 @@ def get_list_of_teams():
 
 
 def get_teams_by_agency(agency_id, team_id):
-    return team_service.agency_list()
+    return team_service.get_teams_by_agency_id(agency_id, team_id)

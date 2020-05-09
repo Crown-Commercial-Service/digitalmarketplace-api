@@ -109,6 +109,7 @@ class Agency(db.Model):
     ), nullable=False, default='other')
     whitelisted = db.Column(db.Boolean, nullable=False, default=True)
     reports = db.Column(db.Boolean, nullable=False, default=True)
+    must_join_team = db.Column(db.Boolean, nullable=False, default=False)
     domains = db.relationship('AgencyDomain', cascade="all, delete-orphan")
 
 
@@ -1559,7 +1560,8 @@ class UserClaim(db.Model):
         db.Enum(
             *[
                 'signup',
-                'password_reset'
+                'password_reset',
+                'join_team'
             ],
             name='user_claim_type_enum'
         ),
@@ -2965,22 +2967,19 @@ class Application(db.Model):
                 self.data.pop('representative', None)
                 self.data.pop('phone', None)
                 self.data.pop('email', None)
-
-                if self.data.get('recruiter') == 'no':
-                    self.data['labourHire'] = {}
-                else:
-                    to_remove = []
-                    for state, state_value in self.data.get('labourHire', {}).iteritems():
-                        if not (
-                            state_value.get('expiry') and
-                            state_value.get('licenceNumber')
-                        ):
-                            to_remove.append(state)
-                    for r in to_remove:
-                        self.data.get('labourHire', {}).pop(r)
-
             else:
                 supplier = Supplier()
+
+            to_remove = []
+            for state, state_value in self.data.get('labourHire', {}).iteritems():
+                if not (
+                    state_value.get('expiry') and
+                    state_value.get('licenceNumber')
+                ):
+                    to_remove.append(state)
+            for r in to_remove:
+                self.data.get('labourHire', {}).pop(r)
+
             supplier.update_from_json(self.data)
 
             if not existing:

@@ -11,6 +11,16 @@ class UserClaimService(Service):
     def __init__(self, *args, **kwargs):
         super(UserClaimService, self).__init__(*args, **kwargs)
 
+    def get_active_claims(self, email_address=None, type=None, team_id=None):
+        query = db.session.query(UserClaim).filter(UserClaim.claimed.is_(False))
+        if email_address:
+            query = query.filter(UserClaim.email_address == email_address)
+        if type:
+            query = query.filter(UserClaim.type == type)
+        if team_id:
+            query = query.filter(UserClaim.data['team_id'].astext == str(team_id))
+        return query.all()
+
     # records a claim of ownership of a user email address
     def make_claim(self, type=None, email_address=None, data=None):
         if not data:
@@ -26,9 +36,11 @@ class UserClaimService(Service):
     def get_claim(self, token=None, type=None, email_address=None, claimed=False):
         query = (
             db.session.query(UserClaim)
-            .filter(UserClaim.token == token, UserClaim.type == type, UserClaim.email_address == email_address)
+            .filter(UserClaim.token == token, UserClaim.type == type)
             .filter(UserClaim.claimed.is_(claimed))
         )
+        if email_address:
+            query = query.filter(UserClaim.email_address == email_address)
         return query.first()
 
     # attempts to validate the claim and records the claim as claimed if successful

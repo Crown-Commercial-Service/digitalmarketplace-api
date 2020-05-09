@@ -149,6 +149,7 @@ class AgencyService(Service):
                 Agency.body_type,
                 Agency.whitelisted,
                 Agency.reports,
+                Agency.must_join_team,
                 subquery.c.domains
             )
             .join(subquery, subquery.c.agency_id == Agency.id)
@@ -156,3 +157,7 @@ class AgencyService(Service):
             .one_or_none()
         )
         return result._asdict()
+
+    def agency_requires_team_membership(self, agency_id):
+        agency = self.get(agency_id)
+        return True if agency.must_join_team else False
