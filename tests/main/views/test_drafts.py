@@ -1582,6 +1582,85 @@ class TestDraftServices(DraftsHelpersMixin):
         assert audit_event['type'] == 'create_draft_service'
 
 
+class TestListDraftServiceByFramework(DraftsHelpersMixin):
+
+    def test_list_drafts_for_framework_paginates_results(self):
+        for i in range(1, 11):
+            self.create_draft_service()
+
+        res = self.client.get('/draft-services/framework/g-cloud-7')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        # Assert that IDs are in ascending order
+        draft_ids = [draft['id'] for draft in data['services']]
+        assert all(x <= y for x, y in zip(draft_ids, draft_ids[1:]))
+
+        assert len(data['services']) == 5
+        assert data['meta']['total'] == 10
+        assert data['links']['next'] == 'http://127.0.0.1:5000/draft-services/framework/g-cloud-7?page=2'
+        assert data['links']['last'] == 'http://127.0.0.1:5000/draft-services/framework/g-cloud-7?page=2'
+        assert data['links']['self'] == 'http://127.0.0.1:5000/draft-services/framework/g-cloud-7'
+
+    def test_list_drafts_for_framework_page2(self):
+        for i in range(1, 11):
+            self.create_draft_service()
+
+        res = self.client.get('/draft-services/framework/g-cloud-7?page=2')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        # Assert that IDs are in ascending order
+        draft_ids = [draft['id'] for draft in data['services']]
+        assert all(x <= y for x, y in zip(draft_ids, draft_ids[1:]))
+
+        assert len(data['services']) == 5
+        assert data['meta']['total'] == 10
+        assert data['links']['prev'] == 'http://127.0.0.1:5000/draft-services/framework/g-cloud-7?page=1'
+        assert data['links']['self'] == 'http://127.0.0.1:5000/draft-services/framework/g-cloud-7?page=2'
+
+    @pytest.mark.parametrize('status, expected_count', [
+        ('not-submitted', 4),
+        ('submitted', 1)
+    ])
+    def test_list_drafts_filters_by_status(self, status, expected_count):
+        for i in range(1, 6):
+            self.create_draft_service()
+        # Mark a draft as submitted
+        self.complete_draft_service(DraftService.query.first().id)
+
+        res = self.client.get(f'/draft-services/framework/g-cloud-7?status={status}')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data['meta']['total'] == expected_count
+        for draft in data['services']:
+            assert draft['status'] == status
+
+    def test_list_drafts_page_out_of_range_returns_404(self):
+        for i in range(1, 11):
+            self.create_draft_service()
+
+        res = self.client.get('/draft-services/framework/g-cloud-7?page=3')
+
+        assert res.status_code == 404
+
+    def test_list_drafts_requires_valid_status(self):
+        res = self.client.get(f'/draft-services/framework/g-cloud-7?status=kraftwerk')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Invalid argument: status must be 'submitted' or 'not-submitted'"
+
+    def test_list_drafts_requires_valid_framework(self):
+        res = self.client.get(f'/draft-services/framework/x-cloud-99')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 404
+        assert data['error'] == "Framework 'x-cloud-99' not found"
+
+
 class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
     endpoint = '/draft-services/{self.draft_id}/copy'
     method = 'post'
