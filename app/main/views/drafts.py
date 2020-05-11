@@ -288,11 +288,16 @@ def find_draft_services_by_framework(framework_slug):
     framework = Framework.query.filter(
         Framework.slug == framework_slug
     ).first()
+    if not framework:
+        abort(404, "Framework '{}' not found".format(framework_slug))
 
     draft_service_query = DraftService.query.order_by(asc(DraftService.id))
     draft_service_query = draft_service_query.filter(DraftService.framework_id == framework.id)
 
     if status:
+        # Filter by 'submitted', 'not-submitted' only
+        if status not in ('submitted', 'not-submitted'):
+            abort(400, "Invalid argument: status must be 'submitted' or 'not-submitted'")
         draft_service_query = draft_service_query.filter(DraftService.status == status)
 
     pagination_params = request.args.to_dict()
