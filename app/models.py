@@ -787,6 +787,12 @@ class Supplier(db.Model):
             ))
         elif status == 'unassessed':
             sd.price_status = 'unassessed'
+            db.session.add(AuditEvent(
+                audit_type=AuditTypes.unassessed_domain,
+                user=user if user else '',
+                data=audit_data if audit_data else {},
+                db_object=sd
+            ))
         db.session.flush()
 
     @property
