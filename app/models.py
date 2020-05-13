@@ -2980,6 +2980,8 @@ class Application(db.Model):
             else:
                 supplier = Supplier()
 
+            self.data.pop('understandsAssessmentProcess', None)
+
             to_remove = []
             for state, state_value in self.data.get('labourHire', {}).iteritems():
                 if not (
