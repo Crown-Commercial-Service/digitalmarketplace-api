@@ -14,8 +14,10 @@ from ...utils import (
     get_int_or_400,
     get_json_from_request,
     get_request_page_questions,
+    get_valid_page_or_1,
     json_only_has_required_keys,
     list_result_response,
+    paginated_result_response,
     single_result_response,
     validate_and_return_updater_request,
 )
@@ -245,7 +247,7 @@ def edit_draft_service(draft_id):
 
 
 @main.route('/draft-services', methods=['GET'])
-def list_draft_services():
+def list_draft_services_by_supplier():
     supplier_id = get_int_or_400(request.args, 'supplier_id')
     service_id = request.args.get('service_id')
     framework_slug = request.args.get('framework')
@@ -275,6 +277,50 @@ def list_draft_services():
 
     services = services.filter(DraftService.supplier_id == supplier_id)
     return list_result_response(RESOURCE_NAME, services), 200
+
+
+@main.route('/draft-services/framework/<string:framework_slug>', methods=['GET'])
+def find_draft_services_by_framework(framework_slug):
+    # Paginated list view for draft services for a framework iteration
+    # Includes options to filter by
+    # - status (submitted / not-submitted)
+    # - supplier_id (i.e. a paginated version of .list_draft_services_by_supplier above)
+    page = get_valid_page_or_1()
+    status = request.args.get('status')
+    supplier_id = get_int_or_400(request.args, 'supplier_id')
+
+    framework = Framework.query.filter(
+        Framework.slug == framework_slug
+    ).first()
+    if not framework:
+        abort(404, "Framework '{}' not found".format(framework_slug))
+
+    draft_service_query = DraftService.query.order_by(asc(DraftService.id))
+    draft_service_query = draft_service_query.filter(DraftService.framework_id == framework.id)
+
+    if status:
+        # Filter by 'submitted', 'not-submitted' only
+        if status not in ('submitted', 'not-submitted'):
+            abort(400, "Invalid argument: status must be 'submitted' or 'not-submitted'")
+        draft_service_query = draft_service_query.filter(DraftService.status == status)
+
+    if supplier_id:
+        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
+        if not supplier:
+            abort(404, "Supplier_id '{}' not found".format(supplier_id))
+        draft_service_query = draft_service_query.filter(DraftService.supplier_id == supplier_id)
+
+    pagination_params = request.args.to_dict()
+    pagination_params['framework_slug'] = framework_slug
+
+    return paginated_result_response(
+        result_name=RESOURCE_NAME,
+        results_query=draft_service_query,
+        page=page,
+        per_page=current_app.config['DM_API_SERVICES_PAGE_SIZE'],
+        endpoint='.find_draft_services_by_framework',
+        request_args=pagination_params
+    ), 200
 
 
 @main.route('/draft-services/<int:draft_id>', methods=['GET'])
