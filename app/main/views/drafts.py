@@ -282,8 +282,12 @@ def list_draft_services_by_supplier():
 @main.route('/draft-services/framework/<string:framework_slug>', methods=['GET'])
 def find_draft_services_by_framework(framework_slug):
     # Paginated list view for draft services for a framework iteration
+    # Includes options to filter by
+    # - status (submitted / not-submitted)
+    # - supplier_id (i.e. a paginated version of .list_draft_services_by_supplier above)
     page = get_valid_page_or_1()
     status = request.args.get('status')
+    supplier_id = get_int_or_400(request.args, 'supplier_id')
 
     framework = Framework.query.filter(
         Framework.slug == framework_slug
@@ -299,6 +303,12 @@ def find_draft_services_by_framework(framework_slug):
         if status not in ('submitted', 'not-submitted'):
             abort(400, "Invalid argument: status must be 'submitted' or 'not-submitted'")
         draft_service_query = draft_service_query.filter(DraftService.status == status)
+
+    if supplier_id:
+        supplier = Supplier.query.filter(Supplier.supplier_id == supplier_id).all()
+        if not supplier:
+            abort(404, "Supplier_id '{}' not found".format(supplier_id))
+        draft_service_query = draft_service_query.filter(DraftService.supplier_id == supplier_id)
 
     pagination_params = request.args.to_dict()
     pagination_params['framework_slug'] = framework_slug

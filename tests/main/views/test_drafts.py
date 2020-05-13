@@ -39,6 +39,9 @@ class DraftsHelpersMixin(BaseApplicationTest, FixtureMixin):
             Supplier(supplier_id=1, name=u"Supplier 1")
         )
         db.session.add(
+            Supplier(supplier_id=2, name=u"Supplier 2")
+        )
+        db.session.add(
             ContactInformation(
                 supplier_id=1,
                 contact_name=u"Liz",
@@ -1638,6 +1641,26 @@ class TestListDraftServiceByFramework(DraftsHelpersMixin):
         for draft in data['services']:
             assert draft['status'] == status
 
+    def test_list_drafts_filters_by_supplier_id(self):
+        draft1 = self.create_draft_service()
+        # Use the JSON from draft 1 to create draft 2, with a different supplier ID
+        draft1['supplierId'] = 2
+        draft_update_json = {'services': draft1,
+                             'updated_by': 'joeblogs'}
+
+        self.client.post(
+            '/draft-services',
+            data=json.dumps(draft_update_json),
+            content_type='application/json'
+        )
+
+        res = self.client.get(f'/draft-services/framework/g-cloud-7?supplier_id=2')
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data['meta']['total'] == 1
+        assert data['services'][0]['supplierId'] == 2
+
     def test_list_drafts_page_out_of_range_returns_404(self):
         for i in range(1, 11):
             self.create_draft_service()
@@ -1659,6 +1682,20 @@ class TestListDraftServiceByFramework(DraftsHelpersMixin):
 
         assert res.status_code == 404
         assert data['error'] == "Framework 'x-cloud-99' not found"
+
+    def test_list_drafts_requires_valid_supplier_id(self):
+        res = self.client.get(f'/draft-services/framework/g-cloud-7?supplier_id=the-human-league')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Invalid supplier_id: the-human-league"
+
+    def test_list_drafts_requires_supplier_id_to_exist(self):
+        res = self.client.get(f'/draft-services/framework/g-cloud-7?supplier_id=999')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 404
+        assert data['error'] == "Supplier_id '999' not found"
 
 
 class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
