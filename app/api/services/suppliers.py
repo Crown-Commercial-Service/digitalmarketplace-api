@@ -28,8 +28,8 @@ class SuppliersService(Service):
                 .filter(Supplier.status != 'deleted')
                 .all())
 
-    def get_supplier_by_code(self, code):
-        return (
+    def get_supplier_by_code(self, code, include_deleted=True):
+        query = (
             db
             .session
             .query(
@@ -40,8 +40,10 @@ class SuppliersService(Service):
                 .joinedload(SupplierDomain.domain)
             )
             .filter(Supplier.code == code)
-            .one_or_none()
         )
+        if not include_deleted:
+            query = query.filter(Supplier.status != 'deleted')
+        return query.one_or_none()
 
     def get_supplier_by_abn(self, abn):
         return (
