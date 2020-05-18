@@ -27,8 +27,8 @@ docutils==0.15.2          # via botocore
 flask-bcrypt==0.7.1       # via -r requirements.in
 flask-gzip==0.2           # via digitalmarketplace-utils
 flask-login==0.5.0        # via digitalmarketplace-utils
-flask-migrate==2.0.3      # via -r requirements.in
-flask-script==2.0.6       # via digitalmarketplace-utils, flask-migrate
+flask-migrate==2.5.3      # via -r requirements.in
+flask-script==2.0.6       # via digitalmarketplace-utils
 flask-sqlalchemy==2.4.1   # via -r requirements.in, flask-migrate
 flask-wtf==0.14.3         # via digitalmarketplace-utils
 flask==1.0.4              # via -r requirements.in, digitalmarketplace-utils, flask-bcrypt, flask-gzip, flask-login, flask-migrate, flask-script, flask-sqlalchemy, flask-wtf, gds-metrics
