@@ -37,7 +37,7 @@ future==0.18.2            # via notifications-python-client
 gds-metrics==0.2.0        # via digitalmarketplace-utils
 govuk-country-register==0.5.0  # via digitalmarketplace-utils
 idna==2.9                 # via cryptography, requests
-itsdangerous==0.24        # via -r requirements.in, flask, flask-wtf
+itsdangerous==1.1.0       # via -r requirements.in, flask, flask-wtf
 jinja2==2.11.1            # via flask
 jmespath==0.9.4           # via boto3, botocore
 jsonschema==3.2.0         # via -r requirements.in
