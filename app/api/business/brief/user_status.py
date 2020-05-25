@@ -183,10 +183,10 @@ class BriefUserStatus(object):
             return True
         return False
 
-    def has_responded(self):
+    def has_responded(self, submitted_only=True):
         if self.user_role == 'supplier':
             responses = brief_responses_service.get_brief_responses(
-                self.brief.id, self.supplier_code, submitted_only=True
+                self.brief.id, self.supplier_code, submitted_only=submitted_only
             )
             brief_response_count = len(responses)
             lot = lots_service.find(

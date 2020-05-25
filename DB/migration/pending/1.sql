@@ -1,17 +1,28 @@
--- adding the must_join_team flag for agencies
+drop view if exists "public"."vuser" cascade;
 
-alter table "public"."agency" add column "must_join_team" boolean;
+alter table "public"."user" alter column "role" set data type varchar;
 
-update agency set must_join_team = false;
+drop type "public"."user_roles_enum";
 
-alter table "public"."agency" alter column "must_join_team" set not null;
+create type "public"."user_roles_enum" as enum ('buyer', 'supplier', 'admin', 'assessor', 'admin-ccs-category', 'admin-ccs-sourcing', 'applicant');
 
--- adding the join_team claim type
+alter table "public"."user" alter column "role" set data type user_roles_enum using "role"::user_roles_enum;
 
-alter table "public"."user_claim" alter column "type" set data type varchar;
-
-drop type "public"."user_claim_type_enum";
-
-create type "public"."user_claim_type_enum" as enum ('signup', 'password_reset', 'join_team');
-
-alter table "public"."user_claim" alter column "type" set data type user_claim_type_enum using "type"::user_claim_type_enum;
+create view "public"."vuser" as  SELECT u.id,
+    u.name,
+    u.email_address,
+    u.phone_number,
+    u.password,
+    u.active,
+    u.created_at,
+    u.updated_at,
+    u.password_changed_at,
+    u.logged_in_at,
+    u.terms_accepted_at,
+    u.failed_login_count,
+    u.role,
+    u.supplier_code,
+    u.application_id,
+    u.agency_id,
+    split_part((u.email_address)::text, '@'::text, 2) AS email_domain
+   FROM "user" u;

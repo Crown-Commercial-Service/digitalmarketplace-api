@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 import json
 import pytest
 import mock
 from app import encryption
 from app.models import db, utcnow, Supplier, SupplierFramework, Contact, SupplierDomain, User,\
-    Framework, UserFramework, AuditEvent, BriefResponse
+    Framework, UserFramework, AuditEvent, BriefResponse, Domain
 from app.api.services import brief_responses_service
 from tests.app.helpers import COMPLETE_SPECIALIST_BRIEF
 from faker import Faker
@@ -11,6 +12,58 @@ from dmapiclient.audit import AuditTypes
 import pendulum
 import copy
 fake = Faker()
+
+
+specialist_data = {
+    'areaOfExpertise': 'Software engineering and Development',
+    'attachments': [],
+    'budgetRange': '',
+    'closedAt': '2019-07-03',
+    'contactNumber': '0123456789',
+    'contractExtensions': '',
+    'contractLength': '1 year',
+    'comprehensiveTerms': True,
+    'essentialRequirements': [
+        {
+            'criteria': 'TEST',
+            'weighting': '55'
+        },
+        {
+            'criteria': 'TEST 2',
+            'weighting': '45'
+        }
+    ],
+    'evaluationType': [
+        'Responses to selection criteria',
+        'Résumés'
+    ],
+    'includeWeightingsEssential': False,
+    'includeWeightingsNiceToHave': False,
+    'internalReference': '',
+    'location': [
+        'Australian Capital Territory'
+    ],
+    'maxRate': '123',
+    'niceToHaveRequirements': [
+        {
+            'criteria': 'Code review',
+            'weighting': '0'
+        }
+    ],
+    'numberOfSuppliers': '3',
+    'openTo': 'all',
+    'organisation': 'Digital Transformation Agency',
+    'preferredFormatForRates': 'dailyRate',
+    'securityClearance': 'noneRequired',
+    'securityClearanceCurrent': '',
+    'securityClearanceObtain': '',
+    'securityClearanceOther': '',
+    'sellers': {},
+    'sellerCategory': '6',
+    'startDate': pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+    'summary': 'asdf',
+    'title': 'Developer'
+}
 
 
 @pytest.fixture()
@@ -85,15 +138,20 @@ def suppliers(app, request):
 
 @pytest.fixture()
 def supplier_domains(app, request, suppliers):
+    params = request.param if hasattr(request, 'param') else {}
+    status = params['status'] if 'status' in params else 'assessed'
+    price_status = params['price_status'] if 'price_status' in params else 'approved'
+    domains = Domain.query.all()
     with app.app_context():
         for s in suppliers:
-            for i in range(1, 6):
+            for domain in domains:
                 db.session.add(SupplierDomain(
                     supplier_id=s.id,
-                    domain_id=i,
-                    status='assessed'
+                    domain_id=domain.id,
+                    status=status,
+                    price_status=price_status
                 ))
-
+                db.session.commit()
                 db.session.flush()
 
         db.session.commit()
@@ -286,7 +344,14 @@ def brief_responses_atm(app, request, supplier_users):
 
 
 @mock.patch('app.tasks.publish_tasks.brief_response')
-def test_get_brief_response(brief_response, client, supplier_user, supplier_domains, briefs, assessments, suppliers):
+@pytest.mark.parametrize(
+    'specialist_brief',
+    [{
+        'data': specialist_data,
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+    }], indirect=True
+)
+def test_get_brief_response(brief_response, client, supplier_user, supplier_domains, specialist_brief, suppliers):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
     }), content_type='application/json')
@@ -334,12 +399,18 @@ def test_get_brief_response(brief_response, client, supplier_user, supplier_doma
 
 
 @mock.patch('app.tasks.publish_tasks.brief_response')
+@pytest.mark.parametrize(
+    'specialist_brief',
+    [{
+        'data': specialist_data,
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+    }], indirect=True
+)
 def test_withdraw_brief_response(brief_response,
                                  client,
                                  supplier_user,
                                  supplier_domains,
-                                 briefs,
-                                 assessments,
+                                 specialist_brief,
                                  suppliers):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
@@ -410,12 +481,18 @@ def test_withdraw_brief_response(brief_response,
 
 
 @mock.patch('app.tasks.publish_tasks.brief_response')
+@pytest.mark.parametrize(
+    'specialist_brief',
+    [{
+        'data': specialist_data,
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+    }], indirect=True
+)
 def test_withdraw_already_withdrawn_brief_response(brief_response,
                                                    client,
                                                    supplier_user,
                                                    supplier_domains,
-                                                   briefs,
-                                                   assessments,
+                                                   specialist_brief,
                                                    suppliers):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
@@ -615,7 +692,7 @@ def test_rfx_non_invited_seller_can_not_respond(brief, client, suppliers, suppli
     assert res.status_code == 200
 
     res = client.post('/2/brief/1/respond')
-    assert res.status_code == 403
+    assert res.status_code == 400
 
 
 @pytest.fixture()
@@ -748,6 +825,13 @@ def test_atm_seller_can_respond_open_to_category(brief_response, brief, client, 
 
 @mock.patch('app.tasks.publish_tasks.brief')
 @mock.patch('app.tasks.publish_tasks.brief_response')
+@pytest.mark.parametrize(
+    'supplier_domains',
+    [{
+        'status': 'unassessed',
+        'price_status': 'unassessed'
+    }], indirect=True
+)
 def test_atm_seller_can_not_respond_open_to_category(brief_response, brief, client, suppliers, supplier_user,
                                                      supplier_domains, buyer_user, atm_brief, atm_data):
     res = client.post('/2/login', data=json.dumps({
@@ -771,7 +855,7 @@ def test_atm_seller_can_not_respond_open_to_category(brief_response, brief, clie
     assert res.status_code == 200
 
     res = client.post('/2/brief/1/respond')
-    assert res.status_code == 403
+    assert res.status_code == 400
 
 
 @mock.patch('app.tasks.publish_tasks.brief')
@@ -951,10 +1035,17 @@ def test_atm_seller_success_with_file(brief_response, brief, client, suppliers, 
 
 @mock.patch('app.tasks.publish_tasks.brief')
 @mock.patch('app.tasks.publish_tasks.brief_response')
+@pytest.mark.parametrize(
+    'specialist_brief',
+    [{
+        'data': specialist_data,
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+    }], indirect=True
+)
 @pytest.mark.parametrize('brief_responses_specialist', [{'include_resume': False}], indirect=True)
 def test_brief_response_edit_previous_submitted_without_doc_specialist(brief_response, brief, client, suppliers,
                                                                        supplier_user, supplier_domains,
-                                                                       briefs, brief_responses_specialist,
+                                                                       specialist_brief, brief_responses_specialist,
                                                                        supplier_users):
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
