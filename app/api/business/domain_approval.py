@@ -9,9 +9,9 @@ from app.tasks import publish_tasks
 class DomainApproval(object):
     def __init__(self, evidence_id=None, actioned_by=None):
         if not actioned_by or not str(actioned_by).isdigit():
-            raise DomainApprovalException('An admin user id must be supplied')
+            raise DomainApprovalException('An admin or assessor user id must be supplied')
         self.user = users.get_by_id(int(actioned_by))
-        if not self.user or self.user.role != 'admin':
+        if not self.user or self.user.role not in ['admin', 'assessor']:
             raise DomainApprovalException('Invalid user id in actioned_by')
         self.evidence = evidence_service.get_evidence_by_id(evidence_id)
         if not self.evidence or not self.evidence.status == 'submitted':

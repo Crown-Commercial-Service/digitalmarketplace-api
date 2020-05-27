@@ -1382,6 +1382,7 @@ class User(db.Model):
         'supplier',
         'admin',               # a general admin user, with permission to do most (but not all)
                                # admin actions.
+        'assessor',            # can perform category asssessments
         'admin-ccs-category',  # generally restricted to read-only access to admin views.
         'admin-ccs-sourcing',  # can perform admin actions involving supplier acceptance.
         'applicant'
