@@ -22,6 +22,7 @@ from app.api.business.errors import AbrError
 from flask import current_app
 import xml.etree.ElementTree as ElementTree
 import json
+from xml.sax import saxutils
 
 
 class SuppliersService(Service):
@@ -419,6 +420,8 @@ class SuppliersService(Service):
         # takes the first organisationName
         search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
         organisation_name = search_xml_organisation_name[0]
+        # this only works for &, < and > but not ' and "" so I need to look into this
+        organisation_name = saxutils.unescape(organisation_name)
 
         # takes the first postcode
         search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', xmlText)
