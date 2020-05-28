@@ -1,23 +1,28 @@
-CREATE SEQUENCE IF NOT EXISTS "public"."brief_history_id_seq";
+drop view if exists "public"."vuser" cascade;
 
-CREATE TABLE IF NOT EXISTS "public"."brief_history" (
-    "id" INTEGER NOT NULL default nextval('brief_history_id_seq'::regclass),
-    "brief_id" INTEGER NOT NULL,
-    "user_id" INTEGER NOT NULL,
-    "edited_at" TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    "data" JSON NOT NULL,
-    CONSTRAINT "brief_history_pkey" PRIMARY KEY (id),
-    CONSTRAINT "brief_history_brief_id_fkey" FOREIGN KEY (brief_id)
-        REFERENCES public.brief(id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION,
-    CONSTRAINT "brief_history_user_id_fkey" FOREIGN KEY (user_id)
-        REFERENCES public."user"(id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-);
+alter table "public"."user" alter column "role" set data type varchar;
 
-CREATE unique index IF NOT EXISTS brief_history_pkey ON public.brief_history USING btree (id);
-CREATE index IF NOT EXISTS ix_brief_history_brief_id ON public.brief_history USING btree (brief_id);
-CREATE index IF NOT EXISTS ix_brief_history_user_id ON public.brief_history USING btree (user_id);
-CREATE index IF NOT EXISTS ix_brief_history_edited_at ON public.brief_history USING btree (edited_at);
+drop type "public"."user_roles_enum";
+
+create type "public"."user_roles_enum" as enum ('buyer', 'supplier', 'admin', 'assessor', 'admin-ccs-category', 'admin-ccs-sourcing', 'applicant');
+
+alter table "public"."user" alter column "role" set data type user_roles_enum using "role"::user_roles_enum;
+
+create view "public"."vuser" as  SELECT u.id,
+    u.name,
+    u.email_address,
+    u.phone_number,
+    u.password,
+    u.active,
+    u.created_at,
+    u.updated_at,
+    u.password_changed_at,
+    u.logged_in_at,
+    u.terms_accepted_at,
+    u.failed_login_count,
+    u.role,
+    u.supplier_code,
+    u.application_id,
+    u.agency_id,
+    split_part((u.email_address)::text, '@'::text, 2) AS email_domain
+   FROM "user" u;

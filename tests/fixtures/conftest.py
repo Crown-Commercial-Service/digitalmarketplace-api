@@ -487,6 +487,7 @@ def atm_brief(client, app, request, buyer_user):
 def specialist_brief(client, app, request, buyer_user):
     params = request.param if hasattr(request, 'param') else {}
     data = params['data'] if 'data' in params else {'title': 'SPECIALIST TEST'}
+    published_at = pendulum.parse(params['published_at']) if 'published_at' in params else None
     with app.app_context():
         framework = Framework.query.filter(Framework.slug == 'digital-marketplace').first()
         framework.status = 'live'
@@ -499,7 +500,8 @@ def specialist_brief(client, app, request, buyer_user):
                 data=data,
                 framework=Framework.query.filter(Framework.slug == 'digital-marketplace').first(),
                 lot=Lot.query.filter(Lot.slug == 'specialist').first(),
-                users=[buyer_user]
+                users=[buyer_user],
+                published_at=published_at
             )
         )
 

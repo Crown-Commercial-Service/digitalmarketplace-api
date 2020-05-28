@@ -1105,23 +1105,49 @@ class TestWorkOrder(BaseApplicationTest):
 class TestApplication(BaseApplicationTest):
     def setup(self):
         super(TestApplication, self).setup()
-        with self.app.app_context():
-            framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
-            lot = framework.get_lot('digital-outcomes')
 
-            self.setup_dummy_user(role='applicant')
-            self.user = User.query.first()
-            db.session.add(self.user)
+    @pytest.fixture()
+    def app(self):
+        app = create_app('test')
+        app.config['SERVER_NAME'] = 'localhost'
+        app.config['CSRF_ENABLED'] = False
+        yield app
 
+    @pytest.fixture()
+    def supplier(self, app):
+        self.setup()
+        with app.app_context():
             self.setup_dummy_suppliers(1)
             db.session.commit()
-            self.supplier = Supplier.query.filter(Supplier.code == 0).first()
+            supplier = (
+                db.session
+                  .query(Supplier)
+                  .filter(Supplier.code == 0)
+                  .first()
+            )
 
-    @mock.patch('app.jiraapi.JIRA')
-    def test_new_seller_application(self, jira):
-        with self.app.test_request_context('/hello'):
-            app = Application(data=INCOMING_APPLICATION_DATA)
-            user = User(
+            yield supplier
+
+    @pytest.fixture()
+    def new_application(self, app):
+        with app.app_context():
+            application = Application(data=INCOMING_APPLICATION_DATA)
+            db.session.add(application)
+            db.session.commit()
+            yield application
+
+    @pytest.fixture()
+    def existing_application(self, app, supplier):
+        with app.app_context():
+            application = Application(data=INCOMING_APPLICATION_DATA, supplier=supplier)
+            db.session.add(application)
+            db.session.commit()
+            yield application
+
+    @pytest.fixture()
+    def applicant(self, app, new_application):
+        with app.app_context():
+            applicant = User(
                 email_address='email@digital.gov.au',
                 name='name',
                 role='applicant',
@@ -1131,62 +1157,16 @@ class TestApplication(BaseApplicationTest):
                 created_at=utcnow(),
                 updated_at=utcnow(),
                 password_changed_at=utcnow(),
-                application=app
+                application=new_application
             )
 
-            # flushing to database in order to set defaults (very annoying "feature" of sqlalchemy)
-            db.session.add(app)
-            db.session.add(user)
-            db.session.flush()
+            db.session.add(applicant)
+            db.session.commit()
+            yield applicant
 
-            x_from_manual = app.serialize()
-            x_from_deterministic = json.loads(app.json)
-
-            subset = {
-                k: v for k, v
-                in x_from_deterministic.items()
-                if k in x_from_manual
-            }
-            assert subset == x_from_manual
-
-            assert app.status == 'saved'
-
-            app.submit_for_approval()
-
-            assert app.status == 'submitted'
-            assert app.supplier is None
-
-            with raises(ValidationError):
-                app.submit_for_approval()
-
-            app.set_approval(approved=False)
-
-            assert app.status == 'approval_rejected'
-
-            app.unreject_approval()
-            assert app.status == 'submitted'
-
-            app.set_approval(approved=True)
-
-            with raises(ValidationError):
-                app.set_approval(True)
-
-            assert app.status == 'approved'
-            assert app.supplier.status == 'limited'
-
-            assert app.supplier.id is not None
-            assert app.supplier.code is not None
-            assert user.role == 'supplier'
-            assert user.supplier_code == app.supplier.code
-
-            db.session.flush()
-
-            assert len(app.supplier.contacts) == 1
-
-    @mock.patch('app.jiraapi.JIRA')
-    def test_existing_seller_application(self, jira):
-        with self.app.test_request_context('/hello'):
-            app = Application(data=INCOMING_APPLICATION_DATA, supplier=self.supplier)
+    @pytest.fixture()
+    def supplier_user(self, app, existing_application, supplier):
+        with app.app_context():
             user = User(
                 email_address='email@digital.gov.au',
                 name='name',
@@ -1197,11 +1177,239 @@ class TestApplication(BaseApplicationTest):
                 created_at=utcnow(),
                 updated_at=utcnow(),
                 password_changed_at=utcnow(),
-                application=app,
-                supplier=self.supplier
+                application=existing_application,
+                supplier=supplier
             )
 
-            db.session.add(app)
+            db.session.add(user)
+            db.session.commit()
+            yield user
+
+    @mock.patch('app.jiraapi.JIRA')
+    @pytest.mark.parametrize('test_data', [
+        {
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '', 'licenceNumber': ''},
+                'vic': {'licenceNumber': ''}
+            }
+        },
+        {
+            'labourHire': {
+                'qld': {'expiry': None},
+                'sa': {'expiry': None, 'licenceNumber': None},
+                'vic': {'licenceNumber': None}
+            }
+        }
+    ])
+    def test_labour_hire_data_is_removed_for_new_seller_application(self, jira, app, new_application,
+                                                                    applicant, test_data):
+        with app.app_context():
+            new_application.data['labourHire'] = test_data['labourHire']
+
+            assert new_application.status == 'saved'
+            new_application.submit_for_approval()
+            assert new_application.status == 'submitted'
+            new_application.set_approval(approved=True)
+            assert new_application.status == 'approved'
+
+            labour_hire = new_application.data.get('labourHire')
+            assert labour_hire == {}
+
+            supplier = new_application.supplier
+            supplier_labour_hire = supplier.data.get('labourHire')
+            assert supplier_labour_hire == {}
+
+    @mock.patch('app.jiraapi.JIRA')
+    @pytest.mark.parametrize('test_data', [
+        {
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '', 'licenceNumber': ''},
+                'vic': {'licenceNumber': ''}
+            }
+        },
+        {
+            'labourHire': {
+                'qld': {'expiry': None},
+                'sa': {'expiry': None, 'licenceNumber': None},
+                'vic': {'licenceNumber': None}
+            }
+        }
+    ])
+    def test_labour_hire_data_is_removed_for_existing_seller_application(self, jira, app, existing_application,
+                                                                         supplier_user, test_data):
+        with app.app_context():
+            existing_application.data['labourHire'] = test_data['labourHire']
+
+            assert existing_application.status == 'saved'
+            existing_application.submit_for_approval()
+            assert existing_application.status == 'submitted'
+            existing_application.set_approval(approved=True)
+            assert existing_application.status == 'approved'
+
+            labour_hire = existing_application.data.get('labourHire')
+            assert labour_hire == {}
+
+            supplier = existing_application.supplier
+            supplier_labour_hire = supplier.data.get('labourHire')
+            assert supplier_labour_hire == {}
+
+    @mock.patch('app.jiraapi.JIRA')
+    @pytest.mark.parametrize('test_data', [
+        {
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '2040-10-22', 'licenceNumber': '123'},
+                'vic': {'licenceNumber': ''}
+            }
+        }
+    ])
+    def test_labour_hire_data_is_retained_for_new_seller_application(self, jira, app, new_application,
+                                                                     applicant, test_data):
+        with app.app_context():
+            new_application.data['labourHire'] = test_data['labourHire']
+
+            assert new_application.status == 'saved'
+            new_application.submit_for_approval()
+            assert new_application.status == 'submitted'
+            new_application.set_approval(approved=True)
+            assert new_application.status == 'approved'
+
+            expected = {
+                'sa': {
+                    'expiry': '2040-10-22',
+                    'licenceNumber': '123'
+                }
+            }
+
+            labour_hire = new_application.data.get('labourHire')
+            assert labour_hire == expected
+
+            supplier = new_application.supplier
+            supplier_labour_hire = supplier.data.get('labourHire')
+            assert supplier_labour_hire == expected
+
+    @mock.patch('app.jiraapi.JIRA')
+    @pytest.mark.parametrize('test_data', [
+        {
+            'labourHire': {
+                'qld': {'expiry': ''},
+                'sa': {'expiry': '2040-10-22', 'licenceNumber': '123'},
+                'vic': {'licenceNumber': ''}
+            }
+        }
+    ])
+    def test_labour_hire_data_is_retained_for_existing_seller_application(self, jira, app, existing_application,
+                                                                          supplier_user, test_data):
+        with app.app_context():
+            existing_application.data['labourHire'] = test_data['labourHire']
+
+            assert existing_application.status == 'saved'
+            existing_application.submit_for_approval()
+            assert existing_application.status == 'submitted'
+            existing_application.set_approval(approved=True)
+            assert existing_application.status == 'approved'
+
+            expected = {
+                'sa': {
+                    'expiry': '2040-10-22',
+                    'licenceNumber': '123'
+                }
+            }
+
+            labour_hire = existing_application.data.get('labourHire')
+            assert labour_hire == expected
+
+            supplier = existing_application.supplier
+            supplier_labour_hire = supplier.data.get('labourHire')
+            assert supplier_labour_hire == expected
+
+    @mock.patch('app.jiraapi.JIRA')
+    def test_new_seller_application(self, jira, app):
+        with app.test_request_context('/hello'):
+            application = Application(data=INCOMING_APPLICATION_DATA)
+            user = User(
+                email_address='email@digital.gov.au',
+                name='name',
+                role='applicant',
+                password='password',
+                active=True,
+                failed_login_count=0,
+                created_at=utcnow(),
+                updated_at=utcnow(),
+                password_changed_at=utcnow(),
+                application=application
+            )
+
+            # flushing to database in order to set defaults (very annoying "feature" of sqlalchemy)
+            db.session.add(application)
+            db.session.add(user)
+            db.session.flush()
+
+            x_from_manual = application.serialize()
+            x_from_deterministic = json.loads(application.json)
+
+            subset = {
+                k: v for k, v
+                in x_from_deterministic.items()
+                if k in x_from_manual
+            }
+            assert subset == x_from_manual
+
+            assert application.status == 'saved'
+
+            application.submit_for_approval()
+
+            assert application.status == 'submitted'
+            assert application.supplier is None
+
+            with raises(ValidationError):
+                application.submit_for_approval()
+
+            application.set_approval(approved=False)
+
+            assert application.status == 'approval_rejected'
+
+            application.unreject_approval()
+            assert application.status == 'submitted'
+
+            application.set_approval(approved=True)
+
+            with raises(ValidationError):
+                application.set_approval(True)
+
+            assert application.status == 'approved'
+            assert application.supplier.status == 'limited'
+
+            assert application.supplier.id is not None
+            assert application.supplier.code is not None
+            assert user.role == 'supplier'
+            assert user.supplier_code == application.supplier.code
+
+            db.session.flush()
+
+            assert len(application.supplier.contacts) == 1
+
+    @mock.patch('app.jiraapi.JIRA')
+    def test_existing_seller_application(self, jira, app, supplier):
+        with app.test_request_context('/hello'):
+            application = Application(data=INCOMING_APPLICATION_DATA, supplier=supplier)
+            user = User(
+                email_address='email@digital.gov.au',
+                name='name',
+                role='supplier',
+                password='password',
+                active=True,
+                failed_login_count=0,
+                created_at=utcnow(),
+                updated_at=utcnow(),
+                password_changed_at=utcnow(),
+                application=application,
+                supplier=supplier
+            )
+
+            db.session.add(application)
             db.session.add(user)
             db.session.flush()
 
@@ -1209,24 +1417,24 @@ class TestApplication(BaseApplicationTest):
             new_data['summary'] = 'New Summary'
 
             # use this application to do an existing seller update
-            app.data = new_data
-            app.status = 'submitted'
+            application.data = new_data
+            application.status = 'submitted'
 
             db.session.flush()
 
-            app.set_approval(True)
+            application.set_approval(True)
 
             # check that the update took place
-            assert app.supplier.summary == 'New Summary'
+            assert application.supplier.summary == 'New Summary'
 
             # make sure this didn't change
-            assert app.supplier.status == 'complete'
+            assert application.supplier.status == 'complete'
 
             # test application-from-existing-seller scenario
 
-            supplier = app.supplier
+            supplier = application.supplier
 
-            db.session.delete(app)
+            db.session.delete(application)
             db.session.flush()
 
             app_from_existing = Application()
@@ -1240,9 +1448,9 @@ class TestApplication(BaseApplicationTest):
             assert app_from_existing.supplier.code == supplier.code
             assert app_from_existing.supplier == supplier
 
-    def test_application_and_supplier_domains(self):
-        with self.app.test_request_context('/hello'):
-            supp = self.supplier
+    def test_application_and_supplier_domains(self, app, supplier):
+        with app.test_request_context('/hello'):
+            supp = supplier
             db.session.add(supp)
 
             supp.update_from_json(
@@ -1273,9 +1481,9 @@ class TestApplication(BaseApplicationTest):
             with raises(DataError):
                 supp.update_domain_assessment_status('Change, Training and Transformation', 'bad_status_value')
 
-    def test_signed_agreement(self):
-        with self.app.test_request_context('/hello'):
-            app = Application(data=INCOMING_APPLICATION_DATA)
+    def test_signed_agreement(self, app):
+        with app.test_request_context('/hello'):
+            application = Application(data=INCOMING_APPLICATION_DATA)
             user = User(
                 email_address='email@digital.gov.au',
                 name='name',
@@ -1286,7 +1494,7 @@ class TestApplication(BaseApplicationTest):
                 created_at=utcnow(),
                 updated_at=utcnow(),
                 password_changed_at=utcnow(),
-                application=app
+                application=application
             )
 
             now = pendulum.now('utc')
@@ -1300,23 +1508,23 @@ class TestApplication(BaseApplicationTest):
             )
 
             # flushing to database in order to set defaults (very annoying "feature" of sqlalchemy)
-            db.session.add(app)
+            db.session.add(application)
             db.session.add(user)
             db.session.add(agreement)
             db.session.flush()
 
-            assert len(app.serializable['signed_agreements']) == 0
+            assert len(application.serializable['signed_agreements']) == 0
 
             signed_agreement = SignedAgreement(
                 agreement_id=agreement.id,
                 user_id=user.id,
-                application_id=app.id,
+                application_id=application.id,
                 signed_at=now
             )
             db.session.add(signed_agreement)
             db.session.flush()
 
-            assert app.serializable['signed_agreements'][0] == {
+            assert application.serializable['signed_agreements'][0] == {
                 'htmlUrl': '/path/to/agreement.html',
                 'pdfUrl': '/path/to/agreement.pdf',
                 'signedAt': now,

@@ -22,6 +22,7 @@ from app.models import User, has_whitelisted_email_domain
 from app.swagger import swag
 from app.tasks import publish_tasks
 from app.utils import get_json_from_request
+from app.api import load_user
 from dmutils.email import EmailError, InvalidToken
 
 
@@ -100,7 +101,8 @@ def login():
             session.regenerate()
         login_user(user)
 
-        return jsonify(user_info(user))
+        loaded_user = load_user(user.id)
+        return jsonify(user_info(loaded_user))
     else:
         user.failed_login_count += 1
         db.session.add(user)

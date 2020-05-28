@@ -25,7 +25,7 @@ from app.api.business import (
     team_business
 )
 from app.api.helpers import get_email_domain, is_valid_email
-from app.api.services import user_claims_service, users as user_service
+from app.api.services import agency_service, user_claims_service, users as user_service
 from app.tasks import publish_tasks
 
 from dmutils.logging import notify_team
@@ -117,6 +117,18 @@ def get_user_by_id(user_id):
     result.update({
         'teams': teams
     })
+
+    is_part_of_team = True if user.role == 'buyer' and len(teams) > 0 else False
+    must_join_team = None
+    agency_id = user.agency_id
+    if agency_id:
+        must_join_team = agency_service.agency_requires_team_membership(agency_id)
+
+    result.update({
+        'isPartOfTeam': is_part_of_team,
+        'mustJoinTeam': must_join_team
+    })
+
     result.update({
         'supplier': {
             'name': user.supplier_name,
