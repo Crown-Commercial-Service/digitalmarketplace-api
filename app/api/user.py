@@ -17,6 +17,7 @@ from app.api.helpers import get_email_domain
 from app.api.services import suppliers
 import json
 from app.api.business.errors import AbrError
+import abn as abnPython
 
 
 def add_user(data):
@@ -133,7 +134,7 @@ def is_duplicate_user(email_address):
             email_address=email_address,
             application_id=application_id[0])
         return True
-
+ 
     return False
 
 
@@ -254,22 +255,32 @@ def create_user(
             organisation_name = ''
             state = ''
             postcode = ''
-            try:
-                business_info_values = suppliers.get_business_info_by_abn(email_address, abn)
-                business_info_values = json.loads(business_info_values)
+            # check_international = ''
+            check_international = abnPython.validate(abn)
+            if check_international is False:
+                organisation_name = ''
+                state = ''
+                postcode = ''
+            
+            else:
+                try:
+                    # checks if international seller by checking if the nunmber provided is an ABN
 
-                organisation_name = business_info_values["organisation_name"]
-                state = business_info_values["state"]
-                postcode = business_info_values["postcode"]
+                    business_info_values = suppliers.get_business_info_by_abn(email_address, abn)
+                    business_info_values = json.loads(business_info_values)
 
-            # If ABR API is down, it will publish a slack message
-            except AbrError:
-                publish_tasks.user.delay(
-                    user_data,
-                    'abr_failed',
-                    email_address=email_address,
-                    abn=abn
-                )
+                    organisation_name = business_info_values["organisation_name"]
+                    state = business_info_values["state"]
+                    postcode = business_info_values["postcode"]
+
+                # If ABR API is down, it will publish a slack message
+                except AbrError:
+                    publish_tasks.user.delay(
+                        user_data,
+                        'abr_failed',
+                        email_address=email_address,
+                        abn=abn
+                    )
 
             # adding the abn business info into the seller application
             try:
