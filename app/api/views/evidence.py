@@ -134,6 +134,7 @@ def get_evidence(evidence_id):
 
 
 @api.route('/evidence/<int:evidence_id>/view', methods=['GET'])
+@exception_logger
 @login_required
 @role_required('supplier')
 def get_domain_and_evidence(evidence_id):
