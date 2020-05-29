@@ -255,17 +255,10 @@ def create_user(
             organisation_name = ''
             state = ''
             postcode = ''
-            # check_international = ''
             check_international = abnPython.validate(abn)
-            if check_international is False:
-                organisation_name = ''
-                state = ''
-                postcode = ''
-            
-            else:
+            if check_international is not False:
                 try:
                     # checks if international seller by checking if the nunmber provided is an ABN
-
                     business_info_values = suppliers.get_business_info_by_abn(email_address, abn)
                     business_info_values = json.loads(business_info_values)
 
