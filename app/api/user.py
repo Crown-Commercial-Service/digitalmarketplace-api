@@ -134,7 +134,7 @@ def is_duplicate_user(email_address):
             email_address=email_address,
             application_id=application_id[0])
         return True
- 
+
     return False
 
 
