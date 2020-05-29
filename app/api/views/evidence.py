@@ -1,7 +1,7 @@
 from app.api import api
 from flask import request, jsonify, current_app
 from flask_login import current_user, login_required
-from app.api.helpers import not_found, role_required, abort
+from app.api.helpers import not_found, role_required, abort, exception_logger
 from app.api.services import (
     evidence_service, evidence_assessment_service, domain_service, suppliers, briefs, assessments,
     domain_criteria_service
