@@ -144,8 +144,7 @@ def get_domain_and_evidence(evidence_id):
 
     data = {}
     data = evidence.serialize()
-    domain_name = evidence.domain.name
-    data['domain_name'] = domain_name
+    data['domain_name'] = evidence.domain.name
 
     domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
     criteria_from_domain = {}
