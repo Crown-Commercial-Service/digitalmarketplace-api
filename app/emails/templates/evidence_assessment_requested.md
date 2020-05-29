@@ -2,7 +2,7 @@ Hi,
 
 We have received your request to assess your evidence for {{domain_name}}.
 
-[View the Submitted Evidence]({{ frontend_address }}/2/seller-assessment/{{evidence_id}}/view)
+[View the submitted evidence]({{ frontend_address }}/2/seller-assessment/{{evidence_id}}/view)
 
 **What happens next**
 
