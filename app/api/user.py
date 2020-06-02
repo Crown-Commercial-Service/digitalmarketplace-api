@@ -17,7 +17,7 @@ from app.api.helpers import get_email_domain
 from app.api.services import suppliers
 import json
 from app.api.business.errors import AbrError
-import abn as abnPython
+import abn
 
 
 def add_user(data):
@@ -255,7 +255,7 @@ def create_user(
             organisation_name = ''
             state = ''
             postcode = ''
-            check_international = abnPython.validate(abn)
+            check_international = abn.validate(abn)
             if check_international is not False:
                 try:
                     # checks if international seller by checking if the nunmber provided is an ABN
