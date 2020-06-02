@@ -21,7 +21,7 @@ contextlib2==0.6.0.post1  # via digitalmarketplace-utils
 cryptography==2.3.1       # via digitalmarketplace-utils
 defusedxml==0.6.0         # via odfpy
 git+https://github.com/alphagov/digitalmarketplace-apiclient.git@21.5.0#egg=digitalmarketplace-apiclient==21.5.0  # via -r requirements.in
-git+https://github.com/alphagov/digitalmarketplace-utils.git@51.5.0#egg=digitalmarketplace-utils==51.5.0  # via -r requirements.in
+git+https://github.com/alphagov/digitalmarketplace-utils.git@52.3.0#egg=digitalmarketplace-utils==52.3.0  # via -r requirements.in
 docopt==0.6.2             # via notifications-python-client
 docutils==0.15.2          # via botocore
 flask-bcrypt==0.7.1       # via -r requirements.in
@@ -37,6 +37,7 @@ future==0.18.2            # via notifications-python-client
 gds-metrics==0.2.0        # via digitalmarketplace-utils
 govuk-country-register==0.5.0  # via digitalmarketplace-utils
 idna==2.9                 # via cryptography, requests
+importlib-metadata==1.6.0  # via jsonschema
 itsdangerous==1.1.0       # via -r requirements.in, flask, flask-wtf
 jinja2==2.11.1            # via flask
 jmespath==0.9.4           # via boto3, botocore
@@ -69,6 +70,7 @@ urllib3==1.25.8           # via botocore, requests
 werkzeug==1.0.0           # via digitalmarketplace-utils, flask
 workdays==1.4             # via digitalmarketplace-utils
 wtforms==2.2.1            # via flask-wtf
+zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
