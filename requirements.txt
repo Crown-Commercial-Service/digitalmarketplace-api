@@ -29,7 +29,7 @@ flask-gzip==0.2           # via digitalmarketplace-utils
 flask-login==0.5.0        # via digitalmarketplace-utils
 flask-migrate==2.5.3      # via -r requirements.in
 flask-script==2.0.6       # via digitalmarketplace-utils
-flask-sqlalchemy==2.4.1   # via -r requirements.in, flask-migrate
+flask-sqlalchemy==2.4.3   # via -r requirements.in, flask-migrate
 flask-wtf==0.14.3         # via digitalmarketplace-utils
 flask==1.0.4              # via -r requirements.in, digitalmarketplace-utils, flask-bcrypt, flask-gzip, flask-login, flask-migrate, flask-script, flask-sqlalchemy, flask-wtf, gds-metrics
 fleep==1.0.1              # via digitalmarketplace-utils
@@ -37,7 +37,6 @@ future==0.18.2            # via notifications-python-client
 gds-metrics==0.2.0        # via digitalmarketplace-utils
 govuk-country-register==0.5.0  # via digitalmarketplace-utils
 idna==2.9                 # via cryptography, requests
-importlib-metadata==1.6.0  # via jsonschema
 itsdangerous==1.1.0       # via -r requirements.in, flask, flask-wtf
 jinja2==2.11.1            # via flask
 jmespath==0.9.4           # via boto3, botocore
@@ -70,7 +69,6 @@ urllib3==1.25.8           # via botocore, requests
 werkzeug==1.0.0           # via digitalmarketplace-utils, flask
 workdays==1.4             # via digitalmarketplace-utils
 wtforms==2.2.1            # via flask-wtf
-zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
