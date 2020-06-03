@@ -1,3 +1,4 @@
+abn==0.4.2
 amqp==2.2.2
 apipkg==1.4
 appdirs==1.4.3
