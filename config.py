@@ -31,7 +31,6 @@ class Config:
     DM_ALLOWED_ADMIN_DOMAINS = ['digital.cabinet-office.gov.uk', 'crowncommercial.gov.uk', 'user.marketplace.team',
                                 'notifications.service.gov.uk']
 
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/digitalmarketplace'
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
