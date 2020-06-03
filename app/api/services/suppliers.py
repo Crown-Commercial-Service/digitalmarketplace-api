@@ -420,7 +420,7 @@ class SuppliersService(Service):
         # takes the first organisationName
         search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
         organisation_name = search_xml_organisation_name[0]
-        # this only works for &, < and > but not ' and "" so I need to look into this
+        # this only works for &, < and > but not ' and ""
         organisation_name = saxutils.unescape(organisation_name)
 
         # takes the first postcode
