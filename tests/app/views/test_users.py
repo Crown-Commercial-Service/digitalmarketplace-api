@@ -6,6 +6,7 @@ from app import db, encryption
 from app.models import Address, User, Supplier, Application, Brief
 import pendulum
 from pendulum import create as datetime
+import abn
 from ..helpers import \
     BaseApplicationTest, \
     JSONTestMixin, \
