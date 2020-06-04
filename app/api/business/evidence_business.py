@@ -47,6 +47,7 @@ def delete_draft_evidence(evidence_id, actioned_by):
     )
     return True
 
+
 def get_domain_and_evidence_data(evidence_id):
     evidence = evidence_service.get_evidence_by_id(evidence_id)
 
