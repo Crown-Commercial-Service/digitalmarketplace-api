@@ -1,4 +1,4 @@
-from app.api.services import evidence_service, evidence_assessment_service, audit_service, audit_types
+from app.api.services import evidence_service, evidence_assessment_service, audit_service, audit_types, domain_criteria_service
 from app.api.business.domain_criteria import DomainCriteria
 from app.api.business.errors import DomainCriteriaInvalidRateException
 
@@ -45,3 +45,19 @@ def delete_draft_evidence(evidence_id, actioned_by):
         db_object=evidence
     )
     return True
+
+def get_domain_and_evidence_data(evidence_id):
+    evidence = evidence_service.get_evidence_by_id(evidence_id)
+
+    data = {}
+    data = evidence.serialize()
+    data['domain_name'] = evidence.domain.name
+
+    domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
+    criteria_from_domain = {}
+
+    for criteria in domain_criteria:
+        criteria_from_domain[criteria.id] = {'name': criteria.name}
+
+    data['domain_criteria'] = criteria_from_domain
+    return data
