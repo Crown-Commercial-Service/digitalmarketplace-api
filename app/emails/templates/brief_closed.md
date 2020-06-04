@@ -1,6 +1,6 @@
-Thank you for publishing your brief, {{ brief_name }}, on Digital Marketplace.  
+Thank you for publishing your opportunity, {{ brief_name }}, on Digital Marketplace.  
   
-This brief is now closed. Please access the brief responses from [your dashboard]({{ frontend_url }}/2/buyer-dashboard).  
+This opportunity has closed. Please access seller responses from [your dashboard]({{ frontend_url }}/2/buyer-dashboard).  
   
 The [Buyer guide and FAQs](https://marketplace1.zendesk.com/hc/en-gb/categories/115001542047-Buyer-guide-and-FAQs) outline your next steps, including advising sellers who are unsuccessful. This is a requirement under Section 7.15 of the [Commonwealth Procurement Rules](https://www.finance.gov.au/procurement/procurement-policy-and-guidance/commonwealth-procurement-rules/).  
   
