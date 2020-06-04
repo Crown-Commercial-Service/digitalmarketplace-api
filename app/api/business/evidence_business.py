@@ -1,4 +1,5 @@
-from app.api.services import evidence_service, evidence_assessment_service, audit_service, audit_types, domain_criteria_service
+from app.api.services import (evidence_service, evidence_assessment_service, audit_service, 
+                                audit_types, domain_criteria_service)
 from app.api.business.domain_criteria import DomainCriteria
 from app.api.business.errors import DomainCriteriaInvalidRateException
 
