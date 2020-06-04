@@ -413,7 +413,7 @@ class SuppliersService(Service):
         except SSLError as ex:
             raise AbrError('SSLError')
 
-        # Any other expections
+        # Any other exceptions
         except Exception as ex:
             raise AbrError('Failed exception raised')
 
