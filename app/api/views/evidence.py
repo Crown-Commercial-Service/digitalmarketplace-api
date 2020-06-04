@@ -8,6 +8,7 @@ from app.api.services import (
 )
 from app.api.business.validators import EvidenceDataValidator
 from app.api.business.domain_criteria import DomainCriteria
+from app.api.business.evidence_business import get_domain_and_evidence_data
 from app.tasks.jira import create_evidence_assessment_in_jira
 from app.tasks import publish_tasks
 from app.emails.evidence_assessments import send_evidence_assessment_requested_notification
@@ -138,21 +139,7 @@ def get_evidence(evidence_id):
 @login_required
 @role_required('supplier')
 def get_domain_and_evidence(evidence_id):
-    evidence = evidence_service.get_evidence_by_id(evidence_id)
-    if not evidence or current_user.supplier_code != evidence.supplier_code:
-        not_found("No evidence for id '%s' found" % (evidence_id))
-
-    data = {}
-    data = evidence.serialize()
-    data['domain_name'] = evidence.domain.name
-
-    domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
-    criteria_from_domain = {}
-
-    for criteria in domain_criteria:
-        criteria_from_domain[criteria.id] = {'name': criteria.name}
-
-    data['domain_criteria'] = criteria_from_domain
+    data = get_domain_and_evidence_data(evidence_id)
     return jsonify(data)
 
 
