@@ -384,11 +384,11 @@ class SuppliersService(Service):
         return [r._asdict() for r in results]
 
     def get_business_info_by_abn(self, email_address, abn):
-        apiKey = current_app.config['ABR_API_KEY']
-        includeHistoricalDetails = 'N'
+        api_key = current_app.config['ABR_API_KEY']
+        include_historical_details = 'N'
         abn = abn
         link = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
-        url = link + abn + '&includeHistoricalDetails=' + includeHistoricalDetails + '&authenticationGuid=' + apiKey
+        url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
 
         try:
             response = requests.get(url)
