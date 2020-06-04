@@ -372,7 +372,7 @@ def send_brief_closed_email(brief):
         brief_id=brief.id
     )
 
-    subject = "Your brief has closed - please review all responses."
+    subject = "Your opportunity has closed - please review all responses."
 
     send_or_handle_error(
         to_addresses,

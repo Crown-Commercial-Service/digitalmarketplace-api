@@ -9,7 +9,7 @@ from app.api.business.brief import brief_business
 from app.api.business.errors import (BriefError, NotFoundError,
                                      UnauthorisedError)
 from app.api.services import (agency_service, audit_service, audit_types,
-                              brief_history_service)
+                              brief_history_service, domain_service)
 from app.api.services import briefs as brief_service
 from app.api.services import suppliers as supplier_service
 from app.api.services import users as user_service
@@ -24,6 +24,31 @@ from app.emails import (send_opportunity_edited_email_to_buyers,
                         send_specialist_brief_seller_invited_email)
 from app.models import Brief, BriefHistory, ValidationError
 from app.tasks import publish_tasks
+
+
+def get_opportunity_to_edit(user_id, brief_id):
+    brief = brief_service.get(brief_id)
+    if not brief:
+        raise NotFoundError('Opportunity {} does not exist'.format(brief_id))
+
+    if not brief_service.has_permission_to_brief(user_id, brief_id):
+        raise UnauthorisedError('Not authorised to edit opportunity {}'.format(brief_id))
+
+    if brief.status != 'live':
+        raise BriefError('Unable to edit opportunity {}'.format(brief_id))
+
+    domains = []
+    for domain in domain_service.get_active_domains():
+        domains.append({
+            'id': str(domain.id),
+            'name': domain.name
+        })
+
+    return {
+        'brief': brief.serialize(with_users=False),
+        'domains': domains,
+        'isOpenToAll': brief_business.is_open_to_all(brief)
+    }
 
 
 def calculate_new_questions_closed_at(brief):
