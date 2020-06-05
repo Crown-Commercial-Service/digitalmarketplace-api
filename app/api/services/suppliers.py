@@ -402,7 +402,7 @@ class SuppliersService(Service):
 
         except HTTPError as ex:
             raise AbrError('HTTP Error')
-        
+
         except ProxyError as ex:
             raise AbrError('ProxyError')
 
@@ -415,7 +415,7 @@ class SuppliersService(Service):
         # Any other exceptions
         except Exception as ex:
             raise AbrError('Failed exception raised')
-        
+
         # searching for payload exceptions
         search_except_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', xmlText)
         except_description = search_except_description[0]
