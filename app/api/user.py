@@ -258,7 +258,7 @@ def create_user(
             validated_abn = abnPython.validate(abn)
             if validated_abn:
                 try:
-                    # checks if international seller by checking if the nunmber provided is an ABN
+                    #extracts business info using the abn
                     business_info_values = suppliers.get_business_info_by_abn(email_address, abn)
                     business_info_values = json.loads(business_info_values)
 
