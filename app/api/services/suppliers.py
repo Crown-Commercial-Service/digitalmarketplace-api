@@ -415,6 +415,14 @@ class SuppliersService(Service):
         # Any other exceptions
         except Exception as ex:
             raise AbrError('Failed exception raised')
+        
+        # searching for payload exceptions
+        search_except_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', xmlText)
+        except_description = search_except_description[0]
+
+        # raises except descriptions
+        if except_description:
+            raise AbrError(except_description)
 
         # takes the first organisationName
         search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
