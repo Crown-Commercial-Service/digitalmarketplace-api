@@ -432,6 +432,8 @@ class SuppliersService(Service):
         state = search_xml_state[0]
 
         # a dict to store these pre-filled info
-        business_info_abn_dict = {'organisation_name': organisation_name, 'postcode': postcode, 'state': state}
-        business_info_abn = json.dumps(business_info_abn_dict)
-        return business_info_abn
+        return json.dumps({
+            'organisation_name': organisation_name,
+            'postcode': postcode,
+            'state': state
+        })
