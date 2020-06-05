@@ -396,14 +396,13 @@ class SuppliersService(Service):
             xmlText = response.content
             root = ElementTree.fromstring(xmlText)
 
-        # Rasing Different exceptions
+        # Rasing different exceptions
         except ConnectionError as ex:
             raise AbrError('Connection Error')
 
-        # Invalid HTTP Reponse
         except HTTPError as ex:
             raise AbrError('HTTP Error')
-
+        
         except ProxyError as ex:
             raise AbrError('ProxyError')
 
