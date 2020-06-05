@@ -255,10 +255,11 @@ def create_user(
             organisation_name = ''
             state = ''
             postcode = ''
-            validated_abn = abnPython.validate(abn)
+            # abnPython will return a false statement if there is a trailing whitespace in a valid abn.
+            validated_abn = abnPython.validate(abn.strip())
             if validated_abn:
                 try:
-                    #extracts business info using the abn
+                    # extracts business info using the abn
                     business_info_values = suppliers.get_business_info_by_abn(email_address, abn)
                     business_info_values = json.loads(business_info_values)
 
