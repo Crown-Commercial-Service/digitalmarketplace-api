@@ -431,7 +431,6 @@ class SuppliersService(Service):
         search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', xmlText)
         state = search_xml_state[0]
 
-        # a dict to store these pre-filled info
         return json.dumps({
             'organisation_name': organisation_name,
             'postcode': postcode,
