@@ -2107,23 +2107,54 @@ class TestUsersExport(BaseUserTest, FixtureMixin, PutDeclarationAndDetailsAndSer
 
 
 class TestUsersEmailCheck(BaseUserTest):
-    def test_valid_email_is_ok_if_domain_found_in_database(self):
+    def _setup(self):
         # Create a domain that isn't in the buyer-email-domains.txt file
         db.session.add(BuyerEmailDomain(domain_name="bananas.org"))
         db.session.commit()
 
-        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@bananas.org'})
-        assert response.status_code == 200
-        assert json.loads(response.get_data())['valid'] is True
+    # Deprecated
+    def test_get_valid_email_is_ok_if_domain_found_in_database(self):
+        self._setup()
+        get_response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@bananas.org'})
+        assert get_response.status_code == 200
+        assert json.loads(get_response.get_data())['valid'] is True
 
-    def test_invalid_email_is_not_ok(self):
-        response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'someone@notgov.uk'})
-        assert response.status_code == 200
-        assert json.loads(response.get_data())['valid'] is False
+    def test_post_valid_email_is_ok_if_domain_found_in_database(self):
+        self._setup()
+        post_response = self.client.post('/users/check-buyer-email',
+                                         data=json.dumps({'emailAddress': 'buyer@bananas.org'}),
+                                         content_type='application/json')
+        assert post_response.status_code == 200
+        assert json.loads(post_response.get_data())['valid'] is True
 
-    def test_email_address_is_required(self):
-        response = self.client.get('/users/check-buyer-email')
-        assert response.status_code == 400
+    # Deprecated
+    def test_get_invalid_email_is_not_ok(self):
+        get_response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'someone@notgov.uk'})
+        assert get_response.status_code == 200
+        assert json.loads(get_response.get_data())['valid'] is False
+
+        post_response = self.client.post('/users/check-buyer-email',
+                                         data=json.dumps({'emailAddress': 'someone@notgov.uk'}),
+                                         content_type='application/json')
+        assert post_response.status_code == 200
+        assert json.loads(post_response.get_data())['valid'] is False
+
+    def test_post_invalid_email_is_not_ok(self):
+        post_response = self.client.post('/users/check-buyer-email',
+                                         data=json.dumps({'emailAddress': 'someone@notgov.uk'}),
+                                         content_type='application/json')
+        assert post_response.status_code == 200
+        assert json.loads(post_response.get_data())['valid'] is False
+
+    # deprecated
+    def test_get_email_address_is_required(self):
+        # Deprecated
+        get_response = self.client.get('/users/check-buyer-email')
+        assert get_response.status_code == 400
+
+    def test_post_email_address_is_required(self):
+        post_response = self.client.post('/users/check-buyer-email')
+        assert post_response.status_code == 400
 
 
 class TestAdminEmailCheck(BaseUserTest):

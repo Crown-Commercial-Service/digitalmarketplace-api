@@ -429,12 +429,22 @@ def export_users_for_framework(framework_slug):
     return jsonify(users=user_rows), 200
 
 
+# Deprecated
 @main.route("/users/check-buyer-email", methods=["GET"])
 def email_has_valid_buyer_domain():
     email_address = request.args.get('email_address')
     if not email_address:
         abort(400, "'email_address' is a required parameter")
 
+    domain_ok = buyer_email_address_has_approved_domain(BuyerEmailDomain.query.all(), email_address)
+    return jsonify(valid=domain_ok), 200
+
+
+@main.route("/users/check-buyer-email", methods=["POST"])
+def email_has_valid_buyer_domain_post():
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['emailAddress'])
+    email_address = json_payload['emailAddress']
     domain_ok = buyer_email_address_has_approved_domain(BuyerEmailDomain.query.all(), email_address)
     return jsonify(valid=domain_ok), 200
 
