@@ -2163,11 +2163,17 @@ class TestAdminEmailCheck(BaseUserTest):
         super(TestAdminEmailCheck, self).setup()
         self.app.config['DM_ALLOWED_ADMIN_DOMAINS'] = ['bananas.org']
 
-    def test_email_address_is_required(self):
+    # deprecated
+    def test_email_address_is_required_get(self):
         response = self.client.get('/users/valid-admin-email')
         assert response.status_code == 400
 
-    def test_invalid_email_is_not_ok(self):
+    def test_email_address_is_required_post(self):
+        response = self.client.post('/users/valid-admin-email')
+        assert response.status_code == 400
+
+    # deprecated
+    def test_invalid_email_is_not_ok_get(self):
         response = self.client.get(
             '/users/valid-admin-email',
             query_string={'email_address': 'buyer@i-dislike-bananas.org'}
@@ -2175,14 +2181,40 @@ class TestAdminEmailCheck(BaseUserTest):
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is False
 
-    def test_valid_email_is_ok_if_admin_domain_found_in_config(self):
+    def test_invalid_email_is_not_ok_post(self):
+        response = self.client.post(
+            '/users/valid-admin-email',
+            data=json.dumps({'emailAddress': 'buyer@i-dislike-bananas.org'}),
+            content_type='application/json')
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is False
+
+    # deprecated
+    def test_valid_email_is_ok_if_admin_domain_found_in_config_get(self):
         response = self.client.get('/users/valid-admin-email', query_string={'email_address': 'buyer@bananas.org'})
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is True
 
-    def test_returns_invalid_if_no_config_value_set(self):
+    def test_valid_email_is_ok_if_admin_domain_found_in_config_post(self):
+        response = self.client.post('/users/valid-admin-email',
+                                    data=json.dumps({'emailAddress': 'buyer@bananas.org'}),
+                                    content_type='application/json')
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is True
+
+    # deprecated
+    def test_returns_invalid_if_no_config_value_set_get(self):
         self.app.config.pop('DM_ALLOWED_ADMIN_DOMAINS')
 
         response = self.client.get('/users/valid-admin-email', query_string={'email_address': 'buyer@bananas.org'})
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is False
+
+    def test_returns_invalid_if_no_config_value_set_post(self):
+        self.app.config.pop('DM_ALLOWED_ADMIN_DOMAINS')
+
+        response = self.client.post('/users/valid-admin-email',
+                                    data=json.dumps({'emailAddress': 'buyer@bananas.org'}),
+                                    content_type='application/json')
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is False

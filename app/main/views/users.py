@@ -429,7 +429,7 @@ def export_users_for_framework(framework_slug):
     return jsonify(users=user_rows), 200
 
 
-# Deprecated
+# deprecated
 @main.route("/users/check-buyer-email", methods=["GET"])
 def email_has_valid_buyer_domain():
     email_address = request.args.get('email_address')
@@ -449,11 +449,21 @@ def email_has_valid_buyer_domain_post():
     return jsonify(valid=domain_ok), 200
 
 
+# deprecated
 @main.route("/users/valid-admin-email", methods=["GET"])
 def email_is_valid_for_admin_user():
     email_address = request.args.get('email_address')
     if not email_address:
         abort(400, "'email_address' is a required parameter")
 
+    valid = admin_email_address_has_approved_domain(email_address)
+    return jsonify(valid=valid), 200
+
+
+@main.route("/users/valid-admin-email", methods=["POST"])
+def email_is_valid_for_admin_user_post():
+    json_payload = get_json_from_request()
+    json_has_required_keys(json_payload, ['emailAddress'])
+    email_address = json_payload['emailAddress']
     valid = admin_email_address_has_approved_domain(email_address)
     return jsonify(valid=valid), 200
