@@ -2167,7 +2167,7 @@ class TestAdminEmailCheck(BaseUserTest):
         assert response.status_code == 400
 
     def test_email_address_is_required_post(self):
-        response = self.client.post('/users/valid-admin-email')
+        response = self.client.post('/users/valid-admin-email', content_type='application/json')
         assert response.status_code == 400
 
     # deprecated
