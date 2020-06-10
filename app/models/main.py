@@ -49,6 +49,7 @@ from app.validation import (
     is_valid_service_id, get_validation_errors, buyer_email_address_has_approved_domain,
     admin_email_address_has_approved_domain
 )
+from app.draft_utils import get_copiable_service_data
 
 # there is a danger of circular imports here. as such, it is not necessarily "safe" to expect all other models to be
 # present in `models` at import time, but it should be "safe" to reference any of them in this file from within a
@@ -1261,19 +1262,18 @@ class DraftService(db.Model, ServiceTableMixin):
     )
 
     @staticmethod
-    def from_service(service, questions_to_copy=None, target_framework_id=None):
+    def from_service(service, questions_to_copy=None, target_framework_id=None, questions_to_exclude=None):
         draft_not_on_same_framework_as_service = target_framework_id and target_framework_id != service.framework.id
-        if draft_not_on_same_framework_as_service and not isinstance(questions_to_copy, (set, list, tuple)):
-            raise TypeError("'questions_to_copy' must be a list, set or tuple")
+
+        service_data = get_copiable_service_data(service, questions_to_exclude, questions_to_copy) if \
+            draft_not_on_same_framework_as_service else service.data
 
         kwargs = {
             'framework_id': service.framework_id if not target_framework_id else target_framework_id,
             'lot': service.lot,
             'service_id': service.service_id,
             'supplier': service.supplier,
-            'data': {
-                key: value for key, value in service.data.items() if key in questions_to_copy
-            } if draft_not_on_same_framework_as_service else service.data,
+            'data': service_data,
             'status': service.status if not target_framework_id or
             target_framework_id == service.framework.id else 'not-submitted',
             'lot_one_service_limit': service.lot.one_service_limit,
