@@ -383,13 +383,21 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
 
 class TestCopyPublishedFromFramework(DraftsHelpersMixin):
     def post_to_copy_published_from_framework(
-        self, source_framework_slug="g-cloud-6", override_questions_to_copy=None, target_framework_slug='g-cloud-7'
+        self,
+        source_framework_slug="g-cloud-6",
+        override_questions_to_copy=None,
+        override_questions_to_exclude=None,
+        target_framework_slug='g-cloud-7'
     ):
         """
         :param source_framework_slug: The framework slug for the services being copied.
         :param override_questions_to_copy: A list of questions to copy, rather than the default fixture. There is a
                                            special case where an empty list is used. This causes the 'questionsToCopy'
                                            key to be skipped from the request data, for test purposes.
+        :param override_questions_to_exclude: A list of questions to exclude, rather than the default fixture. There is
+                                           a special case where an empty list is used. This causes the
+                                           'questionsToExclude' key to be skipped from the request data, for test
+                                           purposes.
         :param target_framework_slug: The frameworks slug for where the drafts are being created.
         :return: The json response from the api
         """
@@ -399,10 +407,13 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
             "supplierId": 1,
         }
 
-        if override_questions_to_copy == []:
+        if override_questions_to_copy == [] or override_questions_to_exclude == []:
             pass
-        elif override_questions_to_copy:
-            data.update(questionsToCopy=override_questions_to_copy)
+        elif override_questions_to_copy or override_questions_to_exclude:
+            if override_questions_to_copy:
+                data.update(questionsToCopy=override_questions_to_copy)
+            if override_questions_to_exclude:
+                data.update(questionsToExclude=override_questions_to_exclude)
         else:
             data.update(self.basic_questions_json)
 
@@ -449,19 +460,38 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
         res = self.post_to_copy_published_from_framework(source_framework_slug=None)
 
         assert res.status_code == 400
-        assert "Required data missing: 'source_framework_slug'" in res.get_data(as_text=True)
+        assert "Required data missing: 'sourceFrameworkSlug'" in res.get_data(as_text=True)
 
-    def test_should_400_if_no_questions_to_copy(self):
-        res = self.post_to_copy_published_from_framework(override_questions_to_copy=[])
+    @pytest.mark.parametrize('kwarg_', ('override_questions_to_copy', 'override_questions_to_exclude'))
+    def test_should_400_if_no_questions_to_copy_or_exclude(self, kwarg_):
+        kwargs_ = {kwarg_: []}
+        res = self.post_to_copy_published_from_framework(**kwargs_)
 
         assert res.status_code == 400
-        assert "Required data missing: 'questions_to_copy'" in json.loads(res.get_data(as_text=True))['error']
+        assert "Required data missing: either 'questionsToCopy' or 'questionsToExclude'" in \
+               json.loads(res.get_data(as_text=True))['error']
+
+    def test_should_400_if_both_questions_to_copy_or_exclude(self):
+        res = self.post_to_copy_published_from_framework(
+            override_questions_to_exclude=['foo'],
+            override_questions_to_copy=['bar'],
+        )
+
+        assert res.status_code == 400
+        assert "Supply either 'questionsToCopy' or 'questionsToExclude', not both" in \
+               json.loads(res.get_data(as_text=True))['error']
 
     def test_should_400_if_questions_to_copy_is_not_a_list(self):
         res = self.post_to_copy_published_from_framework(override_questions_to_copy='Not a list')
 
         assert res.status_code == 400
-        assert "Data error: 'questions_to_copy' must be a list" in json.loads(res.get_data(as_text=True))['error']
+        assert "Data error: 'questionsToCopy' must be a list" in json.loads(res.get_data(as_text=True))['error']
+
+    def test_should_400_if_questions_to_exclude_is_not_a_list(self):
+        res = self.post_to_copy_published_from_framework(override_questions_to_exclude='Not a list')
+
+        assert res.status_code == 400
+        assert "Data error: 'questionsToExclude' must be a list" in json.loads(res.get_data(as_text=True))['error']
 
     def test_should_404_if_framework_does_not_exist(self):
         res = self.post_to_copy_published_from_framework(target_framework_slug='z-cloud')
@@ -573,6 +603,29 @@ class TestCopyPublishedFromFramework(DraftsHelpersMixin):
 
         assert all(question in draft.data for draft in db_drafts for question in questions_to_copy)
         assert all(question not in draft.data for draft in db_drafts for question in questions_to_drop)
+
+    def test_should_filter_out_questions_excluded(self):
+        service_data = {
+            'serviceName': 'My service',
+            'serviceBenefits': 'Free tea and cake',
+            'provisioningTime': '4 hours',
+            'termsAndConditionsDocumentURL': 'example.com',
+            'serviceSummary': 'The best one going',
+        }
+        self.setup_dummy_services(5, supplier_id=1, lot_id=2, data=service_data)
+
+        questions_to_exclude = ["provisioningTime", "termsAndConditionsDocumentURL"]
+        questions_to_keep = ["serviceName", "serviceBenefits", "serviceSummary"]
+
+        res = self.post_to_copy_published_from_framework(override_questions_to_exclude=questions_to_exclude)
+        assert res.status_code == 201
+
+        db_drafts = DraftService.query.filter(
+            DraftService.supplier_id == 1,
+        ).all()
+
+        assert all(question in draft.data for draft in db_drafts for question in questions_to_keep)
+        assert all(question not in draft.data for draft in db_drafts for question in questions_to_exclude)
 
     def test_should_mark_source_services_as_copied(self):
         self.setup_dummy_services(5, supplier_id=1, lot_id=2)

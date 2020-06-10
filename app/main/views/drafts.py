@@ -133,14 +133,20 @@ def copy_published_from_framework(framework_slug, lot_slug):
 
     supplier_id = get_int_or_400(json_payload, 'supplierId')
     source_framework_slug = json_payload.get('sourceFrameworkSlug')
-    questions_to_copy = json_payload.get('questionsToCopy')
+    questions_to_copy = json_payload.get('questionsToCopy', [])
+    questions_to_exclude = json_payload.get('questionsToExclude', [])
 
     if not source_framework_slug:
-        abort(400, "Required data missing: 'source_framework_slug'")
-    if not questions_to_copy:
-        abort(400, "Required data missing: 'questions_to_copy'")
-    if not isinstance(questions_to_copy, list):
-        abort(400, "Data error: 'questions_to_copy' must be a list")
+        abort(400, "Required data missing: 'sourceFrameworkSlug'")
+    if not (questions_to_copy or questions_to_exclude):
+        abort(400, "Required data missing: either 'questionsToCopy' or 'questionsToExclude'")
+    if questions_to_copy and questions_to_exclude:
+        # Can't have both include-only and exclude-only question lists
+        abort(400, "Supply either 'questionsToCopy' or 'questionsToExclude', not both")
+    if questions_to_copy and not isinstance(questions_to_copy, list):
+        abort(400, "Data error: 'questionsToCopy' must be a list")
+    if questions_to_exclude and not isinstance(questions_to_exclude, list):
+        abort(400, "Data error: 'questionsToExclude' must be a list")
 
     target_framework = Framework.query.filter(
         Framework.slug == framework_slug
@@ -171,7 +177,8 @@ def copy_published_from_framework(framework_slug, lot_slug):
     for service in source_services:
         draft = DraftService.from_service(
             service,
-            questions_to_copy,
+            questions_to_copy=questions_to_copy,
+            questions_to_exclude=questions_to_exclude,
             target_framework_id=target_framework.id,
         )
         drafts_services.append((draft, service))
