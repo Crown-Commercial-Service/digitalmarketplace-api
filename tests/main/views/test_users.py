@@ -2149,10 +2149,23 @@ class TestUsersEmailCheck(BaseUserTest):
     def test_get_email_address_is_required(self):
         get_response = self.client.get('/users/check-buyer-email')
         assert get_response.status_code == 400
+        assert json.loads(get_response.get_data())['error'] == "'email_address' is a required parameter"
 
     def test_post_email_address_is_required(self):
+        post_response = self.client.post('/users/check-buyer-email', content_type='application/json',
+                                         data=json.dumps({}))
+        assert post_response.status_code == 400
+        assert json.loads(post_response.get_data())['error'] == "Invalid JSON must only have ['emailAddress'] keys"
+
+    def test_post_email_address_json_body_is_required(self):
+        post_response = self.client.post('/users/check-buyer-email', content_type='application/json')
+        assert post_response.status_code == 400
+        assert json.loads(post_response.get_data())['error'] == "Invalid JSON; must be a valid JSON object"
+
+    def test_post_email_address_json_content_type_is_required(self):
         post_response = self.client.post('/users/check-buyer-email')
         assert post_response.status_code == 400
+        assert json.loads(post_response.get_data())['error'] == "Unexpected Content-Type, expecting 'application/json'"
 
 
 class TestAdminEmailCheck(BaseUserTest):
@@ -2165,10 +2178,22 @@ class TestAdminEmailCheck(BaseUserTest):
     def test_email_address_is_required_get(self):
         response = self.client.get('/users/valid-admin-email')
         assert response.status_code == 400
+        assert json.loads(response.get_data())['error'] == "'email_address' is a required parameter"
 
     def test_email_address_is_required_post(self):
-        response = self.client.post('/users/valid-admin-email', content_type='application/json')
+        response = self.client.post('/users/valid-admin-email', content_type='application/json', data=json.dumps({}))
         assert response.status_code == 400
+        assert json.loads(response.get_data())['error'] == "Invalid JSON must only have ['emailAddress'] keys"
+
+    def test_json_body_is_required_post(self):
+        response = self.client.post('users/valid-admin-email', content_type='application/json')
+        assert response.status_code == 400
+        assert json.loads(response.get_data())['error'] == "Invalid JSON; must be a valid JSON object"
+
+    def test_json_content_type_is_required_post(self):
+        response = self.client.post('users/valid-admin-email')
+        assert response.status_code == 400
+        assert json.loads(response.get_data())['error'] == "Unexpected Content-Type, expecting 'application/json'"
 
     # deprecated
     def test_invalid_email_is_not_ok_get(self):

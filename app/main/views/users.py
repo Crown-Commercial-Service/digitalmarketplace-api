@@ -21,6 +21,7 @@ from ...utils import (
     get_json_from_request,
     get_valid_page_or_1,
     json_has_required_keys,
+    json_only_has_required_keys,
     json_has_matching_id,
     paginated_result_response,
     single_result_response,
@@ -443,7 +444,7 @@ def email_has_valid_buyer_domain():
 @main.route("/users/check-buyer-email", methods=["POST"])
 def email_has_valid_buyer_domain_post():
     json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ['emailAddress'])
+    json_only_has_required_keys(json_payload, ['emailAddress'])
     email_address = json_payload['emailAddress']
     domain_ok = buyer_email_address_has_approved_domain(BuyerEmailDomain.query.all(), email_address)
     return jsonify(valid=domain_ok), 200
@@ -463,7 +464,7 @@ def email_is_valid_for_admin_user():
 @main.route("/users/valid-admin-email", methods=["POST"])
 def email_is_valid_for_admin_user_post():
     json_payload = get_json_from_request()
-    json_has_required_keys(json_payload, ['emailAddress'])
+    json_only_has_required_keys(json_payload, ['emailAddress'])
     email_address = json_payload['emailAddress']
     valid = admin_email_address_has_approved_domain(email_address)
     return jsonify(valid=valid), 200
