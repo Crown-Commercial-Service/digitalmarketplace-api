@@ -2107,20 +2107,19 @@ class TestUsersExport(BaseUserTest, FixtureMixin, PutDeclarationAndDetailsAndSer
 
 
 class TestUsersEmailCheck(BaseUserTest):
-    def _setup(self):
+    def setup(self):
+        super(TestUsersEmailCheck, self).setup()
         # Create a domain that isn't in the buyer-email-domains.txt file
         db.session.add(BuyerEmailDomain(domain_name="bananas.org"))
         db.session.commit()
 
     # Deprecated
     def test_get_valid_email_is_ok_if_domain_found_in_database(self):
-        self._setup()
         get_response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@bananas.org'})
         assert get_response.status_code == 200
         assert json.loads(get_response.get_data())['valid'] is True
 
     def test_post_valid_email_is_ok_if_domain_found_in_database(self):
-        self._setup()
         post_response = self.client.post('/users/check-buyer-email',
                                          data=json.dumps({'emailAddress': 'buyer@bananas.org'}),
                                          content_type='application/json')
@@ -2148,7 +2147,6 @@ class TestUsersEmailCheck(BaseUserTest):
 
     # deprecated
     def test_get_email_address_is_required(self):
-        # Deprecated
         get_response = self.client.get('/users/check-buyer-email')
         assert get_response.status_code == 400
 
