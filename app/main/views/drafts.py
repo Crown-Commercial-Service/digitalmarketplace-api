@@ -48,9 +48,18 @@ def copy_draft_service_from_existing_service(service_id):
 
     target_framework_slug = json_payload.get('targetFramework')
     questions_to_copy = set(json_payload.get('questionsToCopy', []))
+    questions_to_exclude = set(json_payload.get('questionsToExclude', []))
 
-    if target_framework_slug and not questions_to_copy:
-        abort(400, "Required data missing: 'questions_to_copy'")
+    if target_framework_slug:
+        if not (questions_to_copy or questions_to_exclude):
+            abort(400, "Required data missing: either 'questionsToCopy' or 'questionsToExclude'")
+        if questions_to_copy and questions_to_exclude:
+            # Can't have both include-only and exclude-only question lists
+            abort(400, "Supply either 'questionsToCopy' or 'questionsToExclude', not both")
+        if questions_to_copy and not isinstance(questions_to_copy, (set, list, tuple)):
+            raise TypeError("'questionsToCopy' must be a list, set or tuple")
+        if questions_to_exclude and not isinstance(questions_to_exclude, (set, list, tuple)):
+            raise TypeError("'questionsToExclude' must be a list, set or tuple")
 
     service = Service.query.filter(
         Service.service_id == service_id
@@ -77,6 +86,7 @@ def copy_draft_service_from_existing_service(service_id):
     draft = DraftService.from_service(
         service,
         questions_to_copy=questions_to_copy,
+        questions_to_exclude=questions_to_exclude,
         target_framework_id=target_framework_id,
     )
 

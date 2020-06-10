@@ -15,6 +15,7 @@ class DraftsHelpersMixin(BaseApplicationTest, FixtureMixin):
     updater_json = None
     create_draft_json = None
     basic_questions_json = None
+    exclude_questions_json = None
 
     def setup(self):
         super().setup()
@@ -33,6 +34,9 @@ class DraftsHelpersMixin(BaseApplicationTest, FixtureMixin):
         }
         self.basic_questions_json = {
             'questionsToCopy': ['serviceName']
+        }
+        self.exclude_questions_json = {
+            'questionsToExclude': ['termsAndConditionsDocumentURL']
         }
 
         db.session.add(
@@ -246,7 +250,23 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             content_type='application/json',
         )
         assert res.status_code == 400
-        assert "Required data missing: 'questions_to_copy'" in json.loads(res.get_data(as_text=True))['error']
+        assert "Required data missing: either 'questionsToCopy' or 'questionsToExclude'" in \
+               json.loads(res.get_data(as_text=True))['error']
+
+    def test_400_if_target_framework_and_both_questions_to_copy_and_to_exclude(self):
+        res = self.client.put(
+            '/draft-services/copy-from/0000000000',
+            data=json.dumps({
+                **self.updater_json,
+                **self.basic_questions_json,
+                **self.exclude_questions_json,
+                'targetFramework': 'g-cloud-7'
+            }),
+            content_type='application/json',
+        )
+        assert res.status_code == 400
+        assert "Supply either 'questionsToCopy' or 'questionsToExclude', not both" in \
+               json.loads(res.get_data(as_text=True))['error']
 
     def test_existing_copied_draft_does_not_prevent_copy_to_new_framework(self):
         res1 = self.client.put(
@@ -287,6 +307,23 @@ class TestCopyDraftServiceFromExistingService(DraftsHelpersMixin):
             'termsAndConditionsDocumentURL',
             'copiedFromServiceId'
         }
+
+    def test_specified_questions_are_excluded(self):
+        res = self.client.put(
+            '/draft-services/copy-from/{}'.format(self.service_id),
+            data=json.dumps({
+                **self.updater_json,
+                'targetFramework': 'g-cloud-7',
+                'questionsToExclude': ['termsAndConditionsDocumentURL']
+            }),
+            content_type='application/json')
+        assert res.status_code == 201
+
+        draft = DraftService.query.filter(
+            DraftService.framework_id == 4,
+        ).first()
+
+        assert 'termsAndConditionsDocumentURL' not in set(draft.data.keys())
 
     def test_source_service_is_marked_as_copied_after_copy_to_new_framework(self):
         pre_copy_source_service = Service.query.first()
