@@ -80,6 +80,10 @@ def suppliers(app, request):
                     'phone': '0123456789',
                     'email': 'auth@rep.com',
                     'documents': {
+                        "indemnity": {
+                            "filename": "4.pdf",
+                            "expiry": pendulum.tomorrow().date().to_date_string()
+                        },
                         "liability": {
                             "filename": "1.pdf",
                             "expiry": pendulum.tomorrow().date().to_date_string()
