@@ -15,6 +15,10 @@ def test_can_get_error_for_expired_documents():
     application = Application(
         data={
             'documents': {
+                'indemnity': {
+                    'filename': 'test.pdf',
+                    'expiry': '2018/01/01'
+                },
                 'liability': {
                     'filename': 'test.pdf',
                     'expiry': '2018/01/01'
@@ -31,13 +35,17 @@ def test_can_get_error_for_expired_documents():
     )
     errors = ApplicationValidator(application).validate_documents()
 
-    assert len(errors) == 2
+    assert len(errors) == 3
 
 
 def test_can_get_error_for_no_filename():
     application = Application(
         data={
             'documents': {
+                'indemnity': {
+                    'filename': '',
+                    'expiry': '2018/01/01'
+                },
                 'liability': {
                     'filename': '',
                     'expiry': '2018/01/01'
@@ -53,5 +61,5 @@ def test_can_get_error_for_no_filename():
         }
     )
     errors = ApplicationValidator(application).validate_documents()
-
-    assert len(errors) == 5
+    print errors
+    assert len(errors) == 7
