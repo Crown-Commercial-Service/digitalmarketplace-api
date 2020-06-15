@@ -1265,8 +1265,11 @@ class DraftService(db.Model, ServiceTableMixin):
     def from_service(service, questions_to_copy=None, target_framework_id=None, questions_to_exclude=None):
         draft_not_on_same_framework_as_service = target_framework_id and target_framework_id != service.framework.id
 
-        service_data = get_copiable_service_data(service, questions_to_exclude, questions_to_copy) if \
-            draft_not_on_same_framework_as_service else service.data
+        service_data = get_copiable_service_data(
+            service,
+            questions_to_exclude=questions_to_exclude,
+            questions_to_copy=questions_to_copy
+        ) if draft_not_on_same_framework_as_service else service.data
 
         kwargs = {
             'framework_id': service.framework_id if not target_framework_id else target_framework_id,

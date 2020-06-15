@@ -10,7 +10,7 @@ def validate_and_return_draft_request(draft_id=0):
     return json_payload['services']
 
 
-def get_copiable_service_data(service, questions_to_exclude=None, questions_to_copy=None):
+def get_copiable_service_data(service, *, questions_to_exclude=None, questions_to_copy=None):
     """
     Filter out any service data that shouldn't be copied to a new draft service, by either including
     copyable questions or excluding non-copyable questions.
