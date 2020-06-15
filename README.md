@@ -65,6 +65,13 @@ To run the `flake8` linter:
 make test-flake8
 ```
 
+To re-create the test database (this is a useful troubleshooting step if you are having issues with the test database):
+
+```
+make test-bootstrap
+```
+
+
 ### Updating Python dependencies
 
 `requirements.txt` file is generated from the `requirements.in` in order to pin
