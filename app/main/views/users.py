@@ -431,7 +431,7 @@ def export_users_for_framework(framework_slug):
 
 
 @main.route("/users/check-buyer-email", methods=["POST"])
-def email_has_valid_buyer_domain_post():
+def email_has_valid_buyer_domain():
     json_payload = get_json_from_request()
     json_only_has_required_keys(json_payload, ['emailAddress'])
     email_address = json_payload['emailAddress']
@@ -440,7 +440,7 @@ def email_has_valid_buyer_domain_post():
 
 
 @main.route("/users/valid-admin-email", methods=["POST"])
-def email_is_valid_for_admin_user_post():
+def email_is_valid_for_admin_user():
     json_payload = get_json_from_request()
     json_only_has_required_keys(json_payload, ['emailAddress'])
     email_address = json_payload['emailAddress']

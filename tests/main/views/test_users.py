@@ -2113,35 +2113,35 @@ class TestUsersEmailCheck(BaseUserTest):
         db.session.add(BuyerEmailDomain(domain_name="bananas.org"))
         db.session.commit()
 
-    def test_post_valid_email_is_ok_if_domain_found_in_database(self):
-        post_response = self.client.post('/users/check-buyer-email',
-                                         data=json.dumps({'emailAddress': 'buyer@bananas.org'}),
-                                         content_type='application/json')
-        assert post_response.status_code == 200
-        assert json.loads(post_response.get_data())['valid'] is True
+    def test_valid_email_is_ok_if_domain_found_in_database(self):
+        response = self.client.post('/users/check-buyer-email',
+                                    data=json.dumps({'emailAddress': 'buyer@bananas.org'}),
+                                    content_type='application/json')
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is True
 
-    def test_post_invalid_email_is_not_ok(self):
-        post_response = self.client.post('/users/check-buyer-email',
-                                         data=json.dumps({'emailAddress': 'someone@notgov.uk'}),
-                                         content_type='application/json')
-        assert post_response.status_code == 200
-        assert json.loads(post_response.get_data())['valid'] is False
+    def test_invalid_email_is_not_ok(self):
+        response = self.client.post('/users/check-buyer-email',
+                                    data=json.dumps({'emailAddress': 'someone@notgov.uk'}),
+                                    content_type='application/json')
+        assert response.status_code == 200
+        assert json.loads(response.get_data())['valid'] is False
 
-    def test_post_email_address_is_required(self):
-        post_response = self.client.post('/users/check-buyer-email', content_type='application/json',
-                                         data=json.dumps({}))
-        assert post_response.status_code == 400
-        assert json.loads(post_response.get_data())['error'] == "Invalid JSON must only have ['emailAddress'] keys"
+    def test_email_address_is_required(self):
+        response = self.client.post('/users/check-buyer-email', content_type='application/json',
+                                    data=json.dumps({}))
+        assert response.status_code == 400
+        assert json.loads(response.get_data())['error'] == "Invalid JSON must only have ['emailAddress'] keys"
 
-    def test_post_email_address_json_body_is_required(self):
-        post_response = self.client.post('/users/check-buyer-email', content_type='application/json')
-        assert post_response.status_code == 400
-        assert json.loads(post_response.get_data())['error'] == "Invalid JSON; must be a valid JSON object"
+    def test_email_address_json_body_is_required(self):
+        response = self.client.post('/users/check-buyer-email', content_type='application/json')
+        assert response.status_code == 400
+        assert json.loads(response.get_data())['error'] == "Invalid JSON; must be a valid JSON object"
 
-    def test_post_email_address_json_content_type_is_required(self):
-        post_response = self.client.post('/users/check-buyer-email')
-        assert post_response.status_code == 400
-        assert json.loads(post_response.get_data())['error'] == "Unexpected Content-Type, expecting 'application/json'"
+    def test_email_address_json_content_type_is_required(self):
+        response = self.client.post('/users/check-buyer-email')
+        assert response.status_code == 400
+        assert json.loads(response.get_data())['error'] == "Unexpected Content-Type, expecting 'application/json'"
 
 
 class TestAdminEmailCheck(BaseUserTest):
@@ -2150,22 +2150,22 @@ class TestAdminEmailCheck(BaseUserTest):
         super(TestAdminEmailCheck, self).setup()
         self.app.config['DM_ALLOWED_ADMIN_DOMAINS'] = ['bananas.org']
 
-    def test_email_address_is_required_post(self):
+    def test_email_address_is_required(self):
         response = self.client.post('/users/valid-admin-email', content_type='application/json', data=json.dumps({}))
         assert response.status_code == 400
         assert json.loads(response.get_data())['error'] == "Invalid JSON must only have ['emailAddress'] keys"
 
-    def test_json_body_is_required_post(self):
+    def test_json_body_is_required(self):
         response = self.client.post('users/valid-admin-email', content_type='application/json')
         assert response.status_code == 400
         assert json.loads(response.get_data())['error'] == "Invalid JSON; must be a valid JSON object"
 
-    def test_json_content_type_is_required_post(self):
+    def test_json_content_type_is_required(self):
         response = self.client.post('users/valid-admin-email')
         assert response.status_code == 400
         assert json.loads(response.get_data())['error'] == "Unexpected Content-Type, expecting 'application/json'"
 
-    def test_invalid_email_is_not_ok_post(self):
+    def test_invalid_email_is_not_ok(self):
         response = self.client.post(
             '/users/valid-admin-email',
             data=json.dumps({'emailAddress': 'buyer@i-dislike-bananas.org'}),
@@ -2173,14 +2173,14 @@ class TestAdminEmailCheck(BaseUserTest):
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is False
 
-    def test_valid_email_is_ok_if_admin_domain_found_in_config_post(self):
+    def test_valid_email_is_ok_if_admin_domain_found_in_config(self):
         response = self.client.post('/users/valid-admin-email',
                                     data=json.dumps({'emailAddress': 'buyer@bananas.org'}),
                                     content_type='application/json')
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is True
 
-    def test_returns_invalid_if_no_config_value_set_post(self):
+    def test_returns_invalid_if_no_config_value_set(self):
         self.app.config.pop('DM_ALLOWED_ADMIN_DOMAINS')
 
         response = self.client.post('/users/valid-admin-email',
