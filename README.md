@@ -65,7 +65,7 @@ To run the `flake8` linter:
 make test-flake8
 ```
 
-To re-create the test database (this is a useful troubleshooting step if you are having issues with the test database):
+To re-create an empty test database without migrations (this is a useful troubleshooting step if you are having issues with the test database):
 
 ```
 make test-bootstrap
