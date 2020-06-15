@@ -2113,12 +2113,6 @@ class TestUsersEmailCheck(BaseUserTest):
         db.session.add(BuyerEmailDomain(domain_name="bananas.org"))
         db.session.commit()
 
-    # Deprecated
-    def test_get_valid_email_is_ok_if_domain_found_in_database(self):
-        get_response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'buyer@bananas.org'})
-        assert get_response.status_code == 200
-        assert json.loads(get_response.get_data())['valid'] is True
-
     def test_post_valid_email_is_ok_if_domain_found_in_database(self):
         post_response = self.client.post('/users/check-buyer-email',
                                          data=json.dumps({'emailAddress': 'buyer@bananas.org'}),
@@ -2126,30 +2120,12 @@ class TestUsersEmailCheck(BaseUserTest):
         assert post_response.status_code == 200
         assert json.loads(post_response.get_data())['valid'] is True
 
-    # Deprecated
-    def test_get_invalid_email_is_not_ok(self):
-        get_response = self.client.get('/users/check-buyer-email', query_string={'email_address': 'someone@notgov.uk'})
-        assert get_response.status_code == 200
-        assert json.loads(get_response.get_data())['valid'] is False
-
-        post_response = self.client.post('/users/check-buyer-email',
-                                         data=json.dumps({'emailAddress': 'someone@notgov.uk'}),
-                                         content_type='application/json')
-        assert post_response.status_code == 200
-        assert json.loads(post_response.get_data())['valid'] is False
-
     def test_post_invalid_email_is_not_ok(self):
         post_response = self.client.post('/users/check-buyer-email',
                                          data=json.dumps({'emailAddress': 'someone@notgov.uk'}),
                                          content_type='application/json')
         assert post_response.status_code == 200
         assert json.loads(post_response.get_data())['valid'] is False
-
-    # deprecated
-    def test_get_email_address_is_required(self):
-        get_response = self.client.get('/users/check-buyer-email')
-        assert get_response.status_code == 400
-        assert json.loads(get_response.get_data())['error'] == "'email_address' is a required parameter"
 
     def test_post_email_address_is_required(self):
         post_response = self.client.post('/users/check-buyer-email', content_type='application/json',
@@ -2174,12 +2150,6 @@ class TestAdminEmailCheck(BaseUserTest):
         super(TestAdminEmailCheck, self).setup()
         self.app.config['DM_ALLOWED_ADMIN_DOMAINS'] = ['bananas.org']
 
-    # deprecated
-    def test_email_address_is_required_get(self):
-        response = self.client.get('/users/valid-admin-email')
-        assert response.status_code == 400
-        assert json.loads(response.get_data())['error'] == "'email_address' is a required parameter"
-
     def test_email_address_is_required_post(self):
         response = self.client.post('/users/valid-admin-email', content_type='application/json', data=json.dumps({}))
         assert response.status_code == 400
@@ -2195,15 +2165,6 @@ class TestAdminEmailCheck(BaseUserTest):
         assert response.status_code == 400
         assert json.loads(response.get_data())['error'] == "Unexpected Content-Type, expecting 'application/json'"
 
-    # deprecated
-    def test_invalid_email_is_not_ok_get(self):
-        response = self.client.get(
-            '/users/valid-admin-email',
-            query_string={'email_address': 'buyer@i-dislike-bananas.org'}
-        )
-        assert response.status_code == 200
-        assert json.loads(response.get_data())['valid'] is False
-
     def test_invalid_email_is_not_ok_post(self):
         response = self.client.post(
             '/users/valid-admin-email',
@@ -2212,26 +2173,12 @@ class TestAdminEmailCheck(BaseUserTest):
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is False
 
-    # deprecated
-    def test_valid_email_is_ok_if_admin_domain_found_in_config_get(self):
-        response = self.client.get('/users/valid-admin-email', query_string={'email_address': 'buyer@bananas.org'})
-        assert response.status_code == 200
-        assert json.loads(response.get_data())['valid'] is True
-
     def test_valid_email_is_ok_if_admin_domain_found_in_config_post(self):
         response = self.client.post('/users/valid-admin-email',
                                     data=json.dumps({'emailAddress': 'buyer@bananas.org'}),
                                     content_type='application/json')
         assert response.status_code == 200
         assert json.loads(response.get_data())['valid'] is True
-
-    # deprecated
-    def test_returns_invalid_if_no_config_value_set_get(self):
-        self.app.config.pop('DM_ALLOWED_ADMIN_DOMAINS')
-
-        response = self.client.get('/users/valid-admin-email', query_string={'email_address': 'buyer@bananas.org'})
-        assert response.status_code == 200
-        assert json.loads(response.get_data())['valid'] is False
 
     def test_returns_invalid_if_no_config_value_set_post(self):
         self.app.config.pop('DM_ALLOWED_ADMIN_DOMAINS')
