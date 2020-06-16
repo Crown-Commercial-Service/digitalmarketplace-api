@@ -2136,7 +2136,7 @@ class TestDraftService(BaseApplicationTest, FixtureMixin):
         assert draft_service.data == service.data
         assert draft_service.status == service.status
 
-    def test_from_service_with_target_framework_id_and_questions(self):
+    def test_from_service_with_target_framework_id_and_copiable_questions(self):
         service = Service.query.filter(Service.service_id == '1000000000').first()
         service.data.update(
             questionOne='Question one',
@@ -2164,37 +2164,25 @@ class TestDraftService(BaseApplicationTest, FixtureMixin):
             'questionThree': 'Question three',
         }
 
-    @pytest.mark.parametrize(
-        ('questions_to_copy', 'should_raise'),
-        (
-            (None, True),
-            ({'questions': 'to_copy'}, True),
-            ('Questions', True),
-            (1, True),
-            (['question1', 'question2'], False),
-            (('question1', 'question2'), False),
-            ({'question1', 'question2'}, False),
-        )
-    )
-    def test_from_service_questions_to_copy_must_be_a_set_or_list_or_tuple_if_target_framework_id(
-        self, questions_to_copy, should_raise
-    ):
+    def test_from_service_with_target_framework_id_and_excluded_questions(self):
         service = Service.query.filter(Service.service_id == '1000000000').first()
+        service.data.update(
+            questionOne='Question one',
+            questionTwo='Question two',
+            questionThree='Question three'
+        )
 
-        if should_raise:
-            with pytest.raises(TypeError) as e:
-                DraftService.from_service(
-                    service,
-                    questions_to_copy=questions_to_copy,
-                    target_framework_id=3
-                )
-            assert "'questions_to_copy' must be a list, set or tuple" in str(e.value)
-        else:
-            assert DraftService.from_service(
-                service,
-                questions_to_copy=questions_to_copy,
-                target_framework_id=3
-            )
+        draft_service = DraftService.from_service(
+            service,
+            questions_to_exclude=['serviceName', 'questionOne', 'questionThree'],
+            target_framework_id=3,
+        )
+
+        db.session.add(draft_service)
+        db.session.commit()
+
+        for question in ['serviceName', 'questionOne', 'questionThree']:
+            assert question not in draft_service.data
 
     def test_from_service_copies_status_if_target_framework_id_is_the_same(self):
         service = Service.query.filter(Service.service_id == '1000000000').first()
