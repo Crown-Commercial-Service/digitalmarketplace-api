@@ -1,7 +1,7 @@
 # Run `make freeze-requirements` to update requirements.txt
 # with package version changes made in requirements.in
 
-git+https://github.com/alphagov/digitalmarketplace-utils.git@52.3.0#egg=digitalmarketplace-utils==52.3.0
+git+https://github.com/alphagov/digitalmarketplace-utils.git@52.5.0#egg=digitalmarketplace-utils==52.5.0
 git+https://github.com/alphagov/digitalmarketplace-apiclient.git@21.5.0#egg=digitalmarketplace-apiclient==21.5.0
 
 Flask==1.0.4                     # pyup: >=1.0.0,<1.1.0
