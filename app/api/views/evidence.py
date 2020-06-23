@@ -134,6 +134,15 @@ def get_evidence(evidence_id):
     return jsonify(data)
 
 
+@api.route('/case_studies/<int:domain_id>', methods=['GET'])
+@exception_logger
+@login_required
+@role_required('supplier')
+def get_case_studies():
+    data = 'hello world'
+    return jsonify(data)
+
+
 @api.route('/evidence/<int:evidence_id>/view', methods=['GET'])
 @exception_logger
 @login_required
