@@ -139,7 +139,7 @@ def get_evidence(evidence_id):
 @login_required
 @role_required('supplier')
 def get_case_studies():
-    data = 'hello world'
+    data = "hello world"
     return jsonify(data)
 
 
