@@ -138,7 +138,7 @@ def get_evidence(evidence_id):
 @exception_logger
 @login_required
 @role_required('supplier')
-def get_case_studies():
+def get_case_studies(domain_id):
     data = "hello world"
     return jsonify(data)
 
