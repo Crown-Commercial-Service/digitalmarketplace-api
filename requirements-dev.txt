@@ -45,7 +45,7 @@ requests-mock==1.7.0      # via -r requirements-dev.in
 requests==2.23.0          # via -c requirements.txt, coveralls, requests-mock
 six==1.14.0               # via -c requirements.txt, freezegun, isodate, jsonschema, packaging, pip-tools, python-dateutil, requests-mock
 sortedcontainers==2.1.0   # via hypothesis
-sqlalchemy==1.3.17        # via -c requirements.txt, alchemyjsonschema
+sqlalchemy==1.3.18        # via -c requirements.txt, alchemyjsonschema
 strict-rfc3339==0.7       # via -c requirements.txt, alchemyjsonschema
 testfixtures==6.13.0      # via -r requirements-dev.in
 urllib3==1.25.8           # via -c requirements.txt, requests
