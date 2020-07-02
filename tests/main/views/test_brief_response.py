@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Tests for brief response views in app/views/brief_responses.py."""
 from datetime import datetime, timedelta
 from freezegun import freeze_time
@@ -13,10 +14,43 @@ from dmutils.formats import DATE_FORMAT, DATETIME_FORMAT
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from tests.helpers import FixtureMixin
 
-from ... import example_listings
-
 
 class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
+
+    def example_brief_data(self):
+        return {
+            'title': 'My Test Brief Title',
+            'specialistRole': 'developer',
+            'location': 'Wales',
+            'essentialRequirements': [
+                'Essential Requirement 1',
+                u'Essential Requirement 2 £Ⰶⶼ',
+                u"Essential Requirement 3 \u200d\u2029\u202f",
+                u"Essential Requirement 4\"\'<&%",
+                u"Essential Requirement 5",
+            ],
+            'niceToHaveRequirements': [
+                'Nice to have requirement 1',
+                'Nice to have requirement 2',
+                'Nice to have requirement 3',
+                'Nice to have requirement 4',
+                'Nice to have requirement 5'
+            ],
+        }
+
+    def example_brief_response_data(self):
+        return {
+            "essentialRequirementsMet": True,
+            "essentialRequirements": [
+                {"evidence": "Essential evidence 1"},
+                {"evidence": "Essential evidence 2 £Ⰶⶼ."},
+                {"evidence": "Essential evidence 3 \u200d\u2029\u202f"},
+                {"evidence": "Essential evidence 4\"\'<&%"},
+            ],
+            "niceToHaveRequirements": [],
+            "respondToEmailAddress": "supplier@example.com",
+        }
+
     def setup(self):
         super(BaseBriefResponseTest, self).setup()
 
@@ -26,7 +60,7 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
             for supplier_id in self.supplier_ids
         ]
         brief = Brief(
-            data=example_listings.brief_data().example(),
+            data=self.example_brief_data(),
             status='live', framework_id=5, lot=Lot.query.get(5)
         )
 
@@ -40,7 +74,7 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
         )
 
         specialist_brief = Brief(
-            data=example_listings.brief_data().example(),
+            data=self.example_brief_data(),
             status='live', framework_id=5, lot=Lot.query.get(6)
         )
 
@@ -61,11 +95,10 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
         self.specialist_brief_id = specialist_brief.id
 
     def setup_dummy_brief_response(
-            self, brief_id=None, supplier_id=0, submitted_at=datetime(2016, 1, 2), award_details=None
+        self, brief_id=None, supplier_id=0, submitted_at=datetime(2016, 1, 2), award_details=None, data=None
     ):
-
         brief_response = BriefResponse(
-            data=example_listings.brief_response_data().example(),
+            data=data if data else self.example_brief_response_data(),
             supplier_id=supplier_id, brief_id=brief_id or self.brief_id,
             submitted_at=submitted_at,
             award_details=award_details if award_details else {}
@@ -76,10 +109,12 @@ class BaseBriefResponseTest(BaseApplicationTest, FixtureMixin):
 
         return brief_response.id
 
-    def setup_dummy_awarded_brief_response(self, brief_id=None, awarded_at=None):
+    def setup_dummy_awarded_brief_response(self, brief_id=None, awarded_at=None, data=None):
         self.setup_dummy_briefs(1, status="closed", brief_start=brief_id or self.brief_id)
         awarded_brief_response_id = self.setup_dummy_brief_response(
-            brief_id=brief_id or self.brief_id, award_details={'pending': True}
+            brief_id=brief_id or self.brief_id,
+            award_details={'pending': True},
+            data=data if data else self.example_brief_response_data(),
         )
         awarded_brief_response = BriefResponse.query.get(awarded_brief_response_id)
         awarded_brief_response.awarded_at = awarded_at or datetime.utcnow()
@@ -740,7 +775,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
 
     def test_list_brief_responses_for_brief_id(self):
         brief = Brief(
-            data=example_listings.brief_data().example(),
+            data=self.example_brief_data(),
             status='live', framework_id=5, lot=Lot.query.get(5)
         )
         db.session.add(brief)
@@ -762,7 +797,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
     def test_list_brief_responses_by_one_framework_slug(self, live_dos2_framework):
         supplier_framework = SupplierFramework(supplier_id=0, framework_id=live_dos2_framework["id"])
         dos2_brief = Brief(
-            data=example_listings.brief_data().example(),
+            data=self.example_brief_data(),
             status='live', framework_id=live_dos2_framework["id"], lot=Lot.query.get(6)
         )
 
@@ -789,7 +824,7 @@ class TestListBriefResponses(BaseBriefResponseTest):
     def test_list_brief_responses_by_multiple_framework_slugs(self, live_dos2_framework):
         supplier_framework = SupplierFramework(supplier_id=0, framework_id=live_dos2_framework["id"])
         dos2_brief = Brief(
-            data=example_listings.brief_data().example(),
+            data=self.example_brief_data(),
             status='live', framework_id=live_dos2_framework["id"], lot=Lot.query.get(6)
         )
         db.session.add_all([dos2_brief, supplier_framework])
