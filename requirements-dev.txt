@@ -7,7 +7,7 @@
 --no-binary psycopg2
 
 alchemyjsonschema==0.5.0  # via -r requirements-dev.in
-attrs==19.3.0             # via -c requirements.txt, hypothesis, jsonschema, pytest
+attrs==19.3.0             # via -c requirements.txt, jsonschema, pytest
 certifi==2019.11.28       # via -c requirements.txt, requests
 chardet==3.0.4            # via -c requirements.txt, requests
 click==7.0                # via -c requirements.txt, pip-tools
@@ -19,7 +19,6 @@ docopt==0.6.2             # via -c requirements.txt, coveralls
 entrypoints==0.3          # via flake8
 flake8==3.7.9             # via -r requirements-dev.in
 freezegun==0.3.15         # via -r requirements-dev.in
-hypothesis==5.5.4         # via -r requirements-dev.in
 idna==2.9                 # via -c requirements.txt, requests
 importlib-metadata==1.6.0  # via -c requirements.txt, jsonschema, pluggy, pytest
 isodate==0.6.0            # via alchemyjsonschema
@@ -44,7 +43,6 @@ pytz==2019.3              # via -c requirements.txt, alchemyjsonschema
 requests-mock==1.7.0      # via -r requirements-dev.in
 requests==2.23.0          # via -c requirements.txt, coveralls, requests-mock
 six==1.14.0               # via -c requirements.txt, freezegun, isodate, jsonschema, packaging, pip-tools, python-dateutil, requests-mock
-sortedcontainers==2.1.0   # via hypothesis
 sqlalchemy==1.3.18        # via -c requirements.txt, alchemyjsonschema
 strict-rfc3339==0.7       # via -c requirements.txt, alchemyjsonschema
 testfixtures==6.13.0      # via -r requirements-dev.in
