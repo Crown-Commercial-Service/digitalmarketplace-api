@@ -47,6 +47,10 @@ def delete_draft_evidence(evidence_id, actioned_by):
     )
     return True
 
+def case_studies_by_supplier_code(supplier_code):
+    case_studies = evidence_service.get_case_studies_by_supplier_code(supplier_code)
+    print(case_studies)
+
 
 def get_domain_and_evidence_data(evidence_id):
     evidence = evidence_service.get_evidence_by_id(evidence_id)

@@ -3,7 +3,7 @@ from sqlalchemy.orm import joinedload, raiseload
 
 from app import db
 from app.api.helpers import Service
-from app.models import Brief, Domain, Evidence, EvidenceAssessment, Supplier
+from app.models import Brief, CaseStudy, Domain, Evidence, EvidenceAssessment, Supplier
 
 
 class EvidenceService(Service):
@@ -190,6 +190,33 @@ class EvidenceService(Service):
             .order_by(Evidence.submitted_at.asc())
         )
         return query.one_or_none()
+
+# edlete this later 
+        # getting one case study details
+    def get_case_studies_by_supplier_code(self, supplier_code):
+        query = (
+        db.session.query(
+            CaseStudy.id.label('id'),
+            CaseStudy.data.label('data'),
+            CaseStudy.status.label('status')
+        )
+        .filter(CaseStudy.supplier_code == supplier_code)
+        )
+
+        return query.one_or_none()
+
+    def get_case_studies_by_supplier_code_2(self, supplier_code, domain_id):
+                        # query(
+        #     db.session.query(
+        #         CaseStudy.id.label('id'),
+        #         CaseStudy.data.label('data')
+        #     )
+        #     .filter()
+        # select sd.*, d.name from supplier_domain sd inner join domain d on d.id = sd.domain_id where supplier_id = 2436;
+        #  would need to add domain to this 
+        #     ) query to return one or all
+        # )
+        return false;
 
     def supplier_has_assessment_for_brief(self, supplier_code, brief_id):
         evidence = self.filter(
