@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for brief response views in app/views/brief_responses.py."""
 from datetime import datetime, timedelta
 from freezegun import freeze_time
