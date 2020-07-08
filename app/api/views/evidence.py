@@ -139,7 +139,6 @@ def get_evidence(evidence_id):
 @login_required
 @role_required('supplier')
 def get_case_studies(domain_id):
-    # data = "hello world"
     data = case_studies_by_supplier_code(current_user.supplier_code, domain_id)
     return jsonify(data)
 
