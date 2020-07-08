@@ -193,30 +193,21 @@ class EvidenceService(Service):
 
 # edlete this later 
         # getting one case study details
-    def get_case_studies_by_supplier_code(self, supplier_code):
+    def get_case_studies_by_supplier_code(self, supplier_code, domain_id):
         query = (
-        db.session.query(
-            CaseStudy.id.label('id'),
-            CaseStudy.data.label('data'),
-            CaseStudy.status.label('status')
-        )
-        .filter(CaseStudy.supplier_code == supplier_code)
-        )
-
-        return query.one_or_none()
-
-    def get_case_studies_by_supplier_code_2(self, supplier_code, domain_id):
-                        # query(
-        #     db.session.query(
-        #         CaseStudy.id.label('id'),
-        #         CaseStudy.data.label('data')
-        #     )
-        #     .filter()
-        # select sd.*, d.name from supplier_domain sd inner join domain d on d.id = sd.domain_id where supplier_id = 2436;
-        #  would need to add domain to this 
-        #     ) query to return one or all
-        # )
-        return false;
+            db.session.query(
+                # Domain.id.label('domainId'),
+                # CaseStudy.data['service'].astext.label('domainName'),
+                # CaseStudy.id.label('caseStudyId'),
+                CaseStudy.data.label('data')
+                # I am commenting status out for now - since the user can only see the approved status and not their rejected case studies on the seller dashboard right?
+                # CaseStudy.status
+                )
+                .filter(CaseStudy.supplier_code == supplier_code)
+                # .join(CaseStudy, and_(Domain.name == CaseStudy.data['service'].astext.label('domainName')))
+                .join(Domain, and_(CaseStudy.data['service'].astext.label('domainName') == Domain.name ))
+                )
+        return query.all()
 
     def supplier_has_assessment_for_brief(self, supplier_code, brief_id):
         evidence = self.filter(
