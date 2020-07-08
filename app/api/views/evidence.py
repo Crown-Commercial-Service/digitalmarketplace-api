@@ -139,8 +139,8 @@ def get_evidence(evidence_id):
 @login_required
 @role_required('supplier')
 def get_case_studies(domain_id):
-    data = "hello world"
-    print("HIIII")
+    # data = "hello world"
+    data = case_studies_by_supplier_code(current_user.supplier_code, domain_id)
     return jsonify(data)
 
 
@@ -150,8 +150,6 @@ def get_case_studies(domain_id):
 @role_required('supplier')
 def get_domain_and_evidence(evidence_id):
     data = get_domain_and_evidence_data(evidence_id)
-    # delete this later
-    # test = case_studies_by_supplier_code(current_user.supplier_code)
     return jsonify(data)
 
 
