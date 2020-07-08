@@ -7,7 +7,6 @@ coverage
 coveralls
 flake8
 freezegun
-hypothesis
 mock
 pytest
 pytest-cov
