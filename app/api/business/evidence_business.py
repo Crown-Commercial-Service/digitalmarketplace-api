@@ -47,13 +47,34 @@ def delete_draft_evidence(evidence_id, actioned_by):
     )
     return True
 
+# def case_studies_by_supplier_code(supplier_code, domain_id):
+#     case_studies = {}
+#     case_studies['domain_id'] = domain_id
+#     # main data of the case studies + approved status 
+#     case_studies['data'] = evidence_service.get_case_studies_by_supplier_code(supplier_code, domain_id)
+#     return case_studies
+
 def case_studies_by_supplier_code(supplier_code, domain_id):
     case_studies = {}
     case_studies['domain_id'] = domain_id
     # main data of the case studies + approved status 
     case_studies['data'] = evidence_service.get_case_studies_by_supplier_code(supplier_code, domain_id)
+    # print('case studies data structure')
+    # print(case_studies)
+    test = case_studies.get('data')
+    # print(test)
+    x = test[0]
+    # print("value of x")
+    # print(x)
+    print("value of c")
+    c = x[0]
+    print(c)
+    case_studies = c
+    # # case_studies = c
+    # print(c)
+    # print(case_studies)
+    # print(case_studies.get('data'))
     return case_studies
-
 
 def get_domain_and_evidence_data(evidence_id):
     evidence = evidence_service.get_evidence_by_id(evidence_id)
