@@ -191,43 +191,36 @@ class EvidenceService(Service):
         )
         return query.one_or_none()
 
-        # getting one case study details
-    def get_case_studies_by_supplier_code(self, supplier_code, domain_id):
+    def get_case_studies_by_supplier_code(self,supplier_code,domain_id):
+        # from domain_id get domain_name
+        # the domain_name would be used to check against the case_study_data['service']
         subquery = (
             db
             .session
             .query(Domain.name)
             .filter(Domain.id == domain_id)
-            # .join(Domain, Domain.id == domain_id)
             .subquery()
         )
+
         query = (
-            db.session.query(
-                CaseStudy.data.label('data')
+            db
+            .session
+            .query(
+                func.json_agg(
+                    func.json_build_object(
+                    'id', CaseStudy.id,
+                    'data', CaseStudy.data
+                    )
+                    .label('case_study_data')
                 )
-                .filter(CaseStudy.supplier_code == supplier_code)
-                .filter(subquery.c.name == CaseStudy.data['service'].astext.label('domainName'))
-                # .join(Domain, and_(CaseStudy.data['service'].astext.label('domainName') == Domain.name ))
-                # .join(subquery, and_(subquery.c.name == CaseStudy.data['service']))
+                .filter(
+                    CaseStudy.supplier_code == supplier_code,
+                    subquery.c.name == CaseStudy.data['service'].astext.label('domain_name')
                 )
+            )
+        )
         return query.all()
-        # old one below
-        # query = (
-        #     db.session.query(
-        #         # Domain.id.label('domainId'),
-        #         # CaseStudy.data['service'].astext.label('domainName'),
-        #         # CaseStudy.id.label('caseStudyId'),
-        #         CaseStudy.data.label('data')
-        #         # I am commenting status out for now - since the user can only see the approved status and not their rejected case studies on the seller dashboard right?
-        #         # CaseStudy.status
-        #         )
-        #         .filter(CaseStudy.supplier_code == supplier_code)
-        #         # .filter()
-        #         # .join(CaseStudy, and_(Domain.name == CaseStudy.data['service'].astext.label('domainName')))
-        #         .join(Domain, and_(CaseStudy.data['service'].astext.label('domainName') == Domain.name ))
-        #         # .join(subquery, subquery.c.name == CaseStudy.data['service'])
-        #         )
-        # return query.all()
+
 
     def supplier_has_assessment_for_brief(self, supplier_code, brief_id):
         evidence = self.filter(
