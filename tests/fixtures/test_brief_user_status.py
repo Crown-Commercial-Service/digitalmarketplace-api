@@ -444,3 +444,14 @@ def test_can_not_respond_to_open_to_all_atm_as_unassessed_consultant(atm_brief, 
     result = user_status.can_respond_to_atm_opportunity()
 
     assert result is False
+
+
+@pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
+def test_can_not_respond_to_open_to_category_atm_as_recruiter(atm_brief, supplier_user):
+    atm_brief.data['openTo'] = 'category'
+    supplier_user.supplier.data['recruiter'] = 'yes'
+
+    user_status = BriefUserStatus(atm_brief, supplier_user)
+    result = user_status.can_respond_to_atm_opportunity()
+
+    assert result is False
