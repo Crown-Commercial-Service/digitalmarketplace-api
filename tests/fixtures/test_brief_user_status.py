@@ -389,3 +389,14 @@ def test_atm_brief_user_status_as_applicant(atm_brief, applicant_user, supplier_
     assert not user_status.has_been_assessed_for_brief()
     assert not user_status.can_respond()
     assert not user_status.has_responded()
+
+
+@pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
+def test_can_not_respond_to_open_to_all_atm_as_recruiter(atm_brief, supplier_user):
+    atm_brief.data['openTo'] = 'all'
+    supplier_user.supplier.data['recruiter'] = 'yes'
+
+    user_status = BriefUserStatus(atm_brief, supplier_user)
+    result = user_status.can_respond_to_atm_opportunity()
+
+    assert result is False
