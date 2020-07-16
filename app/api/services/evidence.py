@@ -191,7 +191,7 @@ class EvidenceService(Service):
         )
         return query.one_or_none()
 
-    def get_case_studies_by_supplier_code(self, supplier_code, domain_id):
+    def get_case_studies_by_supplier_code(self, supplier_code,domain_id):
         # from domain_id get domain_name
         # the domain_name would be used to check against the case_study_data['service']
         subquery = (
@@ -208,8 +208,8 @@ class EvidenceService(Service):
             .query(
                 func.json_agg(
                     func.json_build_object(
-                        'id', CaseStudy.id,
-                        'data', CaseStudy.data
+                    'id', CaseStudy.id,
+                    'data', CaseStudy.data
                     )
                     .label('case_study_data')
                 )
@@ -220,6 +220,7 @@ class EvidenceService(Service):
             )
         )
         return query.all()
+
 
     def supplier_has_assessment_for_brief(self, supplier_code, brief_id):
         evidence = self.filter(
