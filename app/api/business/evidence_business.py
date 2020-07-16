@@ -51,7 +51,7 @@ def delete_draft_evidence(evidence_id, actioned_by):
 def case_studies_by_supplier_code(supplier_code, domain_id):
     case_studies = {}
     case_studies['data'] = evidence_service.get_case_studies_by_supplier_code(supplier_code, domain_id)
-
+    # simplify case_studies data structure
     get_case_study_data = case_studies.get('data')
     retrieve_list = get_case_study_data[0]
     case_studies = retrieve_list[0]
