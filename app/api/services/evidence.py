@@ -221,7 +221,6 @@ class EvidenceService(Service):
         )
         return query.all()
 
-
     def supplier_has_assessment_for_brief(self, supplier_code, brief_id):
         evidence = self.filter(
             Evidence.supplier_code == supplier_code,
