@@ -411,3 +411,14 @@ def test_can_respond_to_open_to_all_atm_as_assessed_hybrid(atm_brief, supplier_u
     result = user_status.can_respond_to_atm_opportunity()
 
     assert result is True
+
+
+@pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
+def test_can_not_respond_to_open_to_all_atm_as_unassessed_hybrid(atm_brief, supplier_user):
+    atm_brief.data['openTo'] = 'all'
+    supplier_user.supplier.data['recruiter'] = 'both'
+
+    user_status = BriefUserStatus(atm_brief, supplier_user)
+    result = user_status.can_respond_to_atm_opportunity()
+
+    assert result is False
