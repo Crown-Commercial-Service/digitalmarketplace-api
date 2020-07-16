@@ -208,8 +208,8 @@ class EvidenceService(Service):
             .query(
                 func.json_agg(
                     func.json_build_object(
-                    'id', CaseStudy.id,
-                    'data', CaseStudy.data
+                        'id', CaseStudy.id,
+                        'data', CaseStudy.data
                     )
                     .label('case_study_data')
                 )
