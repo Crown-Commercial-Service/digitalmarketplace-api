@@ -1,13 +1,14 @@
 from app.api import api
 from flask import request, jsonify, current_app
 from flask_login import current_user, login_required
-from app.api.helpers import not_found, role_required, abort
+from app.api.helpers import not_found, role_required, abort, exception_logger
 from app.api.services import (
     evidence_service, evidence_assessment_service, domain_service, suppliers, briefs, assessments,
     domain_criteria_service
 )
 from app.api.business.validators import EvidenceDataValidator
 from app.api.business.domain_criteria import DomainCriteria
+from app.api.business.evidence_business import get_domain_and_evidence_data, case_studies_by_supplier_code
 from app.tasks.jira import create_evidence_assessment_in_jira
 from app.tasks import publish_tasks
 from app.emails.evidence_assessments import send_evidence_assessment_requested_notification
@@ -133,26 +134,21 @@ def get_evidence(evidence_id):
     return jsonify(data)
 
 
+@api.route('/case-studies/<int:domain_id>/view', methods=['GET'])
+@exception_logger
+@login_required
+@role_required('supplier')
+def get_case_studies(domain_id):
+    data = case_studies_by_supplier_code(current_user.supplier_code, domain_id)
+    return jsonify(data)
+
+
 @api.route('/evidence/<int:evidence_id>/view', methods=['GET'])
+@exception_logger
 @login_required
 @role_required('supplier')
 def get_domain_and_evidence(evidence_id):
-    evidence = evidence_service.get_evidence_by_id(evidence_id)
-    if not evidence or current_user.supplier_code != evidence.supplier_code:
-        not_found("No evidence for id '%s' found" % (evidence_id))
-
-    data = {}
-    data = evidence.serialize()
-    domain_name = evidence.domain.name
-    data['domain_name'] = domain_name
-
-    domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
-    criteria_from_domain = {}
-
-    for criteria in domain_criteria:
-        criteria_from_domain[criteria.id] = {'name': criteria.name}
-
-    data['domain_criteria'] = criteria_from_domain
+    data = get_domain_and_evidence_data(evidence_id)
     return jsonify(data)
 
 
