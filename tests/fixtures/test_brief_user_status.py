@@ -465,3 +465,13 @@ def test_can_not_respond_to_open_to_category_atm_as_unassessed(atm_brief, recrui
     result = user_status.can_respond_to_atm_opportunity()
 
     assert result is False
+
+
+@pytest.mark.parametrize('rfx_brief', [{'data': rfx_data}], indirect=True)
+def test_can_not_respond_to_rfx_as_recruiter(rfx_brief, supplier_user):
+    supplier_user.supplier.data['recruiter'] = 'yes'
+
+    user_status = BriefUserStatus(rfx_brief, supplier_user)
+    result = user_status.can_respond_to_rfx_or_training_opportunity()
+
+    assert result is False
