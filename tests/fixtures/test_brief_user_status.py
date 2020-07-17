@@ -475,3 +475,14 @@ def test_can_not_respond_to_rfx_as_recruiter(rfx_brief, supplier_user):
     result = user_status.can_respond_to_rfx_or_training_opportunity()
 
     assert result is False
+
+
+@pytest.mark.parametrize('rfx_brief', [{'data': rfx_data}], indirect=True)
+@pytest.mark.parametrize('recruiter', ['both', 'no'])
+def test_can_respond_to_rfx_as_assessed_invited_seller(rfx_brief, recruiter, supplier_user, supplier_domains):
+    supplier_user.supplier.data['recruiter'] = recruiter
+
+    user_status = BriefUserStatus(rfx_brief, supplier_user)
+    result = user_status.can_respond_to_rfx_or_training_opportunity()
+
+    assert result is True
