@@ -403,9 +403,10 @@ def test_can_not_respond_to_open_to_all_atm_as_recruiter(atm_brief, supplier_use
 
 
 @pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
-def test_can_respond_to_open_to_all_atm_as_assessed_hybrid(atm_brief, supplier_user, supplier_domains):
+@pytest.mark.parametrize('recruiter', ['both', 'no'])
+def test_can_respond_to_open_to_all_atm_as_assessed(atm_brief, recruiter, supplier_user, supplier_domains):
     atm_brief.data['openTo'] = 'all'
-    supplier_user.supplier.data['recruiter'] = 'both'
+    supplier_user.supplier.data['recruiter'] = recruiter
 
     user_status = BriefUserStatus(atm_brief, supplier_user)
     result = user_status.can_respond_to_atm_opportunity()
@@ -414,31 +415,10 @@ def test_can_respond_to_open_to_all_atm_as_assessed_hybrid(atm_brief, supplier_u
 
 
 @pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
-def test_can_not_respond_to_open_to_all_atm_as_unassessed_hybrid(atm_brief, supplier_user):
+@pytest.mark.parametrize('recruiter', ['both', 'no'])
+def test_can_not_respond_to_open_to_all_atm_as_unassessed(atm_brief, recruiter, supplier_user):
     atm_brief.data['openTo'] = 'all'
-    supplier_user.supplier.data['recruiter'] = 'both'
-
-    user_status = BriefUserStatus(atm_brief, supplier_user)
-    result = user_status.can_respond_to_atm_opportunity()
-
-    assert result is False
-
-
-@pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
-def test_can_respond_to_open_to_all_atm_as_assessed_consultant(atm_brief, supplier_user, supplier_domains):
-    atm_brief.data['openTo'] = 'all'
-    supplier_user.supplier.data['recruiter'] = 'no'
-
-    user_status = BriefUserStatus(atm_brief, supplier_user)
-    result = user_status.can_respond_to_atm_opportunity()
-
-    assert result is True
-
-
-@pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
-def test_can_not_respond_to_open_to_all_atm_as_unassessed_consultant(atm_brief, supplier_user):
-    atm_brief.data['openTo'] = 'all'
-    supplier_user.supplier.data['recruiter'] = 'no'
+    supplier_user.supplier.data['recruiter'] = recruiter
 
     user_status = BriefUserStatus(atm_brief, supplier_user)
     result = user_status.can_respond_to_atm_opportunity()
@@ -458,10 +438,11 @@ def test_can_not_respond_to_open_to_category_atm_as_recruiter(atm_brief, supplie
 
 
 @pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
-def test_can_respond_to_open_to_category_atm_as_assessed_hybrid(atm_brief, supplier_user, supplier_domains):
+@pytest.mark.parametrize('recruiter', ['both', 'no'])
+def test_can_respond_to_open_to_category_atm_as_assessed(atm_brief, recruiter, supplier_user, supplier_domains):
     atm_brief.data['openTo'] = 'category'
     atm_brief.data['sellerCategory'] = '1'
-    supplier_user.supplier.data['recruiter'] = 'both'
+    supplier_user.supplier.data['recruiter'] = recruiter
 
     user_status = BriefUserStatus(atm_brief, supplier_user)
     result = user_status.can_respond_to_atm_opportunity()
@@ -470,38 +451,11 @@ def test_can_respond_to_open_to_category_atm_as_assessed_hybrid(atm_brief, suppl
 
 
 @pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
-def test_can_not_respond_to_open_to_category_atm_as_unassessed_hybrid(atm_brief, supplier_user, supplier_domains):
+@pytest.mark.parametrize('recruiter', ['both', 'no'])
+def test_can_not_respond_to_open_to_category_atm_as_unassessed(atm_brief, recruiter, supplier_user, supplier_domains):
     atm_brief.data['openTo'] = 'category'
     atm_brief.data['sellerCategory'] = '1'
-    supplier_user.supplier.data['recruiter'] = 'both'
-    supplier_domain = next(
-        supplier_domain for supplier_domain in supplier_domains if supplier_domain.domain_id == 1
-    )
-    supplier_domain.status = 'unassessed'
-
-    user_status = BriefUserStatus(atm_brief, supplier_user)
-    result = user_status.can_respond_to_atm_opportunity()
-
-    assert result is False
-
-
-@pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
-def test_can_respond_to_open_to_category_atm_as_assessed_consultant(atm_brief, supplier_user, supplier_domains):
-    atm_brief.data['openTo'] = 'category'
-    atm_brief.data['sellerCategory'] = '1'
-    supplier_user.supplier.data['recruiter'] = 'no'
-
-    user_status = BriefUserStatus(atm_brief, supplier_user)
-    result = user_status.can_respond_to_atm_opportunity()
-
-    assert result is True
-
-
-@pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
-def test_can_not_respond_to_open_to_category_atm_as_unassessed_consultant(atm_brief, supplier_user, supplier_domains):
-    atm_brief.data['openTo'] = 'category'
-    atm_brief.data['sellerCategory'] = '1'
-    supplier_user.supplier.data['recruiter'] = 'no'
+    supplier_user.supplier.data['recruiter'] = recruiter
     supplier_domain = next(
         supplier_domain for supplier_domain in supplier_domains if supplier_domain.domain_id == 1
     )
