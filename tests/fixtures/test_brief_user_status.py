@@ -570,3 +570,15 @@ def test_can_respond_to_open_to_all_specialist_as_recruiter(specialist_brief, su
     result = user_status.can_respond_to_specialist_opportunity()
 
     assert result is True
+
+
+@pytest.mark.parametrize('specialist_brief', [{'data': specialist_data}], indirect=True)
+@pytest.mark.parametrize('recruiter', ['both', 'no'])
+def test_can_respond_to_open_to_all_specialist_as_assessed(specialist_brief, recruiter, supplier_user, supplier_domains):
+    specialist_brief.data['openTo'] = 'all'
+    supplier_user.supplier.data['recruiter'] = recruiter
+
+    user_status = BriefUserStatus(specialist_brief, supplier_user)
+    result = user_status.can_respond_to_specialist_opportunity()
+
+    assert result is True
