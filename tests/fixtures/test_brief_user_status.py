@@ -197,6 +197,13 @@ open_to_selected_specialist_data = {
     "title": "Developer"
 }
 
+open_to_selected_specialist_data_not_invited = copy.copy(open_to_selected_specialist_data)
+open_to_selected_specialist_data_not_invited['sellers'] = {
+    '999': {
+        'name': 'test'
+    }
+}
+
 @pytest.fixture()
 def supplier_domains(app, request, domains, suppliers):
     params = request.param if hasattr(request, 'param') else {}
@@ -658,3 +665,13 @@ def test_can_respond_to_open_to_selected_specialist_as_invited_recruiter(special
     result = user_status.can_respond_to_specialist_opportunity()
 
     assert result is True
+
+
+@pytest.mark.parametrize('specialist_brief', [{'data': open_to_selected_specialist_data_not_invited}], indirect=True)
+def test_can_respond_to_open_to_selected_specialist_as_recruiter_not_invited(specialist_brief, supplier_user):
+    supplier_user.supplier.data['recruiter'] = 'yes'
+
+    user_status = BriefUserStatus(specialist_brief, supplier_user)
+    result = user_status.can_respond_to_specialist_opportunity()
+
+    assert result is False
