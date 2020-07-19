@@ -91,6 +91,57 @@ atm_data = {
     'workAlreadyDone': 'TEST'
 }
 
+specialist_data = {
+    "securityClearanceOther": "",
+    "startDate": "2020-10-20",
+    "attachments": [
+        "test.pdf"
+    ],
+    "preferredFormatForRates": "dailyRate",
+    "evaluationType": [
+        "Responses to selection criteria",
+        "R\u00e9sum\u00e9s"
+    ],
+    "sellers": {},
+    "contractLength": "2 years",
+    "includeWeightingsNiceToHave": False,
+    "securityClearanceCurrent": "",
+    "essentialRequirements": [
+        {
+            "weighting": "",
+            "criteria": "Python"
+        }
+    ],
+    "contactNumber": "0412 345 678",
+    "maxRate": "1000",
+    "budgetRange": "",
+    "securityClearance": "noneRequired",
+    "sellerSelector": "allSellers",
+    "sellerCategory": "6",
+    "contractExtensions": "",
+    "includeWeightingsEssential": False,
+    "title": "Developer",
+    "organisation": "Digital Transformation Agency",
+    "internalReference": "",
+    "niceToHaveRequirements": [
+        {
+            "weighting": "",
+            "criteria": ""
+        }
+    ],
+    "numberOfSuppliers": "3",
+    "summary": "Code",
+    "closedAt": "2020-09-10",
+    "location": [
+        "Australian Capital Territory",
+        "New South Wales"
+    ],
+    "areaOfExpertise": "Software engineering and Development",
+    "comprehensiveTerms": False,
+    "securityClearanceObtain": "",
+    "openTo": "all"
+}
+
 
 @pytest.fixture()
 def supplier_domains(app, request, domains, suppliers):
@@ -508,3 +559,14 @@ def test_can_not_respond_to_rfx_as_unassessed_seller(rfx_brief, recruiter, suppl
     result = user_status.can_respond_to_rfx_or_training_opportunity()
 
     assert result is False
+
+
+@pytest.mark.parametrize('specialist_brief', [{'data': specialist_data}], indirect=True)
+def test_can_respond_to_open_to_all_specialist_as_recruiter(specialist_brief, supplier_user):
+    specialist_brief.data['openTo'] = 'all'
+    supplier_user.supplier.data['recruiter'] = 'yes'
+
+    user_status = BriefUserStatus(specialist_brief, supplier_user)
+    result = user_status.can_respond_to_specialist_opportunity()
+
+    assert result is True
