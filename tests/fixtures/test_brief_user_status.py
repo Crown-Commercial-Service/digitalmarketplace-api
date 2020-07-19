@@ -142,6 +142,60 @@ specialist_data = {
     "openTo": "all"
 }
 
+open_to_selected_specialist_data = {
+    "areaOfExpertise": "Software engineering and Development",
+    "attachments": [
+        "test.pdf"
+    ],
+    "budgetRange": "",
+    "closedAt": "2020-09-10",
+    "comprehensiveTerms": False,
+    "contactNumber": "0412 345 678",
+    "contractExtensions": "",
+    "contractLength": "2 years",
+    "essentialRequirements": [
+        {
+            "weighting": "",
+            "criteria": "Code"
+        }
+    ],
+    "evaluationType": [
+        "Responses to selection criteria",
+        "Résumés"
+    ],
+    "includeWeightingsEssential": False,
+    "includeWeightingsNiceToHave": False,
+    "internalReference": "",
+    "location": [
+        "New South Wales",
+        "Australian Capital Territory"
+    ],
+    "maxRate": "1000",
+    "niceToHaveRequirements": [
+        {
+            "weighting": "",
+            "criteria": ""
+        }
+    ],
+    "numberOfSuppliers": "3",
+    "openTo": "selected",
+    "organisation": "Digital Transformation Agency",
+    "preferredFormatForRates": "dailyRate",
+    "securityClearance": "noneRequired",
+    "securityClearanceCurrent": "",
+    "securityClearanceObtain": "",
+    "securityClearanceOther": "",
+    "sellerCategory": "6",
+    "sellerSelector": "someSellers",
+    "sellers": {
+        "1": {
+            "name": "Test Supplier1"
+        }
+    },
+    "startDate": "2020-10-20",
+    "summary": "Code",
+    "title": "Developer"
+}
 
 @pytest.fixture()
 def supplier_domains(app, request, domains, suppliers):
@@ -594,3 +648,13 @@ def test_can_not_respond_to_open_to_all_specialist_as_unassessed(specialist_brie
     result = user_status.can_respond_to_specialist_opportunity()
 
     assert result is False
+
+
+@pytest.mark.parametrize('specialist_brief', [{'data': open_to_selected_specialist_data}], indirect=True)
+def test_can_respond_to_open_to_selected_specialist_as_invited_recruiter(specialist_brief, supplier_user):
+    supplier_user.supplier.data['recruiter'] = 'yes'
+
+    user_status = BriefUserStatus(specialist_brief, supplier_user)
+    result = user_status.can_respond_to_specialist_opportunity()
+
+    assert result is True
