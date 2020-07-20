@@ -91,7 +91,7 @@ atm_data = {
     'workAlreadyDone': 'TEST'
 }
 
-specialist_data = {
+open_to_all_specialist_data = {
     "areaOfExpertise": "Software engineering and Development",
     "attachments": [
         "test.pdf"
@@ -623,7 +623,7 @@ def test_can_not_respond_to_rfx_as_unassessed_seller(rfx_brief, recruiter, suppl
     assert result is False
 
 
-@pytest.mark.parametrize('specialist_brief', [{'data': specialist_data}], indirect=True)
+@pytest.mark.parametrize('specialist_brief', [{'data': open_to_all_specialist_data}], indirect=True)
 def test_can_respond_to_open_to_all_specialist_as_recruiter(specialist_brief, supplier_user):
     specialist_brief.data['openTo'] = 'all'
     supplier_user.supplier.data['recruiter'] = 'yes'
@@ -634,7 +634,7 @@ def test_can_respond_to_open_to_all_specialist_as_recruiter(specialist_brief, su
     assert result is True
 
 
-@pytest.mark.parametrize('specialist_brief', [{'data': specialist_data}], indirect=True)
+@pytest.mark.parametrize('specialist_brief', [{'data': open_to_all_specialist_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
 def test_can_respond_to_open_to_all_specialist_as_assessed(
     specialist_brief, recruiter, supplier_user, supplier_domains
@@ -648,7 +648,7 @@ def test_can_respond_to_open_to_all_specialist_as_assessed(
     assert result is True
 
 
-@pytest.mark.parametrize('specialist_brief', [{'data': specialist_data}], indirect=True)
+@pytest.mark.parametrize('specialist_brief', [{'data': open_to_all_specialist_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
 def test_can_not_respond_to_open_to_all_specialist_as_unassessed(specialist_brief, recruiter, supplier_user):
     specialist_brief.data['openTo'] = 'all'
