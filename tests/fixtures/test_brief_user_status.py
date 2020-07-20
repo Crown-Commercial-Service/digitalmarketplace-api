@@ -204,6 +204,7 @@ open_to_selected_specialist_data_not_invited['sellers'] = {
     }
 }
 
+
 @pytest.fixture()
 def supplier_domains(app, request, domains, suppliers):
     params = request.param if hasattr(request, 'param') else {}
@@ -635,7 +636,9 @@ def test_can_respond_to_open_to_all_specialist_as_recruiter(specialist_brief, su
 
 @pytest.mark.parametrize('specialist_brief', [{'data': specialist_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
-def test_can_respond_to_open_to_all_specialist_as_assessed(specialist_brief, recruiter, supplier_user, supplier_domains):
+def test_can_respond_to_open_to_all_specialist_as_assessed(
+    specialist_brief, recruiter, supplier_user, supplier_domains
+):
     specialist_brief.data['openTo'] = 'all'
     supplier_user.supplier.data['recruiter'] = recruiter
 
@@ -679,7 +682,9 @@ def test_can_respond_to_open_to_selected_specialist_as_recruiter_not_invited(spe
 
 @pytest.mark.parametrize('specialist_brief', [{'data': open_to_selected_specialist_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
-def test_can_respond_to_open_to_selected_specialist_as_assessed_invited_seller(specialist_brief, recruiter, supplier_user, supplier_domains):
+def test_can_respond_to_open_to_selected_specialist_as_assessed_invited_seller(
+    specialist_brief, recruiter, supplier_user, supplier_domains
+):
     supplier_user.supplier.data['recruiter'] = recruiter
 
     user_status = BriefUserStatus(specialist_brief, supplier_user)
@@ -690,7 +695,9 @@ def test_can_respond_to_open_to_selected_specialist_as_assessed_invited_seller(s
 
 @pytest.mark.parametrize('specialist_brief', [{'data': open_to_selected_specialist_data_not_invited}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
-def test_can_not_respond_to_open_to_selected_specialist_as_assessed_seller_not_invited(specialist_brief, recruiter, supplier_user, supplier_domains):
+def test_can_not_respond_to_open_to_selected_specialist_as_assessed_seller_not_invited(
+    specialist_brief, recruiter, supplier_user, supplier_domains
+):
     supplier_user.supplier.data['recruiter'] = recruiter
 
     user_status = BriefUserStatus(specialist_brief, supplier_user)
@@ -701,7 +708,9 @@ def test_can_not_respond_to_open_to_selected_specialist_as_assessed_seller_not_i
 
 @pytest.mark.parametrize('specialist_brief', [{'data': open_to_selected_specialist_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
-def test_can_not_respond_to_open_to_selected_specialist_as_unassessed_seller(specialist_brief, recruiter, supplier_user):
+def test_can_not_respond_to_open_to_selected_specialist_as_unassessed_seller(
+    specialist_brief, recruiter, supplier_user
+):
     supplier_user.supplier.data['recruiter'] = recruiter
 
     user_status = BriefUserStatus(specialist_brief, supplier_user)
