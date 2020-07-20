@@ -697,3 +697,14 @@ def test_can_not_respond_to_open_to_selected_specialist_as_assessed_seller_not_i
     result = user_status.can_respond_to_specialist_opportunity()
 
     assert result is False
+
+
+@pytest.mark.parametrize('specialist_brief', [{'data': open_to_selected_specialist_data}], indirect=True)
+@pytest.mark.parametrize('recruiter', ['both', 'no'])
+def test_can_not_respond_to_open_to_selected_specialist_as_unassessed_seller(specialist_brief, recruiter, supplier_user):
+    supplier_user.supplier.data['recruiter'] = recruiter
+
+    user_status = BriefUserStatus(specialist_brief, supplier_user)
+    result = user_status.can_respond_to_specialist_opportunity()
+
+    assert result is False
