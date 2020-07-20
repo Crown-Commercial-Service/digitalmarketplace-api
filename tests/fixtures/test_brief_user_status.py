@@ -92,37 +92,34 @@ atm_data = {
 }
 
 specialist_data = {
-    "securityClearanceOther": "",
-    "startDate": "2020-10-20",
+    "areaOfExpertise": "Software engineering and Development",
     "attachments": [
         "test.pdf"
     ],
-    "preferredFormatForRates": "dailyRate",
-    "evaluationType": [
-        "Responses to selection criteria",
-        "R\u00e9sum\u00e9s"
-    ],
-    "sellers": {},
+    "budgetRange": "",
+    "closedAt": "2020-09-10",
+    "comprehensiveTerms": False,
+    "contactNumber": "0412 345 678",
+    "contractExtensions": "",
     "contractLength": "2 years",
-    "includeWeightingsNiceToHave": False,
-    "securityClearanceCurrent": "",
     "essentialRequirements": [
         {
             "weighting": "",
             "criteria": "Python"
         }
     ],
-    "contactNumber": "0412 345 678",
-    "maxRate": "1000",
-    "budgetRange": "",
-    "securityClearance": "noneRequired",
-    "sellerSelector": "allSellers",
-    "sellerCategory": "6",
-    "contractExtensions": "",
+    "evaluationType": [
+        "Responses to selection criteria",
+        "Résumés"
+    ],
     "includeWeightingsEssential": False,
-    "title": "Developer",
-    "organisation": "Digital Transformation Agency",
+    "includeWeightingsNiceToHave": False,
     "internalReference": "",
+    "location": [
+        "Australian Capital Territory",
+        "New South Wales"
+    ],
+    "maxRate": "1000",
     "niceToHaveRequirements": [
         {
             "weighting": "",
@@ -130,16 +127,19 @@ specialist_data = {
         }
     ],
     "numberOfSuppliers": "3",
-    "summary": "Code",
-    "closedAt": "2020-09-10",
-    "location": [
-        "Australian Capital Territory",
-        "New South Wales"
-    ],
-    "areaOfExpertise": "Software engineering and Development",
-    "comprehensiveTerms": False,
+    "openTo": "all",
+    "organisation": "Digital Transformation Agency",
+    "preferredFormatForRates": "dailyRate",
+    "securityClearance": "noneRequired",
+    "securityClearanceCurrent": "",
     "securityClearanceObtain": "",
-    "openTo": "all"
+    "securityClearanceOther": "",
+    "sellerCategory": "6",
+    "sellerSelector": "allSellers",
+    "sellers": {},
+    "startDate": "2020-10-20",
+    "summary": "Code",
+    "title": "Developer"
 }
 
 open_to_selected_specialist_data = {
