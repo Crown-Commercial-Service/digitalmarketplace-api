@@ -97,7 +97,7 @@ open_to_all_specialist_data = {
         "test.pdf"
     ],
     "budgetRange": "",
-    "closedAt": "2020-09-10",
+    "closedAt": pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
     "comprehensiveTerms": False,
     "contactNumber": "0412 345 678",
     "contractExtensions": "",
@@ -137,7 +137,7 @@ open_to_all_specialist_data = {
     "sellerCategory": "6",
     "sellerSelector": "allSellers",
     "sellers": {},
-    "startDate": "2020-10-20",
+    "startDate": pendulum.today(tz='Australia/Sydney').add(days=24).format('%Y-%m-%d'),
     "summary": "Code",
     "title": "Developer"
 }
@@ -148,7 +148,7 @@ open_to_selected_specialist_data = {
         "test.pdf"
     ],
     "budgetRange": "",
-    "closedAt": "2020-09-10",
+    "closedAt": pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
     "comprehensiveTerms": False,
     "contactNumber": "0412 345 678",
     "contractExtensions": "",
@@ -192,7 +192,7 @@ open_to_selected_specialist_data = {
             "name": "Test Supplier1"
         }
     },
-    "startDate": "2020-10-20",
+    "startDate": pendulum.today(tz='Australia/Sydney').add(days=24).format('%Y-%m-%d'),
     "summary": "Code",
     "title": "Developer"
 }
