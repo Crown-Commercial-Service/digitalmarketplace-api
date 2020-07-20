@@ -517,7 +517,7 @@ def test_can_not_respond_to_open_to_all_atm_as_recruiter(atm_brief, supplier_use
 
 @pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
-def test_can_respond_to_open_to_all_atm_as_assessed(atm_brief, recruiter, supplier_user, supplier_domains):
+def test_can_respond_to_open_to_all_atm_as_assessed_seller(atm_brief, recruiter, supplier_user, supplier_domains):
     atm_brief.data['openTo'] = 'all'
     supplier_user.supplier.data['recruiter'] = recruiter
 
@@ -529,7 +529,7 @@ def test_can_respond_to_open_to_all_atm_as_assessed(atm_brief, recruiter, suppli
 
 @pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
-def test_can_not_respond_to_open_to_all_atm_as_unassessed(atm_brief, recruiter, supplier_user):
+def test_can_not_respond_to_open_to_all_atm_as_unassessed_seller(atm_brief, recruiter, supplier_user):
     atm_brief.data['openTo'] = 'all'
     supplier_user.supplier.data['recruiter'] = recruiter
 
@@ -552,7 +552,7 @@ def test_can_not_respond_to_open_to_category_atm_as_recruiter(atm_brief, supplie
 
 @pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
-def test_can_respond_to_open_to_category_atm_as_assessed(atm_brief, recruiter, supplier_user, supplier_domains):
+def test_can_respond_to_open_to_category_atm_as_assessed_seller(atm_brief, recruiter, supplier_user, supplier_domains):
     atm_brief.data['openTo'] = 'category'
     atm_brief.data['sellerCategory'] = '1'
     supplier_user.supplier.data['recruiter'] = recruiter
@@ -565,7 +565,9 @@ def test_can_respond_to_open_to_category_atm_as_assessed(atm_brief, recruiter, s
 
 @pytest.mark.parametrize('atm_brief', [{'data': atm_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
-def test_can_not_respond_to_open_to_category_atm_as_unassessed(atm_brief, recruiter, supplier_user, supplier_domains):
+def test_can_not_respond_to_open_to_category_atm_as_unassessed_seller(
+    atm_brief, recruiter, supplier_user, supplier_domains
+):
     atm_brief.data['openTo'] = 'category'
     atm_brief.data['sellerCategory'] = '1'
     supplier_user.supplier.data['recruiter'] = recruiter
@@ -636,7 +638,7 @@ def test_can_respond_to_open_to_all_specialist_as_recruiter(specialist_brief, su
 
 @pytest.mark.parametrize('specialist_brief', [{'data': open_to_all_specialist_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
-def test_can_respond_to_open_to_all_specialist_as_assessed(
+def test_can_respond_to_open_to_all_specialist_as_assessed_seller(
     specialist_brief, recruiter, supplier_user, supplier_domains
 ):
     specialist_brief.data['openTo'] = 'all'
@@ -650,7 +652,7 @@ def test_can_respond_to_open_to_all_specialist_as_assessed(
 
 @pytest.mark.parametrize('specialist_brief', [{'data': open_to_all_specialist_data}], indirect=True)
 @pytest.mark.parametrize('recruiter', ['both', 'no'])
-def test_can_not_respond_to_open_to_all_specialist_as_unassessed(specialist_brief, recruiter, supplier_user):
+def test_can_not_respond_to_open_to_all_specialist_as_unassessed_seller(specialist_brief, recruiter, supplier_user):
     specialist_brief.data['openTo'] = 'all'
     supplier_user.supplier.data['recruiter'] = recruiter
 
@@ -671,7 +673,7 @@ def test_can_respond_to_open_to_selected_specialist_as_invited_recruiter(special
 
 
 @pytest.mark.parametrize('specialist_brief', [{'data': open_to_selected_specialist_data_not_invited}], indirect=True)
-def test_can_respond_to_open_to_selected_specialist_as_recruiter_not_invited(specialist_brief, supplier_user):
+def test_can_not_respond_to_open_to_selected_specialist_as_recruiter_not_invited(specialist_brief, supplier_user):
     supplier_user.supplier.data['recruiter'] = 'yes'
 
     user_status = BriefUserStatus(specialist_brief, supplier_user)
