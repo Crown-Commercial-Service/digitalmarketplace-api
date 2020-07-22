@@ -203,21 +203,15 @@ class EvidenceService(Service):
         query = (
             db
             .session
-            .query(
-                func.json_agg(
-                    func.json_build_object(
-                        'id', CaseStudy.id,
-                        'data', CaseStudy.data
-                    )
-                    .label('case_study_data')
-                )
-                .filter(
-                    CaseStudy.supplier_code == supplier_code,
-                    subquery.c.name == CaseStudy.data['service'].astext.label('domain_name')
-                )
+            .query(CaseStudy.id, CaseStudy.data)
+            .filter(
+                CaseStudy.supplier_code == supplier_code,
+                CaseStudy.status == 'approved',
+                CaseStudy.data['service'].astext == subquery.c.name,
             )
         )
-        return query.all()
+        
+        return [case_study._asdict() for case_study in query.all()]
 
     def supplier_has_assessment_for_brief(self, supplier_code, brief_id):
         evidence = self.filter(
