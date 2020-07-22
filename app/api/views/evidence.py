@@ -8,7 +8,7 @@ from app.api.services import (
 )
 from app.api.business.validators import EvidenceDataValidator
 from app.api.business.domain_criteria import DomainCriteria
-from app.api.business.evidence_business import get_domain_and_evidence_data, case_studies_by_supplier_code
+from app.api.business.evidence_business import get_domain_and_evidence_data, get_approved_case_studies
 from app.tasks.jira import create_evidence_assessment_in_jira
 from app.tasks import publish_tasks
 from app.emails.evidence_assessments import send_evidence_assessment_requested_notification
@@ -139,7 +139,7 @@ def get_evidence(evidence_id):
 @login_required
 @role_required('supplier')
 def get_case_studies(domain_id):
-    data = case_studies_by_supplier_code(current_user.supplier_code, domain_id)
+    data = get_approved_case_studies(current_user.supplier_code, domain_id)
     return jsonify(data)
 
 

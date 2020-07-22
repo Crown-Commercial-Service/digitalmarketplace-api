@@ -48,7 +48,7 @@ def delete_draft_evidence(evidence_id, actioned_by):
     return True
 
 
-def case_studies_by_supplier_code(supplier_code, domain_id):
+def get_approved_case_studies(supplier_code, domain_id):
     case_studies = {}
     case_studies['data'] = evidence_service.get_case_studies_by_supplier_code(supplier_code, domain_id)
     # simplify case_studies data structure
