@@ -158,29 +158,65 @@ class BriefUserStatus(object):
             return True
         return False
 
-    def can_respond(self):
+    def can_respond_to_atm_opportunity(self):
+        open_to = self.brief.data.get('openTo', '')
+
+        if (
+            self.user_role == 'supplier' and
+            self.brief.lot.slug == 'atm' and
+            self.supplier.data.get('recruiter', '') != 'yes' and (
+                (open_to == 'all' and self.is_assessed_in_any_category()) or
+                (open_to == 'category' and self.is_assessed_for_category())
+            )
+        ):
+            return True
+
+        return False
+
+    def can_respond_to_rfx_or_training_opportunity(self):
         if (
             self.user_role == 'supplier' and (
-                (
-                    self.brief.lot.slug == 'specialist' and
-                    self.brief.data.get('openTo', '') == 'all' and
-                    self.is_assessed_for_category()
-                ) or (
-                    self.brief.lot.slug != 'specialist' and
-                    (
-                        self.brief.data.get('openTo', '') == 'all' and
-                        self.is_assessed_in_any_category()
-                    ) or (
-                        self.brief.data.get('openTo', '') == 'category' and
-                        self.is_assessed_for_category()
-                    )
-                ) or (
-                    str(self.supplier_code) in self.invited_sellers.keys() and
+                self.brief.lot.slug == 'rfx' or
+                self.brief.lot.slug == 'training2'
+            ) and
+            self.supplier.data.get('recruiter', '') != 'yes' and
+            str(self.supplier_code) in self.invited_sellers.keys() and
+            self.is_assessed_for_category()
+        ):
+            return True
+
+        return False
+
+    def can_respond_to_specialist_opportunity(self):
+        open_to = self.brief.data.get('openTo', '')
+        recruiter = self.supplier.data.get('recruiter', '') if self.user_role == 'supplier' else ''
+
+        if (
+            self.user_role == 'supplier' and
+            self.brief.lot.slug == 'specialist' and (
+                open_to == 'all' or (
+                    open_to == 'selected' and
+                    str(self.supplier_code) in self.invited_sellers.keys()
+                )
+            ) and (
+                recruiter == 'yes' or (
+                    (recruiter == 'both' or recruiter == 'no') and
                     self.is_assessed_for_category()
                 )
             )
         ):
             return True
+
+        return False
+
+    def can_respond(self):
+        if (
+            self.can_respond_to_atm_opportunity() or
+            self.can_respond_to_rfx_or_training_opportunity() or
+            self.can_respond_to_specialist_opportunity()
+        ):
+            return True
+
         return False
 
     def has_responded(self, submitted_only=True):
