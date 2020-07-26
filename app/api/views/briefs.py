@@ -311,6 +311,8 @@ def get_brief(brief_id):
     evidence_id_rejected = user_status.evidence_id_rejected()
     has_supplier_errors = user_status.has_supplier_errors()
     has_signed_current_agreement = user_status.has_signed_current_agreement()
+    last_edited_at = brief_history_service.get_last_edited_date(brief.id)
+    only_sellers_edited = brief_edit_business.only_sellers_were_edited(brief.id)
 
     # remove private data for non brief owners
     brief.data['contactEmail'] = ''
@@ -355,9 +357,6 @@ def get_brief(brief_id):
     if not is_buyer:
         if not is_invited:
             brief_serialized['clarificationQuestions'] = []
-
-    last_edited_at = brief_history_service.get_last_edited_date(brief.id)
-    only_sellers_edited = brief_edit_business.only_sellers_were_edited(brief.id)
 
     return jsonify(brief=brief_serialized,
                    brief_response_count=brief_response_count,
