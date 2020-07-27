@@ -699,17 +699,21 @@ def get_opportunity_history(brief_id):
         not_found("Invalid brief id '{}'".format(brief_id))
 
     user_role = current_user.role if hasattr(current_user, 'role') else None
-
     show_documents = False
+    user_status = BriefUserStatus(brief, current_user)
+    can_respond = user_status.can_respond()
+
     if user_role == 'supplier':
-        user_status = BriefUserStatus(brief, current_user)
-        show_documents = user_status.can_respond()
+        show_documents = can_respond
     elif user_role in ['buyer', 'admin']:
         show_documents = True
+
     try:
         edits = brief_edit_business.get_opportunity_history(brief_id, show_documents, include_sellers=False)
     except NotFoundError as e:
         not_found(e.message)
+
+    edits['can_respond'] = can_respond
 
     return jsonify(edits)
 
