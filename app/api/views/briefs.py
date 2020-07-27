@@ -714,6 +714,8 @@ def get_opportunity_history(brief_id):
         not_found(e.message)
 
     edits['can_respond'] = can_respond
+    if user_role == 'supplier' and not can_respond:
+        edits['edits'] = []
 
     return jsonify(edits)
 
