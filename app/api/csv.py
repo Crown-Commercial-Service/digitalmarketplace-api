@@ -220,6 +220,7 @@ def generate_seller_catalogue_csv(seller_catalogue):
         answers.update({'Email': r['contact_email']})
         answers.update({'Categories': r['domains']})
         answers.update({'Description': r['description']})
+        answers.update({'Methodology': r['methodologies']})
         answers.update({'Recruiter': r['recruiter_status']})
 
         answers.update({
