@@ -233,7 +233,9 @@ def generate_seller_catalogue_csv(seller_catalogue):
             'SME': 'Yes' if r.get('seller_type', {}).get('sme', '') is True else 'No'
         })
 
+        answers.update({'Accreditations': r['certifications']})
         number_of_employees = ''
+
         if r['number_of_employees'] == 'Sole trader':
             number_of_employees = '1 employee'
         elif r['number_of_employees']:
