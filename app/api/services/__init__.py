@@ -9,6 +9,7 @@ from .brief_question import BriefQuestionService
 from .brief_response_download import BriefResponseDownloadService
 from .brief_responses import BriefResponsesService
 from .briefs import BriefsService
+from .case_study import CaseStudyService
 from .domain import DomainService
 from .domain_criteria import DomainCriteriaService
 from .evidence import EvidenceService
@@ -39,6 +40,7 @@ assessments = AssessmentsService()
 domain_service = DomainService()
 domain_criteria_service = DomainCriteriaService()
 briefs = BriefsService()
+case_study = CaseStudyService()
 suppliers = SuppliersService()
 supplier_domain_service = SupplierDomainService()
 lots_service = LotsService()
