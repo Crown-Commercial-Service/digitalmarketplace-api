@@ -61,5 +61,4 @@ def test_can_get_error_for_no_filename():
         }
     )
     errors = ApplicationValidator(application).validate_documents()
-    print errors
     assert len(errors) == 7
