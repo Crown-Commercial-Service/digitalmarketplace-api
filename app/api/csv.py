@@ -220,8 +220,15 @@ def generate_seller_catalogue_csv(seller_catalogue):
         answers.update({'Email': r['contact_email']})
         answers.update({'Categories': r['domains']})
         answers.update({'Recruiter': r['recruiter_status']})
-        answers.update({'Indigenous business': r.get('seller_type', {}).get('indigenous', '')})
-        answers.update({'SME': r.get('seller_type', {}).get('sme', '')})
+
+        answers.update({
+            'Indigenous business': 'Yes' if r.get('seller_type', {}).get('indigenous', '') is True else 'No'
+        })
+
+        answers.update({
+            'SME': 'Yes' if r.get('seller_type', {}).get('sme', '') is True else 'No'
+        })
+
         number_of_employees = ''
         if r['number_of_employees'] == 'Sole trader':
             number_of_employees = '1 employee'
