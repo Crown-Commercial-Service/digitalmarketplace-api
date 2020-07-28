@@ -352,6 +352,7 @@ class SuppliersService(Service):
                 Supplier.creation_time,
                 Supplier.data['contact_email'].astext.label('contact_email'),
                 Supplier.data['methodologies'].astext.label('methodologies'),
+                Supplier.data['tools'].astext.label('tools'),
                 Supplier.data['recruiter'].astext.label('recruiter_status'),
                 case(
                     whens=[
