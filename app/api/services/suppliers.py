@@ -353,6 +353,7 @@ class SuppliersService(Service):
                 Supplier.data['contact_email'].astext.label('contact_email'),
                 Supplier.data['methodologies'].astext.label('methodologies'),
                 Supplier.data['tools'].astext.label('tools'),
+                Supplier.data['technologies'].astext.label('technologies'),
                 Supplier.data['recruiter'].astext.label('recruiter_status'),
                 case(
                     whens=[
