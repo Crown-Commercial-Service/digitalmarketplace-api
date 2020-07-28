@@ -217,9 +217,9 @@ def generate_seller_catalogue_csv(seller_catalogue):
         answers = od()
         answers.update({'ABN': r['abn']})
         answers.update({'Seller name': r['name']})
-        answers.update({'Contact email': r['contact_email']})
-        answers.update({'Domain name': r['domains']})
-        answers.update({'Recruiter status': r['recruiter_status']})
+        answers.update({'Email': r['contact_email']})
+        answers.update({'Categories': r['domains']})
+        answers.update({'Recruiter': r['recruiter_status']})
         answers.update({'Indigenous business': r.get('seller_type', {}).get('indigenous', '')})
         answers.update({'SME': r.get('seller_type', {}).get('sme', '')})
         number_of_employees = ''
@@ -254,12 +254,12 @@ def generate_seller_catalogue_csv(seller_catalogue):
                 if 'expiry' in r['labour_hire']['sa']:
                     licence_sa_expiry = r['labour_hire']['sa']['expiry']
 
-        answers.update({'Labour hire VIC licence': licence_vic_number})
-        answers.update({'Labour hire VIC expiry': licence_vic_expiry})
-        answers.update({'Labour hire QLD licence': licence_qld_number})
-        answers.update({'Labour hire QLD expiry': licence_qld_expiry})
-        answers.update({'Labour hire SA licence': licence_sa_number})
-        answers.update({'Labour hire SA expiry': licence_sa_expiry})
+        answers.update({'VIC labour hire licence': licence_vic_number})
+        answers.update({'VIC licence expiry': licence_vic_expiry})
+        answers.update({'QLD labour hire licence': licence_qld_number})
+        answers.update({'QLD licence expiry': licence_qld_expiry})
+        answers.update({'SA labour hire licence': licence_sa_number})
+        answers.update({'SA licence expiry': licence_sa_expiry})
 
         for k, v in answers.items():
             answers[k] = csv_cell_sanitize(v)
