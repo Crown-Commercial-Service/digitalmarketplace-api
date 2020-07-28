@@ -191,28 +191,6 @@ class EvidenceService(Service):
         )
         return query.one_or_none()
 
-    def get_case_studies_by_supplier_code(self, supplier_code, domain_id):
-        subquery = (
-            db
-            .session
-            .query(Domain.name)
-            .filter(Domain.id == domain_id)
-            .subquery()
-        )
-
-        query = (
-            db
-            .session
-            .query(CaseStudy.id, CaseStudy.data)
-            .filter(
-                CaseStudy.supplier_code == supplier_code,
-                CaseStudy.status == 'approved',
-                CaseStudy.data['service'].astext == subquery.c.name,
-            )
-        )
-        
-        return [case_study._asdict() for case_study in query.all()]
-
     def supplier_has_assessment_for_brief(self, supplier_code, brief_id):
         evidence = self.filter(
             Evidence.supplier_code == supplier_code,
