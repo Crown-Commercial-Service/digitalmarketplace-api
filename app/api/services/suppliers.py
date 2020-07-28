@@ -348,6 +348,7 @@ class SuppliersService(Service):
             .query(
                 Supplier.name,
                 Supplier.abn,
+                Supplier.description,
                 Supplier.creation_time,
                 Supplier.data['contact_email'].astext.label('contact_email'),
                 Supplier.data['recruiter'].astext.label('recruiter_status'),
