@@ -787,6 +787,12 @@ class Supplier(db.Model):
             ))
         elif status == 'unassessed':
             sd.price_status = 'unassessed'
+            db.session.add(AuditEvent(
+                audit_type=AuditTypes.unassessed_domain,
+                user=user if user else '',
+                data=audit_data if audit_data else {},
+                db_object=sd
+            ))
         db.session.flush()
 
     @property
@@ -951,7 +957,11 @@ class Supplier(db.Model):
             # un-assess domains when going from a recruiter to a consultancy
             if self.data.get('recruiter', '') == 'yes' and data.get('recruiter', '') in ['both', 'no']:
                 for domain in self.all_domains:
-                    self.update_domain_assessment_status(domain, 'unassessed')
+                    audit_data = {
+                        'supplier_code': self.code
+                    }
+
+                    self.update_domain_assessment_status(domain, 'unassessed', audit_data=audit_data)
 
         if 'representative' in data:
             self.contacts = [
@@ -2970,6 +2980,8 @@ class Application(db.Model):
                 self.data.pop('email', None)
             else:
                 supplier = Supplier()
+
+            self.data.pop('understandsAssessmentProcess', None)
 
             to_remove = []
             for state, state_value in self.data.get('labourHire', {}).iteritems():
