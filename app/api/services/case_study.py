@@ -6,13 +6,12 @@ from app.api.helpers import Service
 from app.models import CaseStudy, Domain
 
 
-
 class CaseStudyService(Service):
     __model__ = CaseStudy
 
     def __init__(self, *args, **kwargs):
         super(CaseStudyService, self).__init__(*args, **kwargs)
-    
+
     def get_case_studies_by_supplier_code(self, supplier_code, domain_id):
         subquery = (
             db
@@ -32,5 +31,5 @@ class CaseStudyService(Service):
                 CaseStudy.data['service'].astext == subquery.c.name,
             )
         )
-        
+
         return [case_study._asdict() for case_study in query.all()]
