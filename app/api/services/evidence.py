@@ -3,7 +3,7 @@ from sqlalchemy.orm import joinedload, raiseload
 
 from app import db
 from app.api.helpers import Service
-from app.models import Brief, CaseStudy, Domain, Evidence, EvidenceAssessment, Supplier
+from app.models import Brief, Domain, Evidence, EvidenceAssessment, Supplier
 
 
 class EvidenceService(Service):
