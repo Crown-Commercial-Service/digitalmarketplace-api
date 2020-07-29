@@ -385,7 +385,7 @@ class SuppliersService(Service):
                 ).label('seller_type'),
                 aggregated_certifications.c.certifications,
                 Supplier.data['number_of_employees'].label('number_of_employees'),
-                func.string_agg(Domain.name, ',').label('domains'),
+                func.string_agg(Domain.name, '; ').label('domains'),
                 Supplier.data['labourHire'].label('labour_hire')
             )
             .join(SupplierDomain, Domain)
