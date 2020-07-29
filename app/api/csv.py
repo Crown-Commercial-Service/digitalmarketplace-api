@@ -217,6 +217,15 @@ def generate_seller_catalogue_csv(seller_catalogue):
         answers = od()
         answers.update({'ABN': r['abn']})
         answers.update({'Seller name': r['name']})
+
+        address = r.get('address', {}).get('address_line', '')
+        suburb = r.get('address', {}).get('suburb', '')
+        state = r.get('address', {}).get('state', '')
+        postcode = r.get('address', {}).get('postal_code', '')
+        country = r.get('address', {}).get('country', '')
+        full_address = ', '.join([address, suburb, state, postcode, country])
+        answers.update({'Location': full_address})
+
         answers.update({'Email': r['contact_email']})
         answers.update({'Categories': r['domains']})
         answers.update({'Description': r['description']})

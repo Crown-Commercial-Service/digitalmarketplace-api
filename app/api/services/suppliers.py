@@ -372,6 +372,12 @@ class SuppliersService(Service):
                 Supplier.abn,
                 Supplier.description,
                 Supplier.creation_time,
+                case(
+                    whens=[
+                        (Supplier.data['address'].is_(None), '{}')
+                    ],
+                    else_=Supplier.data['address']
+                ).label('address'),
                 Supplier.data['contact_email'].astext.label('contact_email'),
                 Supplier.data['methodologies'].astext.label('methodologies'),
                 Supplier.data['tools'].astext.label('tools'),
