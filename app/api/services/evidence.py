@@ -1,9 +1,10 @@
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import joinedload, raiseload
+from sqlalchemy.types import Integer
 
 from app import db
 from app.api.helpers import Service
-from app.models import Brief, Domain, Evidence, EvidenceAssessment, Supplier
+from app.models import Brief, Domain, DomainCriteria, Evidence, EvidenceAssessment, Supplier
 
 
 class EvidenceService(Service):
@@ -82,6 +83,46 @@ class EvidenceService(Service):
         )
         evidence = query.first()
         return evidence
+
+    def get_evidence_data(self, evidence_id, domain_id):
+
+        evidence_subquery = (
+            db
+            .session
+            .query(
+                Evidence.id.label('evidence_id'),
+                func.json_array_elements_text(Evidence.data['criteria']).label('domain_criteria_id')
+            )
+            .subquery()
+        )
+
+        subquery=(
+            db.session.query(
+                evidence_subquery.c.evidence_id,
+                evidence_subquery.c.domain_criteria_id,
+                DomainCriteria.name,
+            )
+            .join(DomainCriteria, DomainCriteria.id == evidence_subquery.c.domain_criteria_id.cast(Integer))
+            .subquery()
+        )
+
+        query =(
+            db.session.query(
+                subquery.c.evidence_id,
+                func.json_agg(
+                    func.json_build_object(
+                    'domain_criteria_id', subquery.c.domain_criteria_id,
+                    'name', subquery.name
+                    )
+                )
+            )
+            .group_by(subquery.c.evidence_id)
+        )
+# will need to filter by evidence_id
+        result = query.all()
+        print("printing results")
+
+        return result
 
     def get_all_evidence(self, supplier_code=None):
         query = (
