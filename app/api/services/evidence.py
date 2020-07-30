@@ -84,7 +84,7 @@ class EvidenceService(Service):
         evidence = query.first()
         return evidence
 
-    def get_evidence_data(self, evidence_id, domain_id):
+    def get_evidence_data(self, evidence_id):
 
         evidence_subquery = (
             db
@@ -93,6 +93,7 @@ class EvidenceService(Service):
                 Evidence.id.label('evidence_id'),
                 func.json_array_elements_text(Evidence.data['criteria']).label('domain_criteria_id')
             )
+            .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
@@ -118,6 +119,7 @@ class EvidenceService(Service):
             )
             .group_by(subquery.c.evidence_id)
         )
+        # check domain name + something strange is going on
 # will need to filter by evidence_id
         result = query.all()
         print("printing results")
