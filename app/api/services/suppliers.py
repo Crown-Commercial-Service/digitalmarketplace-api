@@ -349,14 +349,46 @@ class SuppliersService(Service):
         return self.save(supplier, do_commit)
 
     def get_approved_suppliers(self):
+        expanded_certifications = (
+            db
+            .session
+            .query(
+                Supplier.id,
+                func.json_array_elements_text(Supplier.data['certifications']).label('certifications')
+            )
+            .subquery()
+        )
+
+        aggregated_certifications = (
+            db
+            .session
+            .query(
+                Supplier.id,
+                func.string_agg(expanded_certifications.c.certifications, '; ').label('certifications')
+            )
+            .join(expanded_certifications, expanded_certifications.c.id == Supplier.id, isouter=True)
+            .group_by(Supplier.id)
+            .subquery()
+        )
+
         results = (
             db
             .session
             .query(
                 Supplier.name,
                 Supplier.abn,
+                Supplier.description,
                 Supplier.creation_time,
+                case(
+                    whens=[
+                        (Supplier.data['address'].is_(None), '{}')
+                    ],
+                    else_=Supplier.data['address']
+                ).label('address'),
                 Supplier.data['contact_email'].astext.label('contact_email'),
+                Supplier.data['methodologies'].astext.label('methodologies'),
+                Supplier.data['tools'].astext.label('tools'),
+                Supplier.data['technologies'].astext.label('technologies'),
                 Supplier.data['recruiter'].astext.label('recruiter_status'),
                 case(
                     whens=[
@@ -364,17 +396,19 @@ class SuppliersService(Service):
                     ],
                     else_=Supplier.data['seller_type']
                 ).label('seller_type'),
+                aggregated_certifications.c.certifications,
                 Supplier.data['number_of_employees'].label('number_of_employees'),
-                func.string_agg(Domain.name, ',').label('domains'),
+                func.string_agg(Domain.name, '; ').label('domains'),
                 Supplier.data['labourHire'].label('labour_hire')
             )
             .join(SupplierDomain, Domain)
+            .join(aggregated_certifications, aggregated_certifications.c.id == Supplier.id)
             .filter(
                 Supplier.status != 'deleted',
                 SupplierDomain.status == 'assessed',
                 SupplierDomain.price_status == 'approved'
             )
-            .group_by(Supplier.id, Supplier.name, Supplier.abn)
+            .group_by(Supplier.id, Supplier.name, Supplier.abn, aggregated_certifications.c.certifications)
             .order_by(Supplier.name)
             .all()
         )
