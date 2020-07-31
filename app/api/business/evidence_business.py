@@ -49,10 +49,15 @@ def delete_draft_evidence(evidence_id, actioned_by):
 
 
 def get_domain_and_evidence_data(evidence_id):
+
     evidence = evidence_service.get_evidence_by_id(evidence_id)
     data = {}
     data = evidence.serialize()
     data['domain_name'] = evidence.domain.name
+
+    # data = evidence_service.get_evidence_data(evidence_id)
+    # print('test')
+    # print(data)
 
     domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
     criteria_from_domain = {}
