@@ -86,6 +86,30 @@ class EvidenceService(Service):
 
     def get_evidence_data(self, evidence_id):
 
+        # we have a function that gets evidence by id so no need to create it just call it =
+        # evidence = db.session.query(func.get_evidence_by_id(evidence_id))
+        evidence = {}
+        query = (
+            db.session.query(Evidence)
+            .filter(
+                Evidence.id == evidence_id
+            )
+            .options(
+                joinedload(Evidence.supplier).joinedload(Supplier.signed_agreements),
+                joinedload(Evidence.supplier).joinedload(Supplier.domains),
+                joinedload(Evidence.user),
+                joinedload(Evidence.brief).joinedload(Brief.clarification_questions),
+                joinedload(Evidence.brief).joinedload(Brief.work_order),
+                joinedload(Evidence.domain),
+                raiseload('*')
+            )
+        )
+        value = query.one_or_none()
+        evidence = value.serialize()
+        evidence['domain_name'] = value.domain.name
+        # print('evidence serialize client')
+
+
         evidence_subquery = (
             db
             .session
@@ -119,12 +143,21 @@ class EvidenceService(Service):
             )
             .group_by(subquery.c.evidence_id)
         )
-        # check domain name + something strange is going on
-# will need to filter by evidence_id
         result = query.all()
-        print("printing results")
+        evidence['domain_criteria'] = result
+        # evidence = result
+        # evidence['result'] = result
 
-        return result
+        print('evidence array')
+        print(evidence)
+        # print('result')
+        # evidence['domain_criteria'] = query.all()
+        # print('evidence is here!')
+        # print(evidence)
+        # print("printing results")
+
+
+        return evidence
 
     def get_all_evidence(self, supplier_code=None):
         query = (
