@@ -114,37 +114,65 @@ class EvidenceService(Service):
             db
             .session
             .query(
-                Evidence.id.label('evidence_id'),
+                # Evidence.id.label('evidence_id'),
                 func.json_array_elements_text(Evidence.data['criteria']).label('domain_criteria_id')
             )
             .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
-        subquery=(
+        query=(
             db.session.query(
-                evidence_subquery.c.evidence_id,
+                # evidence_subquery.c.evidence_id,
                 evidence_subquery.c.domain_criteria_id,
-                DomainCriteria.name,
+                DomainCriteria.name
             )
             .join(DomainCriteria, DomainCriteria.id == evidence_subquery.c.domain_criteria_id.cast(Integer))
-            .subquery()
+            # .subquery()
         )
 
-        query =(
-            db.session.query(
-                subquery.c.evidence_id,
-                func.json_agg(
-                    func.json_build_object(
-                    'domain_criteria_id', subquery.c.domain_criteria_id,
-                    'name', subquery.name
-                    )
-                )
-            )
-            .group_by(subquery.c.evidence_id)
-        )
-        result = query.all()
-        evidence['domain_criteria'] = result
+        criteria_from_domain = {}
+
+        for criteria in query.all():
+            criteria_from_domain[criteria.domain_criteria_id] = {'name': criteria.name}
+        
+        evidence['domain_criteria'] = criteria_from_domain
+
+        # query =(
+        #     db.session.query(
+        #         subquery.c.evidence_id,
+        #         func.json_agg(
+        #             func.json_build_object(
+        #             'domain_criteria_id', subquery.c.domain_criteria_id,
+        #             'name', subquery.name
+        #             )
+        #         )
+        #     )
+        #     .group_by(subquery.c.evidence_id)
+        # )
+
+        # subq_results = query.all()
+        # print('WTF')
+        # print(subq_results)
+
+#         select 
+# 	q1.id evidence_id,
+# 	json_agg(
+# 		json_build_object(
+# 			'domain_criteria_id', q1.domain_criteria_id,
+# 			'name', q1.name
+# 		)
+# 	)
+# from (
+# 	select e.id, domain_criteria_id, dc.name 
+# 	from evidence e, json_array_elements_text(e.data -> 'criteria') domain_criteria_id
+# 	inner join domain_criteria dc on dc.id = domain_criteria_id::integer
+# ) q1
+# group by q1.id
+
+
+        # result = query.all()
+        # evidence['domain_criteria'] = result
         # evidence = result
         # evidence['result'] = result
 
