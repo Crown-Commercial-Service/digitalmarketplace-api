@@ -85,9 +85,8 @@ class EvidenceService(Service):
         return evidence
 
     def get_evidence_data(self, evidence_id):
-
         evidence = {}
-        evidence_query = (
+        get_evidence_by_id_query = (
             db.session.query(Evidence)
             .filter(
                 Evidence.id == evidence_id
@@ -102,11 +101,10 @@ class EvidenceService(Service):
                 raiseload('*')
             )
         )
-        value = evidence_query.one_or_none()
+
+        value = get_evidence_by_id_query.one_or_none()
         evidence = value.serialize()
-
         evidence['domain_name'] = value.domain.name
-
 
         evidence_subquery = (
             db
@@ -118,7 +116,7 @@ class EvidenceService(Service):
             .subquery()
         )
 
-        query=(
+        query = (
             db.session.query(
                 evidence_subquery.c.domain_criteria_id,
                 DomainCriteria.name
@@ -130,7 +128,7 @@ class EvidenceService(Service):
 
         for criteria in query.all():
             criteria_from_domain[criteria.domain_criteria_id] = {'name': criteria.name}
-        
+
         evidence['domain_criteria'] = criteria_from_domain
         return evidence
 
