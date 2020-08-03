@@ -107,14 +107,12 @@ class EvidenceService(Service):
         value = query.one_or_none()
         evidence = value.serialize()
         evidence['domain_name'] = value.domain.name
-        # print('evidence serialize client')
 
 
         evidence_subquery = (
             db
             .session
             .query(
-                # Evidence.id.label('evidence_id'),
                 func.json_array_elements_text(Evidence.data['criteria']).label('domain_criteria_id')
             )
             .filter(Evidence.id == evidence_id)
@@ -123,12 +121,10 @@ class EvidenceService(Service):
 
         query=(
             db.session.query(
-                # evidence_subquery.c.evidence_id,
                 evidence_subquery.c.domain_criteria_id,
                 DomainCriteria.name
             )
             .join(DomainCriteria, DomainCriteria.id == evidence_subquery.c.domain_criteria_id.cast(Integer))
-            # .subquery()
         )
 
         criteria_from_domain = {}
@@ -137,54 +133,6 @@ class EvidenceService(Service):
             criteria_from_domain[criteria.domain_criteria_id] = {'name': criteria.name}
         
         evidence['domain_criteria'] = criteria_from_domain
-
-        # query =(
-        #     db.session.query(
-        #         subquery.c.evidence_id,
-        #         func.json_agg(
-        #             func.json_build_object(
-        #             'domain_criteria_id', subquery.c.domain_criteria_id,
-        #             'name', subquery.name
-        #             )
-        #         )
-        #     )
-        #     .group_by(subquery.c.evidence_id)
-        # )
-
-        # subq_results = query.all()
-        # print('WTF')
-        # print(subq_results)
-
-#         select 
-# 	q1.id evidence_id,
-# 	json_agg(
-# 		json_build_object(
-# 			'domain_criteria_id', q1.domain_criteria_id,
-# 			'name', q1.name
-# 		)
-# 	)
-# from (
-# 	select e.id, domain_criteria_id, dc.name 
-# 	from evidence e, json_array_elements_text(e.data -> 'criteria') domain_criteria_id
-# 	inner join domain_criteria dc on dc.id = domain_criteria_id::integer
-# ) q1
-# group by q1.id
-
-
-        # result = query.all()
-        # evidence['domain_criteria'] = result
-        # evidence = result
-        # evidence['result'] = result
-
-        print('evidence array')
-        print(evidence)
-        # print('result')
-        # evidence['domain_criteria'] = query.all()
-        # print('evidence is here!')
-        # print(evidence)
-        # print("printing results")
-
-
         return evidence
 
     def get_all_evidence(self, supplier_code=None):
