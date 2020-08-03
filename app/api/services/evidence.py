@@ -86,10 +86,8 @@ class EvidenceService(Service):
 
     def get_evidence_data(self, evidence_id):
 
-        # we have a function that gets evidence by id so no need to create it just call it =
-        # evidence = db.session.query(func.get_evidence_by_id(evidence_id))
         evidence = {}
-        query = (
+        evidence_query = (
             db.session.query(Evidence)
             .filter(
                 Evidence.id == evidence_id
@@ -104,8 +102,9 @@ class EvidenceService(Service):
                 raiseload('*')
             )
         )
-        value = query.one_or_none()
+        value = evidence_query.one_or_none()
         evidence = value.serialize()
+
         evidence['domain_name'] = value.domain.name
 
 
