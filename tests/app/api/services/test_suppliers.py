@@ -143,12 +143,12 @@ class TestSuppliersService(BaseApplicationTest):
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=2)
         assert len(suppliers_with_expired_licences) == 0
 
-    def test_get_expired_licences_returns_sa_and_vic_and_qld(self, supplier, users):
+    def test_get_expired_licences_returns_vic_and_qld(self, supplier, users):
         expiry_date = date.today() + timedelta(days=10)
         expiry = '{}-{}-{}'.format(expiry_date.year, expiry_date.month, expiry_date.day)
 
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
-        assert len(suppliers_with_expired_licences[0]['labour_hire_licences']) == 3
+        assert len(suppliers_with_expired_licences[0]['labour_hire_licences']) == 2
 
     @pytest.mark.parametrize(
         'supplier', [
