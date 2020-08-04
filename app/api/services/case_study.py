@@ -12,7 +12,7 @@ class CaseStudyService(Service):
     def __init__(self, *args, **kwargs):
         super(CaseStudyService, self).__init__(*args, **kwargs)
 
-    def get_case_studies_by_supplier_code(self, supplier_code, domain_id):
+    def get_approved_case_studies_by_supplier_code(self, supplier_code, domain_id):
         subquery = (
             db
             .session
