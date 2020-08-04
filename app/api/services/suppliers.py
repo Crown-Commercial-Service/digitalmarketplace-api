@@ -254,12 +254,12 @@ class SuppliersService(Service):
                       .where(and_(Supplier.data['labourHire']['qld']['expiry'].isnot(None),
                                   func.to_date(Supplier.data['labourHire']['qld']['expiry'].astext, 'YYYY-MM-DD') ==
                                   (today.date() + timedelta(days=days)))))
-        sa_expiry = (select([Supplier.code, Supplier.name, literal('sa').label('state'),
-                             Supplier.data['labourHire']['sa']['licenceNumber'].astext.label('licenceNumber'),
-                             Supplier.data['labourHire']['sa']['expiry'].astext.label('expiry')])
-                     .where(and_(Supplier.data['labourHire']['sa']['expiry'].isnot(None),
-                                 func.to_date(Supplier.data['labourHire']['sa']['expiry'].astext, 'YYYY-MM-DD') ==
-                                 (today.date() + timedelta(days=days)))))
+        # sa_expiry = (select([Supplier.code, Supplier.name, literal('sa').label('state'),
+        #                      Supplier.data['labourHire']['sa']['licenceNumber'].astext.label('licenceNumber'),
+        #                      Supplier.data['labourHire']['sa']['expiry'].astext.label('expiry')])
+        #              .where(and_(Supplier.data['labourHire']['sa']['expiry'].isnot(None),
+        #                          func.to_date(Supplier.data['labourHire']['sa']['expiry'].astext, 'YYYY-MM-DD') ==
+        #                          (today.date() + timedelta(days=days)))))
 
         expiry_dates = union(vic_expiry, qld_expiry, sa_expiry).alias('expiry_dates')
 
