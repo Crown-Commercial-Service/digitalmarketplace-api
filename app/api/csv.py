@@ -234,8 +234,7 @@ def generate_seller_catalogue_csv(seller_catalogue):
         licence_vic_expiry = ''
         licence_qld_number = ''
         licence_qld_expiry = ''
-        licence_sa_number = ''
-        licence_sa_expiry = ''
+
         if 'labour_hire' in r and r['labour_hire']:
             if 'vic' in r['labour_hire']:
                 if 'licenceNumber' in r['labour_hire']['vic']:
