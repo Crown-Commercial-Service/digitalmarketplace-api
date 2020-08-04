@@ -167,8 +167,7 @@ def generate_brief_responses_csv(brief, responses):
 
             states = {
                 'qld': 'Queensland',
-                'vic': 'Victoria',
-                'sa': 'South Australia'
+                'vic': 'Victoria'
             }
 
             labourHire = r.supplier.data.get('labourHire', {})
