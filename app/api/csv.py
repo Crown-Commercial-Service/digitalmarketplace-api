@@ -252,8 +252,6 @@ def generate_seller_catalogue_csv(seller_catalogue):
         answers.update({'Labour hire VIC expiry': licence_vic_expiry})
         answers.update({'Labour hire QLD licence': licence_qld_number})
         answers.update({'Labour hire QLD expiry': licence_qld_expiry})
-        answers.update({'Labour hire SA licence': licence_sa_number})
-        answers.update({'Labour hire SA expiry': licence_sa_expiry})
 
         for k, v in answers.items():
             answers[k] = csv_cell_sanitize(v)
