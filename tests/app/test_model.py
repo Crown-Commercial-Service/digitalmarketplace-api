@@ -1189,15 +1189,15 @@ class TestApplication(BaseApplicationTest):
     @pytest.mark.parametrize('test_data', [
         {
             'labourHire': {
-                # 'qld': {'expiry': ''},
-                'qld': {'expiry': '', 'licenceNumber': ''},
+                'qld': {'expiry': ''},
+                # 'qld': {'expiry': '', 'licenceNumber': ''},
                 'vic': {'licenceNumber': ''}
             }
         },
         {
             'labourHire': {
-                # 'qld': {'expiry': None},
-                'qld': {'expiry': None, 'licenceNumber': None},
+                'qld': {'expiry': None},
+                # 'qld': {'expiry': None, 'licenceNumber': None},
                 'vic': {'licenceNumber': None}
             }
         }
@@ -1224,15 +1224,15 @@ class TestApplication(BaseApplicationTest):
     @pytest.mark.parametrize('test_data', [
         {
             'labourHire': {
-                # 'qld': {'expiry': ''},
-                'qld': {'expiry': '', 'licenceNumber': ''},
+                'qld': {'expiry': ''},
+                # 'qld': {'expiry': '', 'licenceNumber': ''},
                 'vic': {'licenceNumber': ''}
             }
         },
         {
             'labourHire': {
-                # 'qld': {'expiry': None},
-                'qld': {'expiry': None, 'licenceNumber': None},
+                'qld': {'expiry': None},
+                # 'qld': {'expiry': None, 'licenceNumber': None},
                 'vic': {'licenceNumber': None}
             }
         }
@@ -1259,8 +1259,8 @@ class TestApplication(BaseApplicationTest):
     @pytest.mark.parametrize('test_data', [
         {
             'labourHire': {
-                # 'qld': {'expiry': ''},
-                'qld': {'expiry': '2040-10-22', 'licenceNumber': '123'},
+                'qld': {'expiry': ''},
+                # 'qld': {'expiry': '2040-10-22', 'licenceNumber': '123'},
                 'vic': {'licenceNumber': ''}
             }
         }
@@ -1277,10 +1277,10 @@ class TestApplication(BaseApplicationTest):
             assert new_application.status == 'approved'
 
             expected = {
-                'qld': {
-                    'expiry': '2040-10-22',
-                    'licenceNumber': '123'
-                }
+                # 'qld': {
+                #     'expiry': '2040-10-22',
+                #     'licenceNumber': '123'
+                # }
             }
 
             labour_hire = new_application.data.get('labourHire')
@@ -1294,8 +1294,8 @@ class TestApplication(BaseApplicationTest):
     @pytest.mark.parametrize('test_data', [
         {
             'labourHire': {
-                # 'qld': {'expiry': ''},
-                'qld': {'expiry': '2040-10-22', 'licenceNumber': '123'},
+                'qld': {'expiry': ''},
+                # 'qld': {'expiry': '2040-10-22', 'licenceNumber': '123'},
                 'vic': {'licenceNumber': ''}
             }
         }
@@ -1312,10 +1312,10 @@ class TestApplication(BaseApplicationTest):
             assert existing_application.status == 'approved'
 
             expected = {
-                'qld': {
-                    'expiry': '2040-10-22',
-                    'licenceNumber': '123'
-                }
+                # 'qld': {
+                #     'expiry': '2040-10-22',
+                #     'licenceNumber': '123'
+                # }
             }
 
             labour_hire = existing_application.data.get('labourHire')
