@@ -28,10 +28,6 @@ class TestSuppliersService(BaseApplicationTest):
                     'expiry': expiry,
                     'licenceNumber': 'Q123456'
                 }
-                # 'sa': {
-                #     'expiry': expiry,
-                #     'licenceNumber': 'S123456'
-                # }
             }
         )
 
