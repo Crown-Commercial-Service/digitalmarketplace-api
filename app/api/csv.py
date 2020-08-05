@@ -167,8 +167,7 @@ def generate_brief_responses_csv(brief, responses):
 
             states = {
                 'qld': 'Queensland',
-                'vic': 'Victoria',
-                'sa': 'South Australia'
+                'vic': 'Victoria'
             }
 
             labourHire = r.supplier.data.get('labourHire', {})
@@ -257,8 +256,7 @@ def generate_seller_catalogue_csv(seller_catalogue):
         licence_vic_expiry = ''
         licence_qld_number = ''
         licence_qld_expiry = ''
-        licence_sa_number = ''
-        licence_sa_expiry = ''
+
         if 'labour_hire' in r and r['labour_hire']:
             if 'vic' in r['labour_hire']:
                 if 'licenceNumber' in r['labour_hire']['vic']:
@@ -270,18 +268,11 @@ def generate_seller_catalogue_csv(seller_catalogue):
                     licence_qld_number = r['labour_hire']['qld']['licenceNumber']
                 if 'expiry' in r['labour_hire']['qld']:
                     licence_qld_expiry = r['labour_hire']['qld']['expiry']
-            if 'sa' in r['labour_hire']:
-                if 'licenceNumber' in r['labour_hire']['sa']:
-                    licence_sa_number = r['labour_hire']['sa']['licenceNumber']
-                if 'expiry' in r['labour_hire']['sa']:
-                    licence_sa_expiry = r['labour_hire']['sa']['expiry']
 
-        answers.update({'VIC labour hire licence': licence_vic_number})
-        answers.update({'VIC licence expiry': licence_vic_expiry})
-        answers.update({'QLD labour hire licence': licence_qld_number})
-        answers.update({'QLD licence expiry': licence_qld_expiry})
-        answers.update({'SA labour hire licence': licence_sa_number})
-        answers.update({'SA licence expiry': licence_sa_expiry})
+        answers.update({'Labour hire VIC licence': licence_vic_number})
+        answers.update({'Labour hire VIC expiry': licence_vic_expiry})
+        answers.update({'Labour hire QLD licence': licence_qld_number})
+        answers.update({'Labour hire QLD expiry': licence_qld_expiry})
 
         for k, v in answers.items():
             answers[k] = csv_cell_sanitize(v)
