@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import tempfile
 import zipfile
+from io import BytesIO
 from os import getenv
 
 import boto3
@@ -81,11 +82,11 @@ def create_responses_zip(brief_id):
         with zipfile.ZipFile(archive, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
             for file in files:
                 s3file = file['key']
-                with tempfile.TemporaryFile() as s3_file:
+                with BytesIO() as s3_stream:
                     try:
-                        bucket.download_fileobj(s3file, s3_file)
-                        s3_file.seek(0)
-                        zf.writestr(file['zip_name'], s3_file.read())
+                        bucket.download_fileobj(s3file, s3_stream)
+                        zf.writestr(file['zip_name'], s3_stream.getvalue())
+                        s3_stream.close()
                     except botocore.exceptions.ClientError as e:
                         raise CreateResponsesZipException('The file "{}" failed to download'.format(s3file))
 
