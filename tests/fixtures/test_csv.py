@@ -100,9 +100,7 @@ def test_csv_handles_tricky_characters_1(app, briefs, brief_responses):
         u'Victoria Labour hire licence,',
         u'Victoria Labour hire licence expiry,',
         u'Queensland Labour hire licence,',
-        u'Queensland Labour hire licence expiry,',
-        u'South Australia Labour hire licence,',
-        u'South Australia Labour hire licence expiry,'
+        u'Queensland Labour hire licence expiry,'
     ]
     assert csvdata.splitlines() == lines
 
@@ -128,9 +126,7 @@ def test_csv_handles_tricky_characters_2(app, briefs, brief_responses):
         u'Victoria Labour hire licence,',
         u'Victoria Labour hire licence expiry,',
         u'Queensland Labour hire licence,',
-        u'Queensland Labour hire licence expiry,',
-        u'South Australia Labour hire licence,',
-        u'South Australia Labour hire licence expiry,'
+        u'Queensland Labour hire licence expiry,'
     ]
     assert csvdata.splitlines() == lines
 
@@ -156,9 +152,7 @@ def test_csv_handles_tricky_characters_3(app, briefs, brief_responses):
         u'Victoria Labour hire licence,',
         u'Victoria Labour hire licence expiry,',
         u'Queensland Labour hire licence,',
-        u'Queensland Labour hire licence expiry,',
-        u'South Australia Labour hire licence,',
-        u'South Australia Labour hire licence expiry,'
+        u'Queensland Labour hire licence expiry,'
     ]
     assert csvdata.splitlines() == lines
 
@@ -239,9 +233,7 @@ def test_csv_specialist_daily_rate(app, briefs, brief_responses):
         u'Victoria Labour hire licence,',
         u'Victoria Labour hire licence expiry,',
         u'Queensland Labour hire licence,',
-        u'Queensland Labour hire licence expiry,',
-        u'South Australia Labour hire licence,',
-        u'South Australia Labour hire licence expiry,'
+        u'Queensland Labour hire licence expiry,'
     ]
     assert csvdata.splitlines() == lines
 
@@ -299,8 +291,6 @@ def test_csv_specialist_hourly_rate(app, briefs, brief_responses):
         u'Victoria Labour hire licence,',
         u'Victoria Labour hire licence expiry,',
         u'Queensland Labour hire licence,',
-        u'Queensland Labour hire licence expiry,',
-        u'South Australia Labour hire licence,',
-        u'South Australia Labour hire licence expiry,'
+        u'Queensland Labour hire licence expiry,'
     ]
     assert csvdata.splitlines() == lines
