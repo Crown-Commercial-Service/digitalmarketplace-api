@@ -342,6 +342,7 @@ def update_brief_admin(brief_id):
 
     if 'areaOfExpertise' in brief_json:
         brief.update_from_json({'areaOfExpertise': brief_json.get('areaOfExpertise', None)})
+    # need to add it here 
 
     audit = AuditEvent(
         audit_type=AuditTypes.update_brief,
