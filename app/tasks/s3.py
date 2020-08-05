@@ -86,6 +86,7 @@ def create_responses_zip(brief_id):
                     try:
                         bucket.download_fileobj(s3file, s3_stream)
                         zf.writestr(file['zip_name'], s3_stream.getvalue())
+                        s3_stream.close()
                     except botocore.exceptions.ClientError as e:
                         raise CreateResponsesZipException('The file "{}" failed to download'.format(s3file))
 
