@@ -163,6 +163,7 @@ def create_responses_zip(brief_id):
 
         try:
             brief.responses_zip_filesize = len(archive.read())
+            archive.seek(0)
             db.session.add(brief)
             db.session.commit()
         except Exception as e:
