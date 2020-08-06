@@ -20,6 +20,7 @@ from ... import db
 from ...models import (
     User,
     Brief,
+    Domain,
     AuditEvent,
     Framework,
     Lot,
@@ -341,9 +342,19 @@ def update_brief_admin(brief_id):
         brief.update_from_json({'sellerEmail': brief_json.get('sellerEmail')})
 
     if 'areaOfExpertise' in brief_json:
+
+        area_of_expertise = brief_json.get('areaOfExpertise', None)
+        domain=Domain.get_by_name_or_id(area_of_expertise)
+        # orignial code below 
         brief.update_from_json({'areaOfExpertise': brief_json.get('areaOfExpertise', None)})
+        # print(domain.id)
+
+        # brief.update_from_json({
+        #     'sellerCategory':domain.id
+        # })
     # need to add it here 
 
+    print('outside area of expertise')
     audit = AuditEvent(
         audit_type=AuditTypes.update_brief,
         user=updater_json['updated_by'],
