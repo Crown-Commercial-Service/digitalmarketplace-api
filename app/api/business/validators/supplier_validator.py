@@ -238,11 +238,11 @@ class SupplierValidator(object):
         if recruiter and (recruiter == 'yes' or recruiter == 'both'):
             labour_hire = self.supplier.data.get('labourHire', {})
             now = pendulum.now('Australia/Canberra').date()
-            for state, state_value in labour_hire.iteritems():
-                print('STATE')
-                print(state)
-                print('STATE_VALUE')
-                print(state_value)
+            # for state, state_value in labour_hire.iteritems():
+                # print('STATE')
+                # print(state)
+                # print('STATE_VALUE')
+                # print(state_value)
 
             for state, state_value in labour_hire.iteritems():
                 if not state_value:
