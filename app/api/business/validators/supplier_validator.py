@@ -257,12 +257,14 @@ class SupplierValidator(object):
                         'severity': 'warning',
                         'step': 'recruiter'
                     })
+                print("HI you should see me")
 
                 if expiry:
                     try:
                         expiry_date = pendulum.parse(expiry, tz='Australia/Sydney')
-
+                        print('before for loop')
                         if state!='sa' and now > expiry_date.date():
+                            print('HELLOWORLD')
                             errors.append({
                                 'message': 'Your {} labour hire licence has expired.'.format(state_to_long_name(state)),
                                 'severity': 'warning',
