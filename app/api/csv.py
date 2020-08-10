@@ -228,10 +228,10 @@ def generate_seller_catalogue_csv(seller_catalogue):
 
         answers.update({'Email': r['contact_email']})
         answers.update({'Categories': r['domains']})
-        answers.update({'Description': r['description']})
-        answers.update({'Methodology': r['methodologies']})
-        answers.update({'Tools': r['tools']})
-        answers.update({'Technologies': r['technologies']})
+        answers.update({'Description': r['description'] if r['description'] else 'N/A'})
+        answers.update({'Methodology': r['methodologies'] if r['methodologies'] else 'N/A'})
+        answers.update({'Tools': r['tools'] if r['tools'] else 'N/A'})
+        answers.update({'Technologies': r['technologies'] if r['technologies'] else 'N/A'})
         answers.update({'Seller type': r['recruiter_status']})
 
         answers.update({
@@ -242,7 +242,7 @@ def generate_seller_catalogue_csv(seller_catalogue):
             'SME': 'Yes' if r.get('seller_type', {}).get('sme', '') is True else 'No'
         })
 
-        answers.update({'Accreditations': r['certifications']})
+        answers.update({'Accreditations': r['certifications'] if r['certifications'] else 'N/A'})
         number_of_employees = ''
 
         if r['number_of_employees'] == 'Sole trader':
@@ -253,12 +253,12 @@ def generate_seller_catalogue_csv(seller_catalogue):
 
         answers.update({'Number of employees': number_of_employees})
 
-        licence_vic_number = ''
-        licence_vic_expiry = ''
-        licence_qld_number = ''
-        licence_qld_expiry = ''
-        licence_sa_number = ''
-        licence_sa_expiry = ''
+        licence_vic_number = 'N/A'
+        licence_vic_expiry = 'N/A'
+        licence_qld_number = 'N/A'
+        licence_qld_expiry = 'N/A'
+        licence_sa_number = 'N/A'
+        licence_sa_expiry = 'N/A'
         if 'labour_hire' in r and r['labour_hire']:
             if 'vic' in r['labour_hire']:
                 if 'licenceNumber' in r['labour_hire']['vic']:
