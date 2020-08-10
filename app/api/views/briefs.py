@@ -311,6 +311,8 @@ def get_brief(brief_id):
     evidence_id_rejected = user_status.evidence_id_rejected()
     has_supplier_errors = user_status.has_supplier_errors()
     has_signed_current_agreement = user_status.has_signed_current_agreement()
+    last_edited_at = brief_history_service.get_last_edited_date(brief.id)
+    only_sellers_edited = brief_edit_business.only_sellers_were_edited(brief.id)
 
     # remove private data for non brief owners
     brief.data['contactEmail'] = ''
@@ -355,9 +357,6 @@ def get_brief(brief_id):
     if not is_buyer:
         if not is_invited:
             brief_serialized['clarificationQuestions'] = []
-
-    last_edited_at = brief_history_service.get_last_edited_date(brief.id)
-    only_sellers_edited = brief_edit_business.only_sellers_were_edited(brief.id)
 
     return jsonify(brief=brief_serialized,
                    brief_response_count=brief_response_count,
@@ -700,17 +699,23 @@ def get_opportunity_history(brief_id):
         not_found("Invalid brief id '{}'".format(brief_id))
 
     user_role = current_user.role if hasattr(current_user, 'role') else None
-
     show_documents = False
+    user_status = BriefUserStatus(brief, current_user)
+    can_respond = user_status.can_respond()
+
     if user_role == 'supplier':
-        user_status = BriefUserStatus(brief, current_user)
-        show_documents = user_status.can_respond()
+        show_documents = can_respond
     elif user_role in ['buyer', 'admin']:
         show_documents = True
+
     try:
         edits = brief_edit_business.get_opportunity_history(brief_id, show_documents, include_sellers=False)
     except NotFoundError as e:
         not_found(e.message)
+
+    edits['can_respond'] = can_respond
+    if (user_role == 'supplier' and not can_respond) or user_role not in ['admin', 'buyer', 'supplier']:
+        edits['edits'] = []
 
     return jsonify(edits)
 
