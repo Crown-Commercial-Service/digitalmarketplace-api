@@ -344,12 +344,12 @@ def update_brief_admin(brief_id):
     if 'areaOfExpertise' in brief_json:
 
         area_of_expertise = brief_json.get('areaOfExpertise', None)
-        domain=Domain.get_by_name_or_id(area_of_expertise)
+        domain = Domain.get_by_name_or_id(area_of_expertise)
         seller_category = str(domain.id)
 
         brief.update_from_json({
             'areaOfExpertise': area_of_expertise,
-            'sellerCategory':seller_category
+            'sellerCategory': seller_category
         })
 
     audit = AuditEvent(
