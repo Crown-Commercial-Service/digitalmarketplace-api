@@ -382,7 +382,14 @@ class SuppliersService(Service):
                 Supplier.data['methodologies'].astext.label('methodologies'),
                 Supplier.data['tools'].astext.label('tools'),
                 Supplier.data['technologies'].astext.label('technologies'),
-                Supplier.data['recruiter'].astext.label('recruiter_status'),
+                case(
+                    whens=[
+                        (Supplier.data['recruiter'].astext == 'yes', 'recruiter'),
+                        (Supplier.data['recruiter'].astext == 'both', 'recruiter and consultant'),
+                        (Supplier.data['recruiter'].astext == 'no', 'consultant')
+                    ],
+                    else_=None,
+                ).label('recruiter_status'),
                 case(
                     whens=[
                         (Supplier.data['seller_type'].is_(None), '{}')
