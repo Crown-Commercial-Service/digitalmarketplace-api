@@ -224,7 +224,7 @@ def generate_seller_catalogue_csv(seller_catalogue):
         postcode = r.get('address', {}).get('postal_code', '')
         country = r.get('address', {}).get('country', '')
         full_address = ', '.join(filter(None, [address, suburb, state, postcode, country]))
-        answers.update({'Location': full_address})
+        answers.update({'Location': full_address if full_address else 'N/A'})
 
         answers.update({'Email': r['contact_email']})
         answers.update({'Categories': r['domains']})
