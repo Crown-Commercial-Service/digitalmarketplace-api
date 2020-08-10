@@ -342,7 +342,6 @@ def update_brief_admin(brief_id):
         brief.update_from_json({'sellerEmail': brief_json.get('sellerEmail')})
 
     if 'areaOfExpertise' in brief_json:
-
         area_of_expertise = brief_json.get('areaOfExpertise', None)
         domain = Domain.get_by_name_or_id(area_of_expertise)
         seller_category = str(domain.id)
