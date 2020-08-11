@@ -104,7 +104,7 @@ class EvidenceService(Service):
             .subquery()
         )
 
-        query = (
+        subquery2 = (
             db.session.query(
                 subquery.c.evidence_id,
                 func.json_object_agg(
@@ -112,10 +112,22 @@ class EvidenceService(Service):
                     func.json_build_object(
                         'name', subquery.name
                     )
-                )
+                ).label('domain_criteria')
             )
             .group_by(subquery.c.evidence_id)
+            .subquery()
         )
+
+        query = (
+            db.session.query(
+                Evidence.id,
+                Evidence.data,
+                subquery2.c.domain_criteria
+            )
+            .join(subquery2, subquery2.c.evidence_id == Evidence.id)
+        )
+
+
         result = query.all()
         print("printing results")
         return result
