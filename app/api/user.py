@@ -14,7 +14,7 @@ from app.models import (Application, AuditEvent, AuditTypes, Framework, User,
                         UserFramework)
 from app.tasks import publish_tasks
 from app.api.helpers import get_email_domain
-from app.api.services import suppliers
+from app.api.services import abr_service
 import json
 from app.api.business.errors import AbrError
 import abn as abn_package
@@ -260,7 +260,7 @@ def create_user(
             if validated_abn:
                 try:
                     # extracts business info using the abn
-                    business_info_values = suppliers.get_business_info_by_abn(email_address, abn)
+                    business_info_values = abr_service.get_business_info_by_abn(email_address, abn)
                     business_info_values = json.loads(business_info_values)
 
                     organisation_name = business_info_values["organisation_name"]
