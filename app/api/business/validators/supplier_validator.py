@@ -238,12 +238,6 @@ class SupplierValidator(object):
         if recruiter and (recruiter == 'yes' or recruiter == 'both'):
             labour_hire = self.supplier.data.get('labourHire', {})
             now = pendulum.now('Australia/Canberra').date()
-            # for state, state_value in labour_hire.iteritems():
-                # print('STATE')
-                # print(state)
-                # print('STATE_VALUE')
-                # print(state_value)
-
             for state, state_value in labour_hire.iteritems():
                 if not state_value:
                     continue
@@ -257,14 +251,11 @@ class SupplierValidator(object):
                         'severity': 'warning',
                         'step': 'recruiter'
                     })
-                print("HI you should see me")
 
                 if expiry:
                     try:
                         expiry_date = pendulum.parse(expiry, tz='Australia/Sydney')
-                        print('before for loop')
                         if state!='sa' and now > expiry_date.date():
-                            print('HELLOWORLD')
                             errors.append({
                                 'message': 'Your {} labour hire licence has expired.'.format(state_to_long_name(state)),
                                 'severity': 'warning',
