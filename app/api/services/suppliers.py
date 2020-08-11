@@ -386,6 +386,7 @@ class SuppliersService(Service):
     def get_business_info_by_abn(self, email_address, abn):
         api_key = current_app.config['ABR_API_KEY']
         include_historical_details = 'N'
+        # maybe remove this and have it as abn
         abn = abn
         link = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
         url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
