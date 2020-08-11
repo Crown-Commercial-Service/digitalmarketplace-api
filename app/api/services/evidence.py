@@ -85,52 +85,40 @@ class EvidenceService(Service):
         return evidence
 
     def get_evidence_data(self, evidence_id):
-        evidence = {}
-        get_evidence_by_id_query = (
-            db.session.query(Evidence)
-            .filter(
-                Evidence.id == evidence_id
-            )
-            .options(
-                joinedload(Evidence.supplier).joinedload(Supplier.signed_agreements),
-                joinedload(Evidence.supplier).joinedload(Supplier.domains),
-                joinedload(Evidence.user),
-                joinedload(Evidence.brief).joinedload(Brief.clarification_questions),
-                joinedload(Evidence.brief).joinedload(Brief.work_order),
-                joinedload(Evidence.domain),
-                raiseload('*')
-            )
-        )
-
-        value = get_evidence_by_id_query.one_or_none()
-        evidence = value.serialize()
-        evidence['domain_name'] = value.domain.name
-
         evidence_subquery = (
-            db
-            .session
-            .query(
+            db.session.query(
+                Evidence.id.label('evidence_id'),
                 func.json_array_elements_text(Evidence.data['criteria']).label('domain_criteria_id')
             )
             .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
-        query = (
+        subquery = (
             db.session.query(
+                evidence_subquery.c.evidence_id,
                 evidence_subquery.c.domain_criteria_id,
-                DomainCriteria.name
+                DomainCriteria.name,
             )
             .join(DomainCriteria, DomainCriteria.id == evidence_subquery.c.domain_criteria_id.cast(Integer))
+            .subquery()
         )
 
-        criteria_from_domain = {}
-
-        for criteria in query.all():
-            criteria_from_domain[criteria.domain_criteria_id] = {'name': criteria.name}
-
-        evidence['domain_criteria'] = criteria_from_domain
-        return evidence
+        query = (
+            db.session.query(
+                subquery.c.evidence_id,
+                func.json_object_agg(
+                    subquery.c.domain_criteria_id,
+                    func.json_build_object(
+                        'name', subquery.name
+                    )
+                )
+            )
+            .group_by(subquery.c.evidence_id)
+        )
+        result = query.all()
+        print("printing results")
+        return result
 
     def get_all_evidence(self, supplier_code=None):
         query = (
