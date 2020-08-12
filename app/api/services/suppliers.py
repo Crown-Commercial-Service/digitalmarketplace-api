@@ -371,7 +371,7 @@ class SuppliersService(Service):
             .query(
                 Supplier.name,
                 Supplier.abn,
-                Supplier.description,
+                Supplier.summary,
                 Supplier.creation_time,
                 case(
                     whens=[

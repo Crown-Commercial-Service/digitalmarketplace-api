@@ -227,7 +227,7 @@ def generate_seller_catalogue_csv(seller_catalogue):
 
         answers.update({'Email': r['contact_email']})
         answers.update({'Categories': r['domains']})
-        answers.update({'Description': r['description'] if r['description'] else 'N/A'})
+        answers.update({'Description': r['summary'] if r['summary'] else 'N/A'})
         answers.update({'Methodology': r['methodologies'] if r['methodologies'] else 'N/A'})
         answers.update({'Tools': r['tools'] if r['tools'] else 'N/A'})
         answers.update({'Technologies': r['technologies'] if r['technologies'] else 'N/A'})
