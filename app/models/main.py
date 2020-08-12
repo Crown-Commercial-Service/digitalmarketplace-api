@@ -1327,6 +1327,10 @@ class DraftService(db.Model, ServiceTableMixin):
     def get_link(self):
         return url_for("main.fetch_draft_service", draft_id=self.id)
 
+    class query_class(BaseQuery):
+        def in_lot(self, lot_slug):
+            return self.filter(DraftService.lot.has(Lot.slug == lot_slug))
+
 
 class AuditEvent(db.Model):
     __tablename__ = 'audit_events'
