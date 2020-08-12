@@ -2226,6 +2226,18 @@ class TestDraftService(BaseApplicationTest, FixtureMixin):
 
         assert draft_service.serialize() == stub.response()
 
+    @pytest.mark.parametrize('lot_slug, expected_count', [('scs', 0), ('saas', 1)])
+    def test_draft_service_filtering_by_lot(self, lot_slug, expected_count):
+        # Create a single DraftService on the 'saas' lot
+        service = Service.query.filter(Service.service_id == '1000000000').first()
+        draft_service = DraftService.from_service(service)
+
+        db.session.add(draft_service)
+        db.session.commit()
+
+        drafts = DraftService.query.in_lot(lot_slug)
+        assert drafts.count() == expected_count
+
 
 class TestSupplierFrameworks(BaseApplicationTest, FixtureMixin):
     def test_nulls_are_stripped_from_declaration(self):
