@@ -195,18 +195,25 @@ class SuppliersService(Service):
         today = datetime.now(pytz.timezone('Australia/Sydney'))
 
         # Find out which of the supplier's documents have expired or are expiring soon
+        indemnity = (select([Supplier.code, Supplier.name, literal('indemnity').label('type'),
+                             Supplier.data['documents']['indemnity']['expiry'].astext.label('expiry')])
+                     .where(and_(Supplier.data['documents']['indemnity']['expiry'].isnot(None),
+                                 func.to_date(Supplier.data['documents']['indemnity']['expiry'].astext, 'YYYY-MM-DD') ==
+                                 (today.date() + timedelta(days=days)))))
+
         liability = (select([Supplier.code, Supplier.name, literal('liability').label('type'),
                              Supplier.data['documents']['liability']['expiry'].astext.label('expiry')])
                      .where(and_(Supplier.data['documents']['liability']['expiry'].isnot(None),
                                  func.to_date(Supplier.data['documents']['liability']['expiry'].astext, 'YYYY-MM-DD') ==
                                  (today.date() + timedelta(days=days)))))
+
         workers = (select([Supplier.code, Supplier.name, literal('workers').label('type'),
                            Supplier.data['documents']['workers']['expiry'].astext.label('expiry')])
                    .where(and_(Supplier.data['documents']['workers']['expiry'].isnot(None),
                                func.to_date(Supplier.data['documents']['workers']['expiry'].astext, 'YYYY-MM-DD') ==
                                (today.date() + timedelta(days=days)))))
 
-        expiry_dates = union(liability, workers).alias('expiry_dates')
+        expiry_dates = union(indemnity, liability, workers).alias('expiry_dates')
 
         # Aggregate the document details so they can be returned with the results
         documents = (db.session.query(expiry_dates.columns.code, expiry_dates.columns.name,

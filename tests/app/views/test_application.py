@@ -37,6 +37,11 @@ application_data = {
             'application_id': 1,
             'filename': '1.pdf'
         },
+        'indemnity': {
+            'application_id': 1,
+            'expiry': pendulum.today().add(years=1).format('%Y-%m-%d'),
+            'filename': '4.pdf'
+        },
         'liability': {
             'application_id': 1,
             'expiry': pendulum.today().add(years=1).format('%Y-%m-%d'),

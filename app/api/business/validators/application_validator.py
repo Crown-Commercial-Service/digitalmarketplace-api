@@ -162,6 +162,7 @@ class ApplicationValidator(object):
 
         now = pendulum.now('Australia/Canberra').date()
         return (self.__validate_document(documents, 'liability', now) +
+                self.__validate_document(documents, 'indemnity', now) +
                 self.__validate_document(documents, 'workers', now) +
                 self.__validate_document(documents, 'financial', now, False))
 
