@@ -302,9 +302,11 @@ def find_draft_services_by_framework(framework_slug):
     # Includes options to filter by
     # - status (submitted / not-submitted)
     # - supplier_id (i.e. a paginated version of .list_draft_services_by_supplier above)
+    # - lot slug (eg cloud-software)
     page = get_valid_page_or_1()
     status = request.args.get('status')
     supplier_id = get_int_or_400(request.args, 'supplier_id')
+    lot_slug = request.args.get('lot')
 
     framework = Framework.query.filter(
         Framework.slug == framework_slug
@@ -326,6 +328,11 @@ def find_draft_services_by_framework(framework_slug):
         if not supplier:
             abort(404, "Supplier_id '{}' not found".format(supplier_id))
         draft_service_query = draft_service_query.filter(DraftService.supplier_id == supplier_id)
+
+    if lot_slug:
+        if not framework.get_lot(lot_slug):
+            abort(400, "Invalid argument: lot not recognised")
+        draft_service_query = draft_service_query.in_lot(lot_slug)
 
     pagination_params = request.args.to_dict()
     pagination_params['framework_slug'] = framework_slug

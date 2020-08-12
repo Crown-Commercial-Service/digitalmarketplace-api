@@ -1751,6 +1751,16 @@ class TestListDraftServiceByFramework(DraftsHelpersMixin):
         assert data['meta']['total'] == 1
         assert data['services'][0]['supplierId'] == 2
 
+    @pytest.mark.parametrize('lot_slug, expected_count', [('scs', 1), ('saas', 0)])
+    def test_list_drafts_filters_by_lot_slug(self, lot_slug, expected_count):
+        self.create_draft_service()  # Creates a G7 'scs' service
+
+        res = self.client.get(f'/draft-services/framework/g-cloud-7?lot={lot_slug}')
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+
+        assert data['meta']['total'] == expected_count
+
     def test_list_drafts_page_out_of_range_returns_404(self):
         for i in range(1, 11):
             self.create_draft_service()
@@ -1779,6 +1789,13 @@ class TestListDraftServiceByFramework(DraftsHelpersMixin):
 
         assert res.status_code == 400
         assert data['error'] == "Invalid supplier_id: the-human-league"
+
+    def test_list_drafts_requires_valid_lot_slug(self):
+        res = self.client.get(f'/draft-services/framework/g-cloud-7?lot=flock-of-seagulls')
+        data = json.loads(res.get_data(as_text=True))
+
+        assert res.status_code == 400
+        assert data['error'] == "Invalid argument: lot not recognised"
 
     def test_list_drafts_requires_supplier_id_to_exist(self):
         res = self.client.get(f'/draft-services/framework/g-cloud-7?supplier_id=999')
