@@ -117,20 +117,32 @@ class EvidenceService(Service):
             .group_by(subquery.c.evidence_id)
             .subquery()
         )
+        domain_name_subquery = (
+            db.session.query(
+                Domain.name.label('domain_name')
+            )
+            .filter(Evidence.id == evidence_id)
+            .join(Evidence, Evidence.domain_id == Domain.id)
+            .subquery()
+        )
 
         query = (
             db.session.query(
                 Evidence.id,
                 Evidence.data,
-                subquery2.c.domain_criteria
+                subquery2.c.domain_criteria,
+                domain_name_subquery.c.domain_name
             )
             .join(subquery2, subquery2.c.evidence_id == Evidence.id)
         )
 
+        return[case_study._asdict() for case_study in query.all()]
+        # print("dict evidence")
+        # print(case_study)
 
-        result = query.all()
-        print("printing results")
-        return result
+        # result = query.all()
+        # print("printing results")
+        # return result
 
     def get_all_evidence(self, supplier_code=None):
         query = (
