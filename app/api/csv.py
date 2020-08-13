@@ -213,6 +213,7 @@ def generate_brief_responses_csv(brief, responses):
 def generate_seller_catalogue_csv(seller_catalogue):
     # converts a brief response into an ordered dict
     def row(r):
+        empty_cell_value = 'N/A'
         answers = od()
         answers.update({'ABN': r['abn']})
         answers.update({'Seller name': r['name']})
@@ -223,14 +224,14 @@ def generate_seller_catalogue_csv(seller_catalogue):
         postcode = r.get('address', {}).get('postal_code', '')
         country = r.get('address', {}).get('country', '')
         full_address = ', '.join(filter(None, [address, suburb, state, postcode, country]))
-        answers.update({'Location': full_address if full_address else 'N/A'})
+        answers.update({'Location': full_address if full_address else empty_cell_value})
 
         answers.update({'Email': r['contact_email']})
         answers.update({'Categories': r['domains']})
-        answers.update({'Description': r['summary'] if r['summary'] else 'N/A'})
-        answers.update({'Methodology': r['methodologies'] if r['methodologies'] else 'N/A'})
-        answers.update({'Tools': r['tools'] if r['tools'] else 'N/A'})
-        answers.update({'Technologies': r['technologies'] if r['technologies'] else 'N/A'})
+        answers.update({'Description': r['summary'] if r['summary'] else empty_cell_value})
+        answers.update({'Methodology': r['methodologies'] if r['methodologies'] else empty_cell_value})
+        answers.update({'Tools': r['tools'] if r['tools'] else empty_cell_value})
+        answers.update({'Technologies': r['technologies'] if r['technologies'] else empty_cell_value})
         answers.update({'Seller type': r['recruiter_status']})
 
         answers.update({
@@ -241,7 +242,7 @@ def generate_seller_catalogue_csv(seller_catalogue):
             'SME': 'Yes' if r.get('seller_type', {}).get('sme', '') is True else 'No'
         })
 
-        answers.update({'Accreditations': r['certifications'] if r['certifications'] else 'N/A'})
+        answers.update({'Accreditations': r['certifications'] if r['certifications'] else empty_cell_value})
         number_of_employees = ''
 
         if r['number_of_employees'] == 'Sole trader':
@@ -252,10 +253,10 @@ def generate_seller_catalogue_csv(seller_catalogue):
 
         answers.update({'Number of employees': number_of_employees})
 
-        licence_vic_number = 'N/A'
-        licence_vic_expiry = 'N/A'
-        licence_qld_number = 'N/A'
-        licence_qld_expiry = 'N/A'
+        licence_vic_number = empty_cell_value
+        licence_vic_expiry = empty_cell_value
+        licence_qld_number = empty_cell_value
+        licence_qld_expiry = empty_cell_value
 
         if 'labour_hire' in r and r['labour_hire']:
             if 'vic' in r['labour_hire']:
