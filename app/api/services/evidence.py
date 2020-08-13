@@ -129,20 +129,15 @@ class EvidenceService(Service):
         query = (
             db.session.query(
                 Evidence.id,
-                Evidence.data,
+                Evidence.data['evidence'].label('evidence_data'),
+                Evidence.data['maxDailyRate'].label('maxDailyRate'),
                 subquery2.c.domain_criteria,
                 domain_name_subquery.c.domain_name
             )
             .join(subquery2, subquery2.c.evidence_id == Evidence.id)
         )
 
-        return[case_study._asdict() for case_study in query.all()]
-        # print("dict evidence")
-        # print(case_study)
-
-        # result = query.all()
-        # print("printing results")
-        # return result
+        return[evidence._asdict() for evidence in query.all()]
 
     def get_all_evidence(self, supplier_code=None):
         query = (
