@@ -119,6 +119,7 @@ class SupplierValidator(object):
 
         now = pendulum.now('Australia/Canberra')
         return (self.__validate_document(documents, 'liability', now) +
+                self.__validate_document(documents, 'indemnity', now) +
                 self.__validate_document(documents, 'workers', now) +
                 self.__validate_document(documents, 'financial', now, False))
 
@@ -139,7 +140,8 @@ class SupplierValidator(object):
         )
 
         name_translation = {
-            'liability': 'Professional Indemnity and Public Liability Insurance',
+            'indemnity': 'Professional Indemnity Insurance',
+            'liability': 'Public Liability Insurance',
             'workers': 'Workers Compensation Insurance',
             'financial': 'Financial statement'
         }
