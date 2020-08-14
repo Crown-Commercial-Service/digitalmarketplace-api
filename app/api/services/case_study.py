@@ -59,13 +59,13 @@ class CaseStudyService(Service):
                                                             CaseStudy.data['timeframe'].label('timeframe'),
                                                             'title',
                                                             CaseStudy.data['title'].label('title'),
-                                    )
-                ).label('data')
+                                                        )
+                                    ).label('data')
             )
             .filter(CaseStudy.supplier_code == supplier_code,
                     CaseStudy.status == 'approved',
                     CaseStudy.data['service'].astext == domain_name_subquery.c.name,
-            )
+                    )
             .group_by(domain_name_subquery.c.name)
             .subquery()
         )
