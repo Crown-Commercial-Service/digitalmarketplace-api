@@ -81,6 +81,21 @@ def test_can_get_error_for_no_licence_number():
 
     assert len(errors) == 1
 
+def test_can_zero_error_for_sa_no_licence_number():
+    application = Application(
+        data={
+            'recruiter': 'yes',
+            'labourHire': {
+                'sa': {
+                    'expiry': '01/01/2050'
+                }
+            }
+        }
+    )
+    errors = ApplicationValidator(application).validate_recruiter()
+
+    assert len(errors) == 0
+
 
 def test_can_get_error_for_no_expiry():
     application = Application(
@@ -96,6 +111,22 @@ def test_can_get_error_for_no_expiry():
     errors = ApplicationValidator(application).validate_recruiter()
 
     assert len(errors) == 1
+
+
+def test_can_get_zero_error_for_sa_no_expiry():
+    application = Application(
+        data={
+            'recruiter': 'yes',
+            'labourHire': {
+                'sa': {
+                    'licenceNumber': 'foobar-licence'
+                }
+            }
+        }
+    )
+    errors = ApplicationValidator(application).validate_recruiter()
+
+    assert len(errors) == 0
 
 
 def test_valid_for_recruiter_and_labour_hire():
