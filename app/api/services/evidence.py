@@ -118,7 +118,7 @@ class EvidenceService(Service):
             .subquery()
         )
         # gets the category assessment
-        domain_name_subquery = (
+        category_name_subquery = (
             db.session.query(
                 Domain.name.label('domain_name')
             )
@@ -134,7 +134,7 @@ class EvidenceService(Service):
                 Evidence.data['evidence'].label('evidence_data'),
                 Evidence.data['maxDailyRate'].label('maxDailyRate'),
                 domain_criteria_name_subquery.c.domain_criteria,
-                domain_name_subquery.c.domain_name
+                category_name_subquery.c.domain_name
             )
             .join(domain_criteria_name_subquery, domain_criteria_name_subquery.c.evidence_id == Evidence.id)
         )
