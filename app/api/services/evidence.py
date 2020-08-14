@@ -93,6 +93,7 @@ class EvidenceService(Service):
             .filter(Evidence.id == evidence_id)
             .subquery()
         )
+        # import pdb; pdb.set_trace()
 
         subquery = (
             db.session.query(
@@ -103,7 +104,7 @@ class EvidenceService(Service):
             .join(DomainCriteria, DomainCriteria.id == evidence_subquery.c.domain_criteria_id.cast(Integer))
             .subquery()
         )
-
+    # domain critieria name seems to be the issue
         domain_criteria_name_subquery = (
             db.session.query(
                 subquery.c.evidence_id,
@@ -117,6 +118,7 @@ class EvidenceService(Service):
             .group_by(subquery.c.evidence_id)
             .subquery()
         )
+        import pdb; pdb.set_trace()
         # gets the category assessment
         category_name_subquery = (
             db.session.query(
