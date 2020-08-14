@@ -12,7 +12,7 @@ class CaseStudyService(Service):
         super(CaseStudyService, self).__init__(*args, **kwargs)
 
     def get_approved_case_studies_by_supplier_code(self, supplier_code, domain_id):
-        domain_name_subquery = (
+        domain_name = (
             db
             .session
             .query(Domain.name)
@@ -27,14 +27,14 @@ class CaseStudyService(Service):
             .filter(
                 CaseStudy.supplier_code == supplier_code,
                 CaseStudy.status == 'approved',
-                CaseStudy.data['service'].astext == domain_name_subquery.c.name,
+                CaseStudy.data['service'].astext == domain_name.c.name,
             )
             .subquery()
         )
 
         case_study = (
             db.session.query(
-                domain_name_subquery.c.name,
+                domain_name.c.name,
                 func.json_object_agg(id_subquery.c.case_study_id,
                                      func.json_build_object('client',
                                                             CaseStudy.data['client'].label('client'),
@@ -66,9 +66,9 @@ class CaseStudyService(Service):
             )
             .filter(CaseStudy.supplier_code == supplier_code,
                     CaseStudy.status == 'approved',
-                    CaseStudy.data['service'].astext == domain_name_subquery.c.name,
+                    CaseStudy.data['service'].astext == domain_name.c.name,
                     )
-            .group_by(domain_name_subquery.c.name)
+            .group_by(domain_name.c.name)
             .subquery()
         )
 
@@ -84,7 +84,7 @@ class CaseStudyService(Service):
             .session
             .query(
                 case_studies_id_array.c.case_study_id,
-                domain_name_subquery.c.name.label('domain_name'),
+                domain_name.c.name.label('domain_name'),
                 case_study.c.data
             )
         )
