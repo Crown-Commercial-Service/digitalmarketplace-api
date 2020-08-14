@@ -104,22 +104,21 @@ class EvidenceService(Service):
             .join(DomainCriteria, DomainCriteria.id == evidence_subquery.c.domain_criteria_id.cast(Integer))
             .subquery()
         )
-    # domain critieria name seems to be the issue
+
         domain_criteria_name_subquery = (
             db.session.query(
                 subquery.c.evidence_id,
                 func.json_object_agg(
                     subquery.c.domain_criteria_id,
                     func.json_build_object(
-                        'name', subquery.name
+                        'name', subquery.c.name
                     )
                 ).label('domain_criteria')
             )
             .group_by(subquery.c.evidence_id)
             .subquery()
         )
-        # import pdb; pdb.set_trace()
-        # gets the category assessment
+
         category_name_subquery = (
             db.session.query(
                 Domain.name.label('domain_name')
