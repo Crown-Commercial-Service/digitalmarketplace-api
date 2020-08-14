@@ -49,7 +49,7 @@ def test_can_get_errors_for_past_date_and_no_licence_number():
 
     assert len(errors) == 2
 
-# south australia
+
 def test_can_zero_errors_for_sa_past_date_and_no_licence_number():
     application = Application(
         data={
@@ -64,6 +64,7 @@ def test_can_zero_errors_for_sa_past_date_and_no_licence_number():
     errors = ApplicationValidator(application).validate_recruiter()
 
     assert len(errors) == 0
+
 
 def test_can_get_error_for_no_licence_number():
     application = Application(
