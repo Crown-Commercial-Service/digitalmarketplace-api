@@ -49,6 +49,21 @@ def test_can_get_errors_for_past_date_and_no_licence_number():
 
     assert len(errors) == 2
 
+# south australia
+def test_can_zero_errors_for_sa_past_date_and_no_licence_number():
+    application = Application(
+        data={
+            'recruiter': 'yes',
+            'labourHire': {
+                'sa': {
+                    'expiry': '01/01/2019'
+                }
+            }
+        }
+    )
+    errors = ApplicationValidator(application).validate_recruiter()
+
+    assert len(errors) == 0
 
 def test_can_get_error_for_no_licence_number():
     application = Application(
