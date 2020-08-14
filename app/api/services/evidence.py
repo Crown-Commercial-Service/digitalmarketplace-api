@@ -118,7 +118,7 @@ class EvidenceService(Service):
             .group_by(subquery.c.evidence_id)
             .subquery()
         )
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         # gets the category assessment
         category_name_subquery = (
             db.session.query(
