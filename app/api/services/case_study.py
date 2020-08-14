@@ -37,18 +37,18 @@ class CaseStudyService(Service):
                 domain_name_subquery.c.name,
                 func.json_object_agg(id_subquery.c.case_study_id,
                                      func.json_build_object(
-                                        'client', CaseStudy.data['client'].label('client'),
-                                        'opportunity', CaseStudy.data['opportunity'].label('opportunity'),
-                                        'outcome', CaseStudy.data['outcome'].label('outcome'),
-                                        'project_links', CaseStudy.data['project_links'].label('project_links'),
-                                        'referee_contact', CaseStudy.data['referee_contact'].label('referee_contact'),
-                                        'referee_email', CaseStudy.data['referee_email'].label('referee_email'),
-                                        'referee_positon', CaseStudy.data['referee_position'].label('referee_position'),
-                                        'referee_name', CaseStudy.data['referee_name'].label('referee_name'),
-                                        'roles', CaseStudy.data['roles'].label('roles'),
-                                        'timeframe', CaseStudy.data['timeframe'].label('timeframe'),
-                                        'title', CaseStudy.data['title'].label('title'),
-                                    )
+                                                            'client', CaseStudy.data['client'].label('client'),
+                                                            'opportunity', CaseStudy.data['opportunity'].label('opportunity'),
+                                                            'outcome', CaseStudy.data['outcome'].label('outcome'),
+                                                            'project_links', CaseStudy.data['project_links'].label('project_links'),
+                                                            'referee_contact', CaseStudy.data['referee_contact'].label('referee_contact'),
+                                                            'referee_email', CaseStudy.data['referee_email'].label('referee_email'),
+                                                            'referee_positon', CaseStudy.data['referee_position'].label('referee_position'),
+                                                            'referee_name', CaseStudy.data['referee_name'].label('referee_name'),
+                                                            'roles', CaseStudy.data['roles'].label('roles'),
+                                                            'timeframe', CaseStudy.data['timeframe'].label('timeframe'),
+                                                            'title', CaseStudy.data['title'].label('title'),
+                                                            )
                 ).label('data')
             )
             .filter(
