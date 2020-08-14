@@ -93,7 +93,6 @@ class EvidenceService(Service):
             .filter(Evidence.id == evidence_id)
             .subquery()
         )
-        # import pdb; pdb.set_trace()
 
         subquery = (
             db.session.query(
@@ -128,12 +127,21 @@ class EvidenceService(Service):
             .subquery()
         )
 
+        evidence_assessment_status = (
+            db.session.query(
+                EvidenceAssessment.status.label('status')
+            )
+            .filter(evidence_id == EvidenceAssessment.evidence_id)
+            .subquery()
+        )
+
         query = (
             db.session.query(
                 Evidence.id,
                 Evidence.data['criteria'].label('criteria'),
                 Evidence.data['evidence'].label('evidence_data'),
                 Evidence.data['maxDailyRate'].label('maxDailyRate'),
+                evidence_assessment_status.c.status,
                 domain_criteria_name_subquery.c.domain_criteria,
                 category_name_subquery.c.domain_name
             )

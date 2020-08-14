@@ -2,6 +2,8 @@ from app import db
 from app.api.helpers import Service
 from app.models import CaseStudy, Domain
 
+from sqlalchemy import and_, func, or_
+
 
 class CaseStudyService(Service):
     __model__ = CaseStudy
@@ -10,7 +12,7 @@ class CaseStudyService(Service):
         super(CaseStudyService, self).__init__(*args, **kwargs)
 
     def get_approved_case_studies_by_supplier_code(self, supplier_code, domain_id):
-        subquery = (
+        domain_name_subquery = (
             db
             .session
             .query(Domain.name)
@@ -18,14 +20,60 @@ class CaseStudyService(Service):
             .subquery()
         )
 
-        query = (
-            db
-            .session
-            .query(CaseStudy.id, CaseStudy.data)
+        id_subquery = (
+            db.session.query(
+                CaseStudy.id.label('case_study_id')
+            )
             .filter(
                 CaseStudy.supplier_code == supplier_code,
                 CaseStudy.status == 'approved',
-                CaseStudy.data['service'].astext == subquery.c.name,
+                CaseStudy.data['service'].astext == domain_name_subquery.c.name,
+            )
+            .subquery()
+        )
+
+        case_study = (
+            db.session.query(
+                domain_name_subquery.c.name,
+                func.json_object_agg(id_subquery.c.case_study_id,
+                    func.json_build_object(
+                        'client', CaseStudy.data['client'].label('client'),
+                        'opportunity', CaseStudy.data['opportunity'].label('opportunity'),
+                        'outcome', CaseStudy.data['outcome'].label('outcome'),
+                        'project_links', CaseStudy.data['project_links'].label('project_links'),
+                        'referee_contact', CaseStudy.data['referee_contact'].label('referee_contact'),
+                        'referee_email', CaseStudy.data['referee_email'].label('referee_email'),
+                        'referee_positon', CaseStudy.data['referee_position'].label('referee_position'),
+                        'referee_name',CaseStudy.data['referee_name'].label('referee_name'),
+                        'roles', CaseStudy.data['roles'].label('roles'),
+                        'timeframe', CaseStudy.data['timeframe'].label('timeframe'),
+                        'title', CaseStudy.data['title'].label('title'),
+                    )
+                ).label('data')
+            )
+            .filter(
+                CaseStudy.supplier_code == supplier_code,
+                CaseStudy.status == 'approved',
+                CaseStudy.data['service'].astext == domain_name_subquery.c.name,
+            )
+            .group_by(domain_name_subquery.c.name)
+            .subquery()
+        )
+
+        case_studies_id_array = (
+            db.session.query(
+                func.array_agg(id_subquery.c.case_study_id).label('case_study_id')
+            )
+            .subquery()
+        )
+
+        query = (
+            db
+            .session
+            .query(
+                case_studies_id_array.c.case_study_id,
+                CaseStudy.data['service'].label('domain_name'),
+                case_study.c.data
             )
         )
 
