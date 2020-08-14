@@ -20,7 +20,7 @@ class CaseStudyService(Service):
             .subquery()
         )
 
-        id_subquery = (
+        cs_id = (
             db.session.query(
                 CaseStudy.id.label('case_study_id')
             )
@@ -35,7 +35,7 @@ class CaseStudyService(Service):
         case_study = (
             db.session.query(
                 domain_name.c.name,
-                func.json_object_agg(id_subquery.c.case_study_id,
+                func.json_object_agg(cs_id.c.case_study_id,
                                      func.json_build_object('client',
                                                             CaseStudy.data['client'].label('client'),
                                                             'opportunity',
@@ -74,7 +74,7 @@ class CaseStudyService(Service):
 
         case_studies_id_array = (
             db.session.query(
-                func.array_agg(id_subquery.c.case_study_id).label('case_study_id')
+                func.array_agg(cs_id.c.case_study_id).label('case_study_id')
             )
             .subquery()
         )
