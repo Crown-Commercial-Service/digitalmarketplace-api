@@ -27,6 +27,10 @@ class TestSuppliersService(BaseApplicationTest):
                 'qld': {
                     'expiry': expiry,
                     'licenceNumber': 'Q123456'
+                },
+                'sa': {	
+                    'expiry': expiry,	
+                    'licenceNumber': 'S123456'
                 }
             }
         )
@@ -153,6 +157,7 @@ class TestSuppliersService(BaseApplicationTest):
 
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
         assert len(suppliers_with_expired_licences[0]['labour_hire_licences']) == 2
+
 
     @pytest.mark.parametrize(
         'supplier', [
