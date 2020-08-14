@@ -55,11 +55,13 @@ class CaseStudyService(Service):
                                                             CaseStudy.data['referee_name'].label('referee_name'),
                                                             'roles',
                                                             CaseStudy.data['roles'].label('roles'),
+                                                            'service',
+                                                            CaseStudy.data['service'].label('service'),
                                                             'timeframe',
                                                             CaseStudy.data['timeframe'].label('timeframe'),
                                                             'title',
-                                                            CaseStudy.data['title'].label('title'),
-                                                        )
+                                                            CaseStudy.data['title'].label('title')
+                                                            )
                                     ).label('data')
             )
             .filter(CaseStudy.supplier_code == supplier_code,
@@ -82,7 +84,7 @@ class CaseStudyService(Service):
             .session
             .query(
                 case_studies_id_array.c.case_study_id,
-                CaseStudy.data['service'].label('domain_name'),
+                domain_name_subquery.c.name.label('domain_name'),
                 case_study.c.data
             )
         )
