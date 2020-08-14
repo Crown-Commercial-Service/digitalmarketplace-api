@@ -62,7 +62,7 @@ class CaseStudyService(Service):
                                                             'title',
                                                             CaseStudy.data['title'].label('title')
                                                             )
-                                    ).label('data')
+                                     ).label('data')
             )
             .filter(CaseStudy.supplier_code == supplier_code,
                     CaseStudy.status == 'approved',
