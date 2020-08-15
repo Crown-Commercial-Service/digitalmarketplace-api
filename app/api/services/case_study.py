@@ -55,8 +55,6 @@ class CaseStudyService(Service):
                                                             CaseStudy.data['referee_name'].label('referee_name'),
                                                             'roles',
                                                             CaseStudy.data['roles'].label('roles'),
-                                                            'service',
-                                                            CaseStudy.data['service'].label('service'),
                                                             'timeframe',
                                                             CaseStudy.data['timeframe'].label('timeframe'),
                                                             'title',
