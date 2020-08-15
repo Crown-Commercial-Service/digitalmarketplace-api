@@ -36,7 +36,9 @@ class CaseStudyService(Service):
             db.session.query(
                 domain_name.c.name,
                 func.json_object_agg(cs_id.c.case_study_id,
-                                     func.json_build_object('client',
+                                     func.json_build_object('approach',
+                                                            CaseStudy.data['client'].label('approach'),
+                                                            'client',
                                                             CaseStudy.data['client'].label('client'),
                                                             'opportunity',
                                                             CaseStudy.data['opportunity'].label('opportunity'),
