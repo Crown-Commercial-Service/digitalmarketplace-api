@@ -104,7 +104,7 @@ class EvidenceService(Service):
             .subquery()
         )
 
-        domain_criteria_name_subquery = (
+        domain_criteria_name = (
             db.session.query(
                 subquery.c.evidence_id,
                 func.json_object_agg(
@@ -142,10 +142,10 @@ class EvidenceService(Service):
                 Evidence.data['evidence'].label('evidence_data'),
                 Evidence.data['maxDailyRate'].label('maxDailyRate'),
                 evidence_assessment_status.c.status,
-                domain_criteria_name_subquery.c.domain_criteria,
+                domain_criteria_name.c.domain_criteria,
                 category_name_subquery.c.domain_name
             )
-            .join(domain_criteria_name_subquery, domain_criteria_name_subquery.c.evidence_id == Evidence.id)
+            .join(domain_criteria_name, domain_criteria_name.c.evidence_id == Evidence.id)
         )
 
         return[evidence._asdict() for evidence in query.all()]
