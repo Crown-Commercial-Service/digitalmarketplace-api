@@ -110,7 +110,7 @@ class EvidenceService(Service):
                 func.json_object_agg(
                     subquery.c.domain_criteria_id,
                     func.json_build_object(
-                        'name', subquery.name
+                        'name', subquery.c.name
                     )
                 ).label('domain_criteria')
             )
