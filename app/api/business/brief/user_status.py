@@ -189,21 +189,16 @@ class BriefUserStatus(object):
 
     def can_respond_to_specialist_opportunity(self):
         open_to = self.brief.data.get('openTo', '')
-        recruiter = self.supplier.data.get('recruiter', '') if self.user_role == 'supplier' else ''
 
         if (
             self.user_role == 'supplier' and
-            self.brief.lot.slug == 'specialist' and (
+            self.brief.lot.slug == 'specialist' and
+            self.supplier.data.get('recruiter', '') in ['yes', 'both', 'no'] and (
                 open_to == 'all' or (
                     open_to == 'selected' and
                     str(self.supplier_code) in self.invited_sellers.keys()
                 )
-            ) and (
-                recruiter == 'yes' or (
-                    (recruiter == 'both' or recruiter == 'no') and
-                    self.is_assessed_for_category()
-                )
-            )
+            ) and self.is_assessed_for_category()
         ):
             return True
 

@@ -642,16 +642,7 @@ def test_can_not_respond_to_rfx_as_unassessed_seller(rfx_brief, recruiter, suppl
 
 
 @pytest.mark.parametrize('specialist_brief', [{'data': open_to_all_specialist_data}], indirect=True)
-def test_can_respond_to_open_to_all_specialist_as_recruiter(specialist_brief, supplier_user):
-    supplier_user.supplier.data['recruiter'] = 'yes'
-    user_status = BriefUserStatus(specialist_brief, supplier_user)
-    result = user_status.can_respond_to_specialist_opportunity()
-
-    assert result is True
-
-
-@pytest.mark.parametrize('specialist_brief', [{'data': open_to_all_specialist_data}], indirect=True)
-@pytest.mark.parametrize('recruiter', ['both', 'no'])
+@pytest.mark.parametrize('recruiter', ['yes', 'both', 'no'])
 def test_can_respond_to_open_to_all_specialist_as_assessed_seller(
     specialist_brief, recruiter, supplier_user, supplier_domains
 ):
@@ -673,7 +664,9 @@ def test_can_not_respond_to_open_to_all_specialist_as_unassessed_seller(speciali
 
 
 @pytest.mark.parametrize('specialist_brief', [{'data': open_to_selected_specialist_data}], indirect=True)
-def test_can_respond_to_open_to_selected_specialist_as_invited_recruiter(specialist_brief, supplier_user):
+def test_can_respond_to_open_to_selected_specialist_as_invited_recruiter(
+    specialist_brief, supplier_user, supplier_domains
+):
     supplier_user.supplier.data['recruiter'] = 'yes'
     user_status = BriefUserStatus(specialist_brief, supplier_user)
     result = user_status.can_respond_to_specialist_opportunity()
