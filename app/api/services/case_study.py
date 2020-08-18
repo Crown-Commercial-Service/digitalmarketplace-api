@@ -37,7 +37,7 @@ class CaseStudyService(Service):
                 domain_name.c.name,
                 func.json_object_agg(cs_id.c.case_study_id,
                                      func.json_build_object(
-                                         'approach',
+                                        'approach',
                                         CaseStudy.data['client'].label('approach'),
                                         'client',
                                         CaseStudy.data['client'].label('client'),
@@ -62,7 +62,7 @@ class CaseStudyService(Service):
                                         CaseStudy.data['timeframe'].label('timeframe'),
                                         'title',
                                         CaseStudy.data['title'].label('title')
-                                                            )
+                                        )
                                      ).label('data')
             )
             .filter(CaseStudy.supplier_code == supplier_code,
