@@ -270,8 +270,6 @@ class SuppliersService(Service):
 
         expiry_dates = union(vic_expiry, qld_expiry).alias('expiry_dates')
         print("SA ARE YOU EXPIRED OR NOT")
-        print(expiry_dates)
-
         # Aggregate the licence details so they can be returned with the results
         licences = (db.session.query(expiry_dates.columns.code, expiry_dates.columns.name,
                                      func.json_agg(
@@ -300,8 +298,9 @@ class SuppliersService(Service):
                          licences.columns.code == aggregated_emails.columns.code)
                    .order_by(licences.columns.code)
                    .all())
-        print('resultssss')
+        # print('resultssss')
         print(results)
+        import pdb; pdb.set_trace()
         return [r._asdict() for r in results]
 
     def get_suppliers_with_unassessed_domains_and_all_case_studies_rejected(self):

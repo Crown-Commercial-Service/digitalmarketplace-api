@@ -182,6 +182,28 @@ class TestSuppliersService(BaseApplicationTest):
                 'licenceNumber': 'V123456'
             }
         ]
+    
+    # sa 
+    @pytest.mark.parametrize(
+        'supplier', [
+            {
+                'labourHire': {
+                    'sa': {
+                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d'),
+                        'licenceNumber': 'SA123456'
+                    }
+                }
+            }
+        ], indirect=True
+    )
+    def test_ignore_sa_expired_licences(self, supplier, users):
+        expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d')
+
+        suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
+
+        # assert len(suppliers_with_expired_licences[0]['labour_hire_licences']) == 0
+
+        # assert suppliers_with_expired_licences[0]['labour_hire_licences'] == []
 
     def test_get_expired_licences_returns_all_supplier_email_addresses(self, supplier, users):
         expiry_date = date.today() + timedelta(days=10)
