@@ -183,7 +183,6 @@ class TestSuppliersService(BaseApplicationTest):
             }
         ]
     
-
     @pytest.mark.parametrize(
         'supplier', [
             {
@@ -200,10 +199,10 @@ class TestSuppliersService(BaseApplicationTest):
             }
         ], indirect=True
     )
-    def test_ignore_sa_expired_licences_return_vic_only(self, supplier, users):
+    def test_ignore_sa_expired_licences_and_return_vic_only(self, supplier, users):
         expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d')
-
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
+
         assert suppliers_with_expired_licences[0]['labour_hire_licences'] == [
             {
                 'expiry': expiry,
@@ -224,9 +223,9 @@ class TestSuppliersService(BaseApplicationTest):
             }
         ], indirect=True
     )
+
     def test_ignore_sa_expired_licences(self, supplier, users):
         expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d')
-        
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
         assert len(suppliers_with_expired_licences) == 0
 
