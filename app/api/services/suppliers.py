@@ -263,7 +263,6 @@ class SuppliersService(Service):
                                   (today.date() + timedelta(days=days)))))
 
         expiry_dates = union(vic_expiry, qld_expiry).alias('expiry_dates')
-        print("SA ARE YOU EXPIRED OR NOT")
         # Aggregate the licence details so they can be returned with the results
         licences = (db.session.query(expiry_dates.columns.code, expiry_dates.columns.name,
                                      func.json_agg(
