@@ -16,7 +16,22 @@ def test_get_no_errors_from_expiried_sa_and_empty_licence_number():
 
     assert len(errors) == 0
 
-def test_can_get_error_for_no_vic_licence_number():
+def test_get_no_errors_from_sa_empty_licence_number():
+    supplier = Supplier(
+        data={
+            'recruiter': 'yes',
+            'labourHire': {
+                'sa': {
+                    'expiry': '01/01/2050'
+                }
+            }
+        }
+    )
+    errors = SupplierValidator(supplier).validate_recruiter()
+
+    assert len(errors) == 0
+
+def test_can_get_error_for_vic_licence_number():
     supplier = Supplier(
         data={
             'recruiter': 'yes',
@@ -30,3 +45,18 @@ def test_can_get_error_for_no_vic_licence_number():
     errors = SupplierValidator(supplier).validate_recruiter()
 
     assert len(errors) == 1
+
+def test_can_get_no_errors_for_sa_no_expiry():
+    supplier = Supplier(
+        data={
+            'recruiter': 'yes',
+            'labourHire': {
+                'sa': {
+                    'licenceNumber': 'foobar-licence'
+                }
+            }
+        }
+    )
+    errors = SupplierValidator(supplier).validate_recruiter()
+
+    assert len(errors) == 0

@@ -50,7 +50,7 @@ def test_can_get_errors_for_past_date_and_no_licence_number():
     assert len(errors) == 2
 
 
-def test_can_zero_errors_for_sa_past_date_and_no_licence_number():
+def test_get_no_errors_for_sa_past_date_and_no_licence_number():
     application = Application(
         data={
             'recruiter': 'yes',
@@ -81,7 +81,7 @@ def test_can_get_error_for_no_licence_number():
 
     assert len(errors) == 1
 
-def test_get_no_errors_from_expiried_sa_and_empty_licence_number():
+def test_get_no_errors_from_sa_empty_licence_number():
     application = Application(
         data={
             'recruiter': 'yes',
@@ -113,7 +113,7 @@ def test_can_get_error_for_no_expiry():
     assert len(errors) == 1
 
 
-def test_can_get_zero_error_for_sa_no_expiry():
+def test_can_get_no_errors_for_sa_no_expiry():
     application = Application(
         data={
             'recruiter': 'yes',
