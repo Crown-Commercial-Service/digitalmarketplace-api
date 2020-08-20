@@ -81,7 +81,7 @@ def test_can_get_error_for_no_licence_number():
 
     assert len(errors) == 1
 
-def test_can_zero_error_for_sa_no_licence_number():
+def test_get_no_errors_from_expiried_sa_and_empty_licence_number():
     application = Application(
         data={
             'recruiter': 'yes',
