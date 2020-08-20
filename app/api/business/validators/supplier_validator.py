@@ -236,7 +236,6 @@ class SupplierValidator(object):
     def validate_recruiter(self):
         errors = []
         recruiter = self.supplier.data.get('recruiter')
-        print("HI")
 
         if recruiter and (recruiter == 'yes' or recruiter == 'both'):
             labour_hire = self.supplier.data.get('labourHire', {})
