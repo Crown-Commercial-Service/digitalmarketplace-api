@@ -236,6 +236,7 @@ class SupplierValidator(object):
     def validate_recruiter(self):
         errors = []
         recruiter = self.supplier.data.get('recruiter')
+        print("HI")
 
         if recruiter and (recruiter == 'yes' or recruiter == 'both'):
             labour_hire = self.supplier.data.get('labourHire', {})
@@ -245,14 +246,16 @@ class SupplierValidator(object):
                     continue
                 licence_number = state_value.get('licenceNumber')
                 expiry = state_value.get('expiry')
-                if not state !='sa' and licence_number or not expiry:
-                    errors.append({
-                        'message': (
-                            'Licence number and expiry must be both filled for {}'.format(state_to_long_name(state))
-                        ),
-                        'severity': 'warning',
-                        'step': 'recruiter'
-                    })
+
+                if not licence_number or not expiry:
+                    if state !='sa':
+                        errors.append({
+                            'message': (
+                                'Licence number and expiry must be both filled for {}'.format(state_to_long_name(state))
+                            ),
+                            'severity': 'warning',
+                            'step': 'recruiter'
+                        })
 
                 if expiry:
                     try:
