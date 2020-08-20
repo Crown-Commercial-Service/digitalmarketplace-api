@@ -4,7 +4,7 @@ from app.api import api
 from app.utils import get_json_from_request
 from app.api.suppliers import get_supplier
 from app.api.helpers import role_required, is_current_supplier
-from app.api.services import suppliers, domain_service
+from app.api.services import briefs, suppliers, domain_service
 import json
 
 
@@ -153,14 +153,27 @@ def get_suppliers():
     keyword = request.args.get('keyword') or ''
     category = request.args.get('category') or ''
     all_suppliers = request.args.get('all') or ''
+    brief_id = request.args.get('briefId', None)
+
+    brief = None
+    if brief_id:
+        brief = briefs.get(brief_id)
+
+    if not brief:
+        raise NotFoundError("Invalid brief id '{}'".format(brief_id))
+
     exclude = json.loads(request.args.get('exclude')) if request.args.get('exclude') else []
+    exclude_recruiters = True if brief and brief.lot.slug != 'specialist' else False
     supplier_codes_to_exclude = [int(code) for code in exclude]
 
     if keyword:
-        results = suppliers.get_suppliers_by_name_keyword(keyword,
-                                                          framework_slug='digital-marketplace',
-                                                          category=category,
-                                                          exclude=supplier_codes_to_exclude)
+        results = suppliers.get_suppliers_by_name_keyword(
+            keyword,
+            framework_slug='digital-marketplace',
+            category=category,
+            exclude=supplier_codes_to_exclude,
+            exclude_recruiters=exclude_recruiters
+        )
 
         supplier_results = []
         for result in results:
