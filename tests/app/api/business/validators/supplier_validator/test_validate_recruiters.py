@@ -60,3 +60,19 @@ def test_can_get_no_errors_for_sa_no_expiry():
     errors = SupplierValidator(supplier).validate_recruiter()
 
     assert len(errors) == 0
+
+def test_valid_for_recruiter_and_labour_hire_vic():
+    supplier = Supplier(
+        data={
+            'recruiter': 'yes',
+            'labourHire': {
+                'vic': {
+                    'expiry': '01/01/2050',
+                    'licenceNumber': 'foobar-licence'
+                }
+            }
+        }
+    )
+    errors = SupplierValidator(supplier).validate_recruiter()
+
+    assert len(errors) == 0
