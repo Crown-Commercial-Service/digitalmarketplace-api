@@ -260,7 +260,7 @@ class ApplicationValidator(object):
                         'step': 'recruiter'
                     })
 
-                if expiry and state !='sa' and not licence_number:
+                if expiry and state != 'sa' and not licence_number:
                     errors.append({
                         'message': 'Please enter your licence number for {}'.format(state_to_long_name(state)),
                         'severity': 'error',
