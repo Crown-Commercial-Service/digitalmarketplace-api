@@ -1,12 +1,14 @@
+import json
+
 from flask import jsonify, request
 from flask_login import login_required
+
 from app.api import api
-from app.utils import get_json_from_request
-from app.api.suppliers import get_supplier
-from app.api.helpers import role_required, is_current_supplier
-from app.api.services import briefs, suppliers, domain_service
-import json
 from app.api.business.errors import NotFoundError
+from app.api.helpers import is_current_supplier, role_required
+from app.api.services import briefs, domain_service, suppliers
+from app.api.suppliers import get_supplier
+from app.utils import get_json_from_request
 
 
 @api.route('/suppliers/<int:code>', methods=['GET'], endpoint='get_supplier')
