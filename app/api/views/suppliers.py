@@ -6,6 +6,7 @@ from app.api.suppliers import get_supplier
 from app.api.helpers import role_required, is_current_supplier
 from app.api.services import briefs, suppliers, domain_service
 import json
+from app.api.business.errors import NotFoundError
 
 
 @api.route('/suppliers/<int:code>', methods=['GET'], endpoint='get_supplier')
