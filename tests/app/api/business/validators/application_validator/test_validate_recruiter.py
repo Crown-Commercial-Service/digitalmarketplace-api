@@ -81,6 +81,7 @@ def test_can_get_error_for_no_licence_number():
 
     assert len(errors) == 1
 
+
 def test_get_no_errors_from_sa_empty_licence_number():
     application = Application(
         data={
