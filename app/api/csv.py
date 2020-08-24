@@ -253,7 +253,6 @@ def generate_seller_catalogue_csv(seller_catalogue):
 
         answers.update({'Number of employees': number_of_employees})
 
-
         licence_vic_number = empty_cell_value
         licence_vic_expiry = empty_cell_value
         licence_qld_number = empty_cell_value
@@ -275,8 +274,6 @@ def generate_seller_catalogue_csv(seller_catalogue):
         answers.update({'VIC licence expiry': licence_vic_expiry})
         answers.update({'QLD labour hire licence': licence_qld_number})
         answers.update({'QLD licence expiry': licence_qld_expiry})
-
-
 
         for k, v in answers.items():
             answers[k] = csv_cell_sanitize(v)
