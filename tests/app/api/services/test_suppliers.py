@@ -28,8 +28,8 @@ class TestSuppliersService(BaseApplicationTest):
                     'expiry': expiry,
                     'licenceNumber': 'Q123456'
                 },
-                'sa': {	
-                    'expiry': expiry,	
+                'sa': {
+                    'expiry': expiry,
                     'licenceNumber': 'S123456'
                 }
             }
@@ -158,7 +158,6 @@ class TestSuppliersService(BaseApplicationTest):
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
         assert len(suppliers_with_expired_licences[0]['labour_hire_licences']) == 2
 
-
     @pytest.mark.parametrize(
         'supplier', [
             {
@@ -182,7 +181,7 @@ class TestSuppliersService(BaseApplicationTest):
                 'licenceNumber': 'V123456'
             }
         ]
-    
+
     @pytest.mark.parametrize(
         'supplier', [
             {
@@ -210,7 +209,7 @@ class TestSuppliersService(BaseApplicationTest):
                 'licenceNumber': 'V123456'
             }
         ]
-    
+
     @pytest.mark.parametrize(
         'supplier', [
             {
@@ -223,12 +222,10 @@ class TestSuppliersService(BaseApplicationTest):
             }
         ], indirect=True
     )
-
     def test_ignore_sa_expired_licences(self, supplier, users):
         expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d')
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
         assert len(suppliers_with_expired_licences) == 0
-
 
     def test_get_expired_licences_returns_all_supplier_email_addresses(self, supplier, users):
         expiry_date = date.today() + timedelta(days=10)
