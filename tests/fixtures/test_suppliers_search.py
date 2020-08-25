@@ -1,5 +1,5 @@
 import json
-from app.models import Brief, User, Supplier, SupplierDomain, CaseStudy, db
+from app.models import Brief, Framework, User, Supplier, SupplierDomain, SupplierFramework, CaseStudy, db
 from app.api.services import frameworks_service, lots_service
 import pytest
 import pendulum
@@ -65,6 +65,48 @@ def briefs(app, request, users):
 
         db.session.commit()
         yield db.session.query(Brief).all()
+
+
+@pytest.fixture()
+def recruiter(app, request, users):
+    with app.app_context():
+        supplier = Supplier(
+            abn=123,
+            code=456,
+            name='Test Recruiter',
+            data={
+                'recruiter': 'yes'
+            }
+        )
+
+        db.session.add(supplier)
+        framework = db.session.query(Framework).filter(Framework.slug == 'digital-marketplace').first()
+        db.session.add(
+            SupplierFramework(
+                framework_id=framework.id,
+                supplier_code=supplier.code
+            )
+        )
+
+        db.session.commit()
+        yield db.session.query(Supplier).filter(Supplier.code == 456).first()
+
+
+@pytest.fixture()
+def recruiter_supplier_domains(app, request, recruiter):
+    with app.app_context():
+        for i in range(1, 6):
+            db.session.add(
+                SupplierDomain(
+                    domain_id=i,
+                    price_status='approved',
+                    status='assessed',
+                    supplier_id=recruiter.id,
+                )
+            )
+
+        db.session.commit()
+        yield db.session.query(SupplierDomain).filter(SupplierDomain.supplier_id == recruiter.id)
 
 
 @pytest.fixture()
@@ -142,3 +184,15 @@ def test_search_suppliers_success(client, briefs, suppliers, domains, supplier_d
 def test_search_suppliers_bad_request_no_keyword(client, briefs):
     response = client.get('/2/suppliers/search?briefId=3')
     assert response.status_code == 400
+
+
+def test_seller_search_returns_recruiter_for_specialist(
+    client, briefs, suppliers, domains, supplier_domains, recruiter, recruiter_supplier_domains
+):
+    response = client.get('/2/suppliers/search?keyword=test&briefId=3')
+    recruiter = {
+        'code': 456,
+        'name': 'Test Recruiter'
+    }
+
+    assert recruiter in json.loads(response.data)['sellers']
