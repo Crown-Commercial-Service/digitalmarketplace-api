@@ -196,3 +196,16 @@ def test_seller_search_returns_recruiter_for_specialist(
     }
 
     assert recruiter in json.loads(response.data)['sellers']
+
+
+@pytest.mark.parametrize('brief_id', [1, 2, 4])
+def test_seller_search_does_not_return_recruiter_for_non_specialist(
+    client, briefs, suppliers, domains, supplier_domains, recruiter, recruiter_supplier_domains, brief_id
+):
+    response = client.get('/2/suppliers/search?keyword=test&briefId={}'.format(brief_id))
+    recruiter = {
+        'code': 456,
+        'name': 'Test Recruiter'
+    }
+
+    assert recruiter not in json.loads(response.data)['sellers']
