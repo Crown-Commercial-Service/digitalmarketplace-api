@@ -61,7 +61,9 @@ class SuppliersService(Service):
             .all()
         )
 
-    def get_suppliers_by_name_keyword(self, keyword, framework_slug=None, category=None, exclude=None):
+    def get_suppliers_by_name_keyword(
+        self, keyword, framework_slug=None, category=None, exclude=None, exclude_recruiters=False
+    ):
         query = (db.session.query(Supplier)
                  .filter(Supplier.name.ilike('%{}%'.format(keyword.encode('utf-8'))))
                  .filter(Supplier.status != 'deleted')
@@ -82,6 +84,8 @@ class SuppliersService(Service):
             query = query.filter(SupplierDomain.domain_id == category).filter(SupplierDomain.status == 'assessed')
         if exclude:
             query = query.filter(Supplier.code.notin_(exclude))
+        if exclude_recruiters:
+            query = query.filter(Supplier.data['recruiter'].astext != 'yes')
 
         query.order_by(Supplier.name.asc()).limit(20)
         return query.all()
