@@ -2,7 +2,7 @@ from app.api.business.validators import SupplierValidator
 from app.models import Supplier
 
 
-def test_get_no_errors_from_expiried_sa_and_empty_licence_number():
+def test_get_no_errors_from_expired_sa_and_empty_licence_number():
     supplier = Supplier(
         data={
             'recruiter': 'yes',
