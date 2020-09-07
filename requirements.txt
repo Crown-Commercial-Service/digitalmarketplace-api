@@ -49,7 +49,7 @@ monotonic==1.5            # via notifications-python-client
 notifications-python-client==5.5.1  # via digitalmarketplace-utils
 odfpy==1.4.1              # via digitalmarketplace-utils
 prometheus-client==0.2.0  # via gds-metrics
-psycopg2==2.8.5           # via -r requirements.in
+psycopg2==2.8.6           # via -r requirements.in
 pycparser==2.19           # via cffi
 pyjwt==1.7.1              # via notifications-python-client
 pyrsistent==0.15.7        # via jsonschema
