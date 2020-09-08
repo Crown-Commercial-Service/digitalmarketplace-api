@@ -249,7 +249,7 @@ class ApplicationValidator(object):
             labour_hire = self.application.data.get('labourHire', {})
             now = pendulum.now('Australia/Canberra').date()
             for state, state_value in labour_hire.iteritems():
-                if not state_value:
+                if not state_value or state == 'sa':
                     continue
                 licence_number = state_value.get('licenceNumber')
                 expiry = state_value.get('expiry')
