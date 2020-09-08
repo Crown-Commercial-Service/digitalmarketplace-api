@@ -245,7 +245,6 @@ class SupplierValidator(object):
                     continue
                 licence_number = state_value.get('licenceNumber')
                 expiry = state_value.get('expiry')
-
                 if not licence_number or not expiry:
                     errors.append({
                         'message': (

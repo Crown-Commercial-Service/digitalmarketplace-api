@@ -253,6 +253,7 @@ class ApplicationValidator(object):
                     continue
                 licence_number = state_value.get('licenceNumber')
                 expiry = state_value.get('expiry')
+
                 if licence_number and not expiry:
                     errors.append({
                         'message': 'Please enter an expiry date for {}'.format(state_to_long_name(state)),
