@@ -253,14 +253,14 @@ class ApplicationValidator(object):
                     continue
                 licence_number = state_value.get('licenceNumber')
                 expiry = state_value.get('expiry')
-                if licence_number and state != 'sa' and not expiry:
+                if licence_number and not expiry:
                     errors.append({
                         'message': 'Please enter an expiry date for {}'.format(state_to_long_name(state)),
                         'severity': 'error',
                         'step': 'recruiter'
                     })
 
-                if expiry and state != 'sa' and not licence_number:
+                if expiry and not licence_number:
                     errors.append({
                         'message': 'Please enter your licence number for {}'.format(state_to_long_name(state)),
                         'severity': 'error',
@@ -270,7 +270,7 @@ class ApplicationValidator(object):
                 if expiry:
                     try:
                         expiry_date = pendulum.parse(expiry, tz='Australia/Sydney')
-                        if state != 'sa' and now > expiry_date.date():
+                        if now > expiry_date.date():
                             errors.append({
                                 'message': 'Your {} labour hire licence has expired.'.format(state_to_long_name(state)),
                                 'severity': 'error',

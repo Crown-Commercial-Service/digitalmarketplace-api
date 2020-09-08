@@ -247,19 +247,18 @@ class SupplierValidator(object):
                 expiry = state_value.get('expiry')
 
                 if not licence_number or not expiry:
-                    if state != 'sa':
-                        errors.append({
-                            'message': (
-                                'Licence number and expiry must be both filled for {}'.format(state_to_long_name(state))
-                            ),
-                            'severity': 'warning',
-                            'step': 'recruiter'
-                        })
+                    errors.append({
+                        'message': (
+                            'Licence number and expiry must be both filled for {}'.format(state_to_long_name(state))
+                        ),
+                        'severity': 'warning',
+                        'step': 'recruiter'
+                    })
 
                 if expiry:
                     try:
                         expiry_date = pendulum.parse(expiry, tz='Australia/Sydney')
-                        if state != 'sa' and now > expiry_date.date():
+                        if now > expiry_date.date():
                             errors.append({
                                 'message': 'Your {} labour hire licence has expired.'.format(state_to_long_name(state)),
                                 'severity': 'warning',
