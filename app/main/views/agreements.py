@@ -19,6 +19,8 @@ from ...supplier_utils import validate_agreement_details_data
 
 RESOURCE_NAME = "agreement"
 
+E_SIGNATURE_LIVE_DATE = datetime(2020, 9, 28)
+
 
 @main.route('/agreements', methods=['POST'])
 def create_framework_agreement():
@@ -99,7 +101,14 @@ def update_framework_agreement(agreement_id):
     ):
         abort(400, "Can not update signedAgreementDetails or signedAgreementPath if agreement has been signed")
 
-    if ('countersignedAgreementPath' in update_json and not framework_agreement.countersigned_agreement_returned_at):
+    # For G-Cloud 12 onwards (e-signature frameworks), CCS Admins do not have to approve for countersigning
+    is_esignature_framework = (
+        framework_agreement.supplier_framework.framework.framework_live_at_utc > E_SIGNATURE_LIVE_DATE
+    )
+    if (
+        'countersignedAgreementPath' in update_json and not
+        (framework_agreement.countersigned_agreement_returned_at or is_esignature_framework)
+    ):
         abort(400, "Can not update countersignedAgreementPath if agreement has not been approved for countersigning")
 
     if update_json.get('signedAgreementDetails'):
@@ -231,6 +240,11 @@ def put_signed_framework_agreement_on_hold(agreement_id):
 
 @main.route('/agreements/<int:agreement_id>/approve', methods=['POST'])
 def approve_for_countersignature(agreement_id):
+    """
+    Admin approval is only required for frameworks prior to G-Cloud 12.
+    :param agreement_id:
+    :return:
+    """
     framework_agreement = FrameworkAgreement.query.filter(FrameworkAgreement.id == agreement_id).first_or_404()
     framework_agreement_details = framework_agreement.supplier_framework.framework.framework_agreement_details
 
