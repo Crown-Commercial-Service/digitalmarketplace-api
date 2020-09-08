@@ -72,7 +72,7 @@ def test_can_get_error_for_no_licence_number():
             'recruiter': 'yes',
             'labourHire': {
                 'vic': {
-                    'expiry': '01/01/2050'
+                    'expiry': '01/01/2350'
                 }
             }
         }
@@ -88,7 +88,7 @@ def test_get_no_errors_from_sa_empty_licence_number():
             'recruiter': 'yes',
             'labourHire': {
                 'sa': {
-                    'expiry': '01/01/2050'
+                    'expiry': '01/01/2350'
                 }
             }
         }
@@ -136,7 +136,7 @@ def test_valid_for_recruiter_and_labour_hire():
             'recruiter': 'yes',
             'labourHire': {
                 'vic': {
-                    'expiry': '01/01/2050',
+                    'expiry': '01/01/2350',
                     'licenceNumber': 'foobar-licence'
                 }
             }
