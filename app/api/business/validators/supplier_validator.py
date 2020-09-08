@@ -257,6 +257,7 @@ class SupplierValidator(object):
                 if expiry:
                     try:
                         expiry_date = pendulum.parse(expiry, tz='Australia/Sydney')
+
                         if now > expiry_date.date():
                             errors.append({
                                 'message': 'Your {} labour hire licence has expired.'.format(state_to_long_name(state)),
