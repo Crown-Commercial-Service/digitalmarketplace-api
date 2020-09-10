@@ -61,7 +61,9 @@ class SuppliersService(Service):
             .all()
         )
 
-    def get_suppliers_by_name_keyword(self, keyword, framework_slug=None, category=None, exclude=None):
+    def get_suppliers_by_name_keyword(
+        self, keyword, framework_slug=None, category=None, exclude=None, exclude_recruiters=False
+    ):
         query = (db.session.query(Supplier)
                  .filter(Supplier.name.ilike('%{}%'.format(keyword.encode('utf-8'))))
                  .filter(Supplier.status != 'deleted')
@@ -82,6 +84,8 @@ class SuppliersService(Service):
             query = query.filter(SupplierDomain.domain_id == category).filter(SupplierDomain.status == 'assessed')
         if exclude:
             query = query.filter(Supplier.code.notin_(exclude))
+        if exclude_recruiters:
+            query = query.filter(Supplier.data['recruiter'].astext != 'yes')
 
         query.order_by(Supplier.name.asc()).limit(20)
         return query.all()
@@ -261,15 +265,8 @@ class SuppliersService(Service):
                       .where(and_(Supplier.data['labourHire']['qld']['expiry'].isnot(None),
                                   func.to_date(Supplier.data['labourHire']['qld']['expiry'].astext, 'YYYY-MM-DD') ==
                                   (today.date() + timedelta(days=days)))))
-        sa_expiry = (select([Supplier.code, Supplier.name, literal('sa').label('state'),
-                             Supplier.data['labourHire']['sa']['licenceNumber'].astext.label('licenceNumber'),
-                             Supplier.data['labourHire']['sa']['expiry'].astext.label('expiry')])
-                     .where(and_(Supplier.data['labourHire']['sa']['expiry'].isnot(None),
-                                 func.to_date(Supplier.data['labourHire']['sa']['expiry'].astext, 'YYYY-MM-DD') ==
-                                 (today.date() + timedelta(days=days)))))
 
-        expiry_dates = union(vic_expiry, qld_expiry, sa_expiry).alias('expiry_dates')
-
+        expiry_dates = union(vic_expiry, qld_expiry).alias('expiry_dates')
         # Aggregate the licence details so they can be returned with the results
         licences = (db.session.query(expiry_dates.columns.code, expiry_dates.columns.name,
                                      func.json_agg(
@@ -349,32 +346,73 @@ class SuppliersService(Service):
         return self.save(supplier, do_commit)
 
     def get_approved_suppliers(self):
+        expanded_certifications = (
+            db
+            .session
+            .query(
+                Supplier.id,
+                func.json_array_elements_text(Supplier.data['certifications']).label('certifications')
+            )
+            .subquery()
+        )
+
+        aggregated_certifications = (
+            db
+            .session
+            .query(
+                Supplier.id,
+                func.string_agg(expanded_certifications.c.certifications, '; ').label('certifications')
+            )
+            .join(expanded_certifications, expanded_certifications.c.id == Supplier.id, isouter=True)
+            .group_by(Supplier.id)
+            .subquery()
+        )
+
         results = (
             db
             .session
             .query(
                 Supplier.name,
                 Supplier.abn,
+                Supplier.summary,
                 Supplier.creation_time,
+                case(
+                    whens=[
+                        (Supplier.data['address'].is_(None), '{}')
+                    ],
+                    else_=Supplier.data['address']
+                ).label('address'),
                 Supplier.data['contact_email'].astext.label('contact_email'),
-                Supplier.data['recruiter'].astext.label('recruiter_status'),
+                Supplier.data['methodologies'].astext.label('methodologies'),
+                Supplier.data['tools'].astext.label('tools'),
+                Supplier.data['technologies'].astext.label('technologies'),
+                case(
+                    whens=[
+                        (Supplier.data['recruiter'].astext == 'yes', 'recruiter'),
+                        (Supplier.data['recruiter'].astext == 'both', 'recruiter and consultant'),
+                        (Supplier.data['recruiter'].astext == 'no', 'consultant')
+                    ],
+                    else_=None,
+                ).label('recruiter_status'),
                 case(
                     whens=[
                         (Supplier.data['seller_type'].is_(None), '{}')
                     ],
                     else_=Supplier.data['seller_type']
                 ).label('seller_type'),
+                aggregated_certifications.c.certifications,
                 Supplier.data['number_of_employees'].label('number_of_employees'),
-                func.string_agg(Domain.name, ',').label('domains'),
+                func.string_agg(Domain.name, '; ').label('domains'),
                 Supplier.data['labourHire'].label('labour_hire')
             )
             .join(SupplierDomain, Domain)
+            .join(aggregated_certifications, aggregated_certifications.c.id == Supplier.id)
             .filter(
                 Supplier.status != 'deleted',
                 SupplierDomain.status == 'assessed',
                 SupplierDomain.price_status == 'approved'
             )
-            .group_by(Supplier.id, Supplier.name, Supplier.abn)
+            .group_by(Supplier.id, Supplier.name, Supplier.abn, aggregated_certifications.c.certifications)
             .order_by(Supplier.name)
             .all()
         )
