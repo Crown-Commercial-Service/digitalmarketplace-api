@@ -43,6 +43,7 @@ class TestListFrameworks(BaseApplicationTest):
             'variations',
             'hasDirectAward',
             'hasFurtherCompetition',
+            'isESignatureSupported',
         ])
 
 
