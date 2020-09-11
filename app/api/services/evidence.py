@@ -94,19 +94,39 @@ class EvidenceService(Service):
             .subquery()
         )
 
+        category_name = (
+            db.session.query(
+                Domain.name.label('category')
+            )
+            .filter(Evidence.id == evidence_id)
+            .join(Evidence, Evidence.domain_id == Domain.id)
+            .subquery()
+        )
+
         # # domain id + name + evidence_data
         subquery = (
             db.session.query(
                 domain_criteria_id.c.dc_id,
                 DomainCriteria.name.label("domain_criteria_name"),
-                Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data')
+                Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data'),
+                # Evidence.data['maxDailyRate'].label('maxDailyRate')
             )
             .filter(Evidence.id == evidence_id)
             .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
+            .subquery()
+        )
+
+        result = (
+            db.session.query(
+                category_name,
+                Evidence.data['maxDailyRate'].label('maxDailyRate'),
+                subquery
+            )
+             .filter(Evidence.id == evidence_id)
         )
 
 
-        return[evidence._asdict() for evidence in subquery.all()]
+        return[evidence._asdict() for evidence in result.all()]
 
     def get_evidence_data(self, evidence_id):
         evidence_subquery = (
