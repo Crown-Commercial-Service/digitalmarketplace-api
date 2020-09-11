@@ -83,6 +83,30 @@ class EvidenceService(Service):
         )
         evidence = query.first()
         return evidence
+    
+    def get_data(self, evidence_id):
+        # get domain criteria_id
+        domain_criteria_id = (
+            db.session.query(
+                func.json_array_elements_text(Evidence.data['criteria']).label('dc_id')
+            )
+            .filter(Evidence.id == evidence_id)
+            .subquery()
+        )
+
+        # # domain id + name + evidence_data
+        subquery = (
+            db.session.query(
+                domain_criteria_id.c.dc_id,
+                DomainCriteria.name.label("domain_criteria_name"),
+                Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data')
+            )
+            .filter(Evidence.id == evidence_id)
+            .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
+        )
+
+
+        return[evidence._asdict() for evidence in subquery.all()]
 
     def get_evidence_data(self, evidence_id):
         evidence_subquery = (
