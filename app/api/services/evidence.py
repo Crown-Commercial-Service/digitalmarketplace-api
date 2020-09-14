@@ -102,7 +102,6 @@ class EvidenceService(Service):
             .subquery()
         )
 
-
         subquery = (
             db.session.query(
                 domain_criteria_id.c.dc_id,
