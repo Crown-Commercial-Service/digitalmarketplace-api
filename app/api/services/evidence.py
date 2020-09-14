@@ -107,7 +107,6 @@ class EvidenceService(Service):
                 domain_criteria_id.c.dc_id,
                 DomainCriteria.name.label("domain_criteria_name"),
                 Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data'),
-                # Evidence.data['maxDailyRate'].label('maxDailyRate')
             )
             .filter(Evidence.id == evidence_id)
             .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
