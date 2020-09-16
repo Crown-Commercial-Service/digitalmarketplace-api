@@ -30,7 +30,7 @@ class AbrService(Service):
     def __init__(self, *args, **kwargs):
         super(AbrService, self).__init__(*args, **kwargs)
     
-    def get_business_info_by_abn(self, email_address, abn):
+    def get_business_info_by_abn(self, abn):
         api_key = current_app.config['ABR_API_KEY']
         include_historical_details = 'N'
         # maybe remove this and have it as abn
@@ -38,12 +38,36 @@ class AbrService(Service):
         link = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
         url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
 
+# maybe refactor code and split it up into 2 functions 1) sets up the url 2) to get responses from the abr service
         try:
             response = requests.get(url)
-            response.raise_for_status()
-            xmlText = response.content
-            root = ElementTree.fromstring(xmlText)
+            print("before response.ok")
+            if response.ok:
+                xmlText = response.content
+                root = ElementTree.fromstring(xmlText)
+                # do i need root? if I just reference xmlTree
+                search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
+                organisation_name = search_xml_organisation_name[0]
+                # this only works for &, < and > but not ' and ""
+                organisation_name = saxutils.unescape(organisation_name)
 
+                # takes the first postcode
+                search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', xmlText)
+                postcode = search_xml_postcode[0]
+
+                # takes the first state
+                search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', xmlText)
+                state = search_xml_state[0]
+
+                return json.dumps({
+                    'organisation_name': organisation_name,
+                    'postcode': postcode,
+                    'state': state
+                })
+
+            response.raise_for_status()
+            
+        # might need an else and put all the raise exceptions
         # Rasing different exceptions
         except ConnectionError as ex:
             raise AbrError('Connection Error')
@@ -73,7 +97,9 @@ class AbrService(Service):
         # if except_description:
         #     raise AbrError(except_description)
 
-        # takes the first organisationName
+#
+    def i_need_to_give_this_a_name(self, x):
+        print('yay')
         search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
         organisation_name = search_xml_organisation_name[0]
         # this only works for &, < and > but not ' and ""
@@ -92,3 +118,23 @@ class AbrService(Service):
             'postcode': postcode,
             'state': state
         })
+
+   # takes the first organisationName
+        # search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
+        # organisation_name = search_xml_organisation_name[0]
+        # # this only works for &, < and > but not ' and ""
+        # organisation_name = saxutils.unescape(organisation_name)
+
+        # # takes the first postcode
+        # search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', xmlText)
+        # postcode = search_xml_postcode[0]
+
+        # # takes the first state
+        # search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', xmlText)
+        # state = search_xml_state[0]
+
+        # return json.dumps({
+        #     'organisation_name': organisation_name,
+        #     'postcode': postcode,
+        #     'state': state
+        # })

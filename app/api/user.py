@@ -259,8 +259,10 @@ def create_user(
             validated_abn = abn_package.validate(abn.strip())
             if validated_abn:
                 try:
-                    # extracts business info using the abn
-                    business_info_values = abr_service.get_business_info_by_abn(email_address, abn)
+                    # extracts business info using the abn email_address is not used for info)by_abn might remove it
+                    business_info_values = abr_service.get_business_info_by_abn(abn)
+                    print('business info values')
+                    print(business_info_values)
                     business_info_values = json.loads(business_info_values)
 
                     organisation_name = business_info_values["organisation_name"]
