@@ -7,6 +7,11 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
+    "backgroundInformation": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
     "budgetRange": {
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
@@ -37,6 +42,11 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
       "type": "string"
     },
+    "endUsers": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
     "essentialRequirements": {
       "items": {
         "maxLength": 300,
@@ -50,9 +60,9 @@
     "evaluationType": {
       "items": {
         "enum": [
+          "Case study",
+          "Work history",
           "Reference",
-          "Interview",
-          "Scenario or test",
           "Presentation"
         ]
       },
@@ -103,6 +113,28 @@
       "minLength": 1,
       "type": "string"
     },
+    "outcome": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "not_applicable",
+        "not_started",
+        "discovery",
+        "alpha",
+        "beta",
+        "live"
+      ]
+    },
+    "priceCriteria": {
+      "enum": [
+        "Fixed price",
+        "Time and materials",
+        "Capped time and materials"
+      ]
+    },
     "priceWeighting": {
       "maximum": 85,
       "minimum": 20,
@@ -113,49 +145,24 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
-    "requirementsLength": {
-      "enum": [
-        "1 week",
-        "2 weeks"
-      ]
-    },
     "securityClearance": {
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
       "type": "string"
     },
-    "specialistRole": {
-      "enum": [
-        "agileCoach",
-        "businessAnalyst",
-        "communicationsManager",
-        "contentDesigner",
-        "securityConsultant",
-        "dataArchitect",
-        "dataEngineer",
-        "dataScientist",
-        "deliveryManager",
-        "designer",
-        "developer",
-        "performanceAnalyst",
-        "portfolioManager",
-        "productManager",
-        "programmeManager",
-        "qualityAssurance",
-        "serviceManager",
-        "technicalArchitect",
-        "userResearcher",
-        "webOperations"
-      ]
-    },
-    "specialistWork": {
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
-      "type": "string"
-    },
     "startDate": {
       "format": "date",
       "type": "string"
+    },
+    "successCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
     },
     "summary": {
       "minLength": 1,
@@ -172,6 +179,11 @@
       "minLength": 1,
       "type": "string"
     },
+    "workAlreadyDone": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
     "workingArrangements": {
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
@@ -184,24 +196,27 @@
     }
   },
   "required": [
+    "backgroundInformation",
     "culturalFitCriteria",
     "culturalWeighting",
+    "endUsers",
     "essentialRequirements",
     "existingTeam",
     "location",
     "numberOfSuppliers",
     "organisation",
+    "outcome",
+    "phase",
+    "priceCriteria",
     "priceWeighting",
-    "requirementsLength",
-    "specialistRole",
-    "specialistWork",
     "startDate",
+    "successCriteria",
     "summary",
     "technicalWeighting",
     "title",
     "workingArrangements",
     "workplaceAddress"
   ],
-  "title": "Digital Outcomes and Specialists 4 Digital specialists Brief Schema",
+  "title": "Digital Outcomes and Specialists 5 Digital outcomes Brief Schema",
   "type": "object"
 }

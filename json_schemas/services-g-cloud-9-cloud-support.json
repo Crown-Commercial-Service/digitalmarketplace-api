@@ -1208,6 +1208,6 @@
     "training",
     "webChatSupport"
   ],
-  "title": "G-Cloud 9 Cloud Support Product Schema",
+  "title": "G-Cloud 9 Cloud Support Service Schema",
   "type": "object"
 }

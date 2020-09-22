@@ -2,6 +2,11 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
+    "accessRestrictions": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
     "additionalTerms": {
       "minLength": 0,
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
@@ -12,24 +17,9 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
-    "contractLength": {
-      "maxLength": 100,
-      "minLength": 0,
-      "type": "string"
-    },
-    "culturalFitCriteria": {
-      "items": {
-        "maxLength": 300,
-        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
-        "type": "string"
-      },
-      "maxItems": 20,
-      "minItems": 1,
-      "type": "array"
-    },
     "culturalWeighting": {
-      "maximum": 20,
-      "minimum": 5,
+      "maximum": 70,
+      "minimum": 10,
       "type": "integer"
     },
     "earlyMarketEngagement": {
@@ -50,21 +40,15 @@
     "evaluationType": {
       "items": {
         "enum": [
+          "Case study",
           "Reference",
-          "Interview",
-          "Scenario or test",
-          "Presentation"
+          "Interview"
         ]
       },
-      "maxItems": 4,
+      "maxItems": 3,
       "minItems": 0,
       "type": "array",
       "uniqueItems": true
-    },
-    "existingTeam": {
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
-      "type": "string"
     },
     "location": {
       "enum": [
@@ -80,7 +64,7 @@
         "South West England",
         "Wales",
         "Northern Ireland",
-        "Offsite"
+        "International (outside the UK)"
       ]
     },
     "niceToHaveRequirements": {
@@ -103,8 +87,23 @@
       "minLength": 1,
       "type": "string"
     },
+    "participantAccessibilityNeeds": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "participantSpecification": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
+      "type": "string"
+    },
+    "participantsPerRound": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
     "priceWeighting": {
-      "maximum": 85,
+      "maximum": 80,
       "minimum": 20,
       "type": "integer"
     },
@@ -113,49 +112,52 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
       "type": "string"
     },
-    "requirementsLength": {
-      "enum": [
-        "1 week",
-        "2 weeks"
-      ]
-    },
-    "securityClearance": {
-      "minLength": 0,
-      "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
-      "type": "string"
-    },
-    "specialistRole": {
-      "enum": [
-        "agileCoach",
-        "businessAnalyst",
-        "communicationsManager",
-        "contentDesigner",
-        "securityConsultant",
-        "dataArchitect",
-        "dataEngineer",
-        "dataScientist",
-        "deliveryManager",
-        "designer",
-        "developer",
-        "performanceAnalyst",
-        "portfolioManager",
-        "productManager",
-        "programmeManager",
-        "qualityAssurance",
-        "serviceManager",
-        "technicalArchitect",
-        "userResearcher",
-        "webOperations"
-      ]
-    },
-    "specialistWork": {
+    "researchAddress": {
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
       "type": "string"
     },
-    "startDate": {
-      "format": "date",
+    "researchDates": {
+      "maxLength": 100,
+      "minLength": 1,
       "type": "string"
+    },
+    "researchFrequency": {
+      "minLength": 1,
+      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
+      "type": "string"
+    },
+    "researchOutOfHours": {
+      "items": {
+        "enum": [
+          "Weekday evenings",
+          "Weekends"
+        ]
+      },
+      "maxItems": 2,
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "researchPlan": {
+      "minLength": 0,
+      "pattern": "^$|(^(?:\\S+\\s+){0,99}\\S+$)",
+      "type": "string"
+    },
+    "researchRounds": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "successCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
     },
     "summary": {
       "minLength": 1,
@@ -163,7 +165,7 @@
       "type": "string"
     },
     "technicalWeighting": {
-      "maximum": 75,
+      "maximum": 70,
       "minimum": 10,
       "type": "integer"
     },
@@ -171,37 +173,26 @@
       "maxLength": 100,
       "minLength": 1,
       "type": "string"
-    },
-    "workingArrangements": {
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
-      "type": "string"
-    },
-    "workplaceAddress": {
-      "minLength": 1,
-      "pattern": "^(?:\\S+\\s+){0,99}\\S+$",
-      "type": "string"
     }
   },
   "required": [
-    "culturalFitCriteria",
     "culturalWeighting",
     "essentialRequirements",
-    "existingTeam",
     "location",
     "numberOfSuppliers",
     "organisation",
+    "participantSpecification",
+    "participantsPerRound",
     "priceWeighting",
-    "requirementsLength",
-    "specialistRole",
-    "specialistWork",
-    "startDate",
+    "researchAddress",
+    "researchDates",
+    "researchFrequency",
+    "researchRounds",
+    "successCriteria",
     "summary",
     "technicalWeighting",
-    "title",
-    "workingArrangements",
-    "workplaceAddress"
+    "title"
   ],
-  "title": "Digital Outcomes and Specialists 4 Digital specialists Brief Schema",
+  "title": "Digital Outcomes and Specialists 5 User research participants Brief Schema",
   "type": "object"
 }

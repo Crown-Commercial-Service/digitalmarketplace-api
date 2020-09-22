@@ -3095,6 +3095,6 @@
     "vulnerabilityManagementType",
     "webChatSupport"
   ],
-  "title": "G-Cloud 10 Cloud Software Product Schema",
+  "title": "G-Cloud 10 Cloud Software Service Schema",
   "type": "object"
 }

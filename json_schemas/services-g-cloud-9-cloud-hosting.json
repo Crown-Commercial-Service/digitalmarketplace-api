@@ -3184,6 +3184,6 @@
     "webChatSupport",
     "webInterface"
   ],
-  "title": "G-Cloud 9 Cloud Hosting Product Schema",
+  "title": "G-Cloud 9 Cloud Hosting Service Schema",
   "type": "object"
 }
