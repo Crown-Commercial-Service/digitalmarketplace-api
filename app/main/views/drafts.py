@@ -509,8 +509,7 @@ def create_new_draft_service():
     framework, lot, supplier = validate_and_return_related_objects(draft_json)
 
     if framework.status != 'open':
-        if (framework.status != 'standstill') or (framework.slug != 'g-cloud-12'):
-            abort(400, "'{}' is not open for submissions".format(framework.slug))
+        abort(400, "'{}' is not open for submissions".format(framework.slug))
 
     if lot.one_service_limit:
         lot_service = DraftService.query.filter(
