@@ -36,29 +36,29 @@
     },
     "labDesktopStreaming": {
       "enum": [
-        "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost",
+        "Yes, included as standard",
+        "Yes, for an additional cost",
         "No"
       ]
     },
     "labDeviceStreaming": {
       "enum": [
-        "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost",
+        "Yes, included as standard",
+        "Yes, for an additional cost",
         "No"
       ]
     },
     "labEyeTracking": {
       "enum": [
-        "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost",
+        "Yes, included as standard",
+        "Yes, for an additional cost",
         "No"
       ]
     },
     "labHosting": {
       "enum": [
-        "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost",
+        "Yes, included as standard",
+        "Yes, for an additional cost",
         "No"
       ]
     },
@@ -79,15 +79,15 @@
     },
     "labStreaming": {
       "enum": [
-        "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost",
+        "Yes, included as standard",
+        "Yes, for an additional cost",
         "No"
       ]
     },
     "labTechAssistance": {
       "enum": [
-        "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost",
+        "Yes, included as standard",
+        "Yes, for an additional cost",
         "No"
       ]
     },
@@ -108,15 +108,15 @@
     },
     "labViewingArea": {
       "enum": [
-        "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost",
+        "Yes, included as standard",
+        "Yes, for an additional cost",
         "No"
       ]
     },
     "labWaitingArea": {
       "enum": [
-        "Yes \u2013 included as standard",
-        "Yes \u2013 for an additional cost",
+        "Yes, included as standard",
+        "Yes, for an additional cost",
         "No"
       ]
     },
