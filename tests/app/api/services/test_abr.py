@@ -18,8 +18,9 @@ class TestAbrService(unittest.TestCase):
             data = '<ABRPayloadSearchResults xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://abr.business.gov.au/ABRXMLSearch/"> <response><stateCode>NSW</stateCode> <postcode>2750</postcode> <organisationName>yay</organisationName></response></ABRPayloadSearchResults>'
             return data
         
+        # test_get_data
         @mock.patch("app.api.services.abr_service.fetch_data", side_effect=mocked_fetch_data)
-        def test_fetch(self, mocked_fetch_data):
+        def test_get_data(self, mocked_fetch_data):
             expected_parsed_data =  '{"state": "NSW", "organisation_name": "yay", "postcode": "2750"}'
             data = abr_service.get_data()
             self.assertEqual(data, expected_parsed_data)
