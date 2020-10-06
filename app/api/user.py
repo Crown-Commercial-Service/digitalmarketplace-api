@@ -252,6 +252,7 @@ def create_user(
             user_data['role'] = 'supplier'
         else:
             business_info_values = ''
+            test = ''
             organisation_name = ''
             state = ''
             postcode = ''
@@ -261,6 +262,7 @@ def create_user(
                 try:
                     # extracts business info using the abn email_address is not used for info)by_abn might remove it
                     business_info_values = abr_service.get_business_info_by_abn(abn)
+                    test = abr_service.get_url(abn)
                     print('business info values')
                     print(business_info_values)
                     business_info_values = json.loads(business_info_values)

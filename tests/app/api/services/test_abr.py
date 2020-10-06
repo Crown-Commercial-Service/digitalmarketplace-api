@@ -3,80 +3,118 @@ import pytest
 from app.api.services import abr_service
 from tests.app.helpers import BaseApplicationTest
 import requests
-from nose.tools import assert_is_not_none
-# from unittest.mock import Mock, patch, MagicMock
+from nose.tools import assert_is_not_none, assert_true
+import unittest
+import mock
+from mock import patch
 import requests_mock
+# from requests.exceptions import HTTPError
+from requests import HTTPError
 
+class TestAbrService(unittest.TestCase):
+        # def setup(self):
 
-class TestAbrService(BaseApplicationTest):
-        def setup(self):
-            super(TestAbrService, self).setup()
+        def mocked_fetch_data():
+            data = '<ABRPayloadSearchResults xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://abr.business.gov.au/ABRXMLSearch/"> <response><stateCode>NSW</stateCode> <postcode>2750</postcode> <organisationName>yay</organisationName></response></ABRPayloadSearchResults>'
+            return data
         
-                # yield_fixture
-        # @pytest.fixture()
-        def test_abn(self):
-            with requests_mock.mock() as mocker:
-                mocker.get('https://pycon-au.org', json={'hello':'world'}, headers = {'Content-Type': 'application/json'})
+        @mock.patch("app.api.services.abr_service.fetch_data", side_effect=mocked_fetch_data)
+        def test_fetch(self, mocked_fetch_data):
+            expected_parsed_data =  '{"state": "NSW", "organisation_name": "yay", "postcode": "2750"}'
+            data = abr_service.get_data()
+            self.assertEqual(data, expected_parsed_data)
 
-                resp = requests.get('https://pycon-au.org')
+        
+        # @patch("app.api.services.abr_service.get")
+        def test_main_exception(self):
+            exception = HTTPError(mock.Mock(status=404), "HTTP Error")
+            # mock_get(mock.ANY).raise_for_status.side_effect = exception
 
-                assert resp.json()['hello'] == 'world'
-                assert resp.headers['Content-Type'] == 'application/json'
-                assert mocker.called
+            with pytest.raises(HTTPError) as error_info:
+                abr_service.get_data()
+                assert error_info == exception
 
-
-# url regexp request_mock
-        # @pytest.fixture()
-        def mock_abn(self):
-            b = mocker.get('https://pycon-au.org/b', text = 'PyConAU')
-            c = mocker.get('https://pycon-au.org/b', text = '2017')
-            e = mocker.get('https://pycon-au.org/b', text = 'Hello')
-
-            responses = [requests.get('https://pycon-au.org/%s' % path)
-                            for path in ('e', 'b', 'c')]
-            for res in responses:
-                assert resp.status_code == 200
-            
-            print(" ". join(resp.text for resp in responses))
-
-            for m in [e, b,c]:
-                assert m.called_once
-
-
-
-
-
-
-
-
-
-
-        # @patch('app.api.services.abr_service.get_business_info_by_abn')
-        # def test_request_response(mocker):
-        #     abn = '96 257 979 159'
-        #     include_historical_details ='N'
+        # def test(requests_mock):
+        #     abn = '42685714570'
         #     link = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
+        #     include_historical_details = 'N'
+        #     api_key = '123456789'
         #     url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
 
-        #     mock_api = mocker.MagicMock(name ='api')
-        #     mock_api.get.side_effect = load_data
+        #     requests_mock.get(url, status_code=404)
+        #     with pytest.raises(HTTPError):
+        #         resp = abr_service.fetch_data()
             
-        #     mocker.patch(''), new = mock_api)
+        # @mock.patch("app.api.services.abr_service.fetch_data")
+        # def test_connecton_error(requests_mock):
+        #     status_code = 503
+        #     resp = abr_service.fetch_data()
+        #     assert resp.status_code == status_code
 
+        # @mock.patch('app.api.services.abr_service.fetch_data')
+        # @mock.patch('requests.get')
+        # def test_failed_query(self, mock_get):
+        #     mock_resp = self._mock_response(status=500, raise_for_status=HTTPError("HTTP Error"))
+        #     mock_get.return_value = mock_resp
+        #     self.assertRaises(HTTPError, abr_service.fetch_data())
+        # def test_verify(mock_request):
+        #     mock_resp = requests.models.Response()
+        #     mock_resp.status_code = 404
+        #     mock_request.return_value = mock_resp
+        #     # res = requests.get()
+        #     res = abr_service.fetch_data()
+        #     with pytest.raises(requests.exceptions.HTTPError) as err_msg:
+        #         res.raise_for_status()
+        #     print(err_msg)
 
-        #     #Act
-        #     result = abr_service.get_business_info_by_abn()
-            # response = requests.get('http://jsonplaceholder.typicode.com/todos')
-            # assert_true(response.ok)
+        # def test(self):
+        #     with self.assertRaises(Exception) as context:
+        #         abr_service.fetch_data()
+        #     self.assertTrue('Failed exception raised' in context.exception)
+        # @mock.patch("app.api.services.abr_service.fetch_data", side_effect=Exception('Failed exception raised'))
+        # def test_exception(self):
+        #     mock_message_raise = 'Failed exception raised'
+        #     resp = abr_service.fetch_data()
+        #     assert resp == mock_message_raise
 
-            # abn = '96 257 979 159'
-            # call service, sends a request to the server
+        # patch - filename, class name, method
+        # exceptions
 
-            # response = abr_service.get_business_info_by_abn(abn)
-            # if the request is successfully, I expect a response
-            # assert_is_not_none(response)
+# doesn't work
+        # @mock.patch("app.api.services.abr_service.requests.get")
+        # def test_data_if_timeout(self, mock_get):
+        #     """ If a timeout is caught we should be getting the default data"""
+        #     mock_get.side_effect = Timeout
+        #     data = abr_service.get_data()
+        #     self.assertEqual(data, self.default_data)
 
-        # check if it works
+    
+
+    # @mock.patch('app.api.services.abr_service.fetch_data')
+    # def test_shouldRaiseHttpError404(self):
+    #     m = Mock(side_effect=Exception)
+
+    #     m = mock.Mock()
+        # barMock.side_effect = HttpError(mock.Mock(status=404), 'not found')
+        # result = foo()
+        # self.assertIsNone(result)  # fails, test raises HttpError
+
+    # invalid abn
+
+        # @mock.patch("app.api.services.abr_service.fetch_data")
+        # def test_simple(requests_mock):
+        #     api_key = '123456789'
+        #     abn = '42685714570'
+        #     link = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
+        #     include_historical_details = 'N'
+
+        #     url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
+        #     requests_mock.get(url, text='<exception><exceptionDescription>Search text is not a valid ABN or ACN</exceptionDescription><exceptionCode>WEBSERVICES</exceptionCode></exception>')
+        #     exception_message =  'WEBSERVICES: Search text is not a valid ABN or ACN'
+
+        #     data = abr_service.get_fetch()
+        #     self.assertEqual(data, exception_message)
+
 
     #  check that they return empty organisation_name, state, postcode
         # test for connectionError
@@ -86,11 +124,12 @@ class TestAbrService(BaseApplicationTest):
         #SSLError
 
         #payload Exceptions
+        #check with internation abn
 
     # test with spaces and different alternatives of the abn
-    #test invalid abn?
+    #test for invalid abn
+
+
 
 
         #
-
-
