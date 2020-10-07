@@ -1,46 +1,74 @@
 import pytest
 
 from app.api.services import abr_service
-from tests.app.helpers import BaseApplicationTest
 import requests
-from nose.tools import assert_is_not_none, assert_true
 import unittest
 import mock
 from mock import patch
-import requests_mock
-from requests.exceptions import ProxyError
-from requests import HTTPError
 
 class TestAbrService(unittest.TestCase):
-        # def setup(self):
 
-        def mocked_fetch_data(self):
+        def mocked_fetch_data():
             data = '<ABRPayloadSearchResults xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://abr.business.gov.au/ABRXMLSearch/"> <response><stateCode>NSW</stateCode> <postcode>2750</postcode> <organisationName>yay</organisationName></response></ABRPayloadSearchResults>'
             return data
         
-        # test_get_data
         @mock.patch("app.api.services.abr_service.fetch_data", side_effect=mocked_fetch_data)
-        def test_get_data(self, mocked_fetch_data):
+        def test_fetch(self, mocked_fetch_data):
             expected_parsed_data =  '{"state": "NSW", "organisation_name": "yay", "postcode": "2750"}'
             data = abr_service.get_data()
             self.assertEqual(data, expected_parsed_data)
 
-        @mock.patch("app.api.services.abr_service.fetch_data")
-        def test_fetch_with_exception(self, mock_fetch):
-            mock_fetch.return_value = self.mocked_fetch_data()
-            mock_fetch.side_effect = ProxyError(mock.Mock(status=400), 'Proxy error!')
-            expected_parsed_data = '{"state": "NSW", "organisation_name": "yay", "postcode": "2750"}'
-            data = abr_service.get_data()
-            self.assertEqual(data, expected_parsed_data)
-        
-        # @patch("app.api.services.abr_service.get")
-        def test_main_exception(self):
-            exception = HTTPError(mock.Mock(status=404), "HTTP Error")
-            # mock_get(mock.ANY).raise_for_status.side_effect = exception
-
-            with pytest.raises(HTTPError) as error_info:
+        @mock.patch('app.api.services.abr_service.fetch_data')
+        def test_foo(self, mock_requests_get):
+            mock_requests_get.side_effect = requests.exceptions.ConnectionError()
+            with self.assertRaises(requests.exceptions.ConnectionError):
                 abr_service.get_data()
-                assert error_info == exception
+        
+
+        @mock.patch('app.api.services.abr_service.fetch_data')
+        def test_foo2(self, mock_requests_get):
+            mock_requests_get.side_effect = requests.exceptions.HTTPError()
+            with self.assertRaises(requests.exceptions.HTTPError):
+                abr_service.get_data()
+
+
+    #  check that they return empty organisation_name, state, postcode
+        # test for connectionError
+        # HttpError
+        #ProxyError
+        #timeout error
+        #SSLError
+
+        #payload Exceptions
+        #check with internation abn
+
+    # test with spaces and different alternatives of the abn
+    #test for invalid abn
+
+   # @mock.patch("app.api.services.abr_service.fetch_data")
+        # def test_fetch_with_exception(self):
+        #     # with self.assertRaises(Exception) as context:
+        #     #     abr_service.get_data()
+
+        # #     self.assertTrue('HTTP Error' in context.exception)
+        #     with pytest.raises(requests.exceptions.Timeout) as e:
+        #         abr_service.get_data()
+        #     assert str(e) == "AbrError: HTTP Error"
+            
+            # self.assertRaises(HTTPError, abr_service.get_data())
+
+                            # with self.assertRaises(Exception) as context:
+            #     abr_service.get_data()
+
+        #     self.assertTrue('HTTP Error' in context.exception)
+        # @patch("app.api.services.abr_service.get")
+        # def test_main_exception(self):
+        #     exception = HTTPError(mock.Mock(status=404), "HTTP Error")
+        #     # mock_get(mock.ANY).raise_for_status.side_effect = exception
+
+        #     with pytest.raises(HTTPError) as error_info:
+        #         abr_service.get_data()
+        #         assert error_info == exception
 
         # def test(requests_mock):
         #     abn = '42685714570'
@@ -122,22 +150,3 @@ class TestAbrService(unittest.TestCase):
 
         #     data = abr_service.get_fetch()
         #     self.assertEqual(data, exception_message)
-
-
-    #  check that they return empty organisation_name, state, postcode
-        # test for connectionError
-        # HttpError
-        #ProxyError
-        #timeout error
-        #SSLError
-
-        #payload Exceptions
-        #check with internation abn
-
-    # test with spaces and different alternatives of the abn
-    #test for invalid abn
-
-
-
-
-        #
