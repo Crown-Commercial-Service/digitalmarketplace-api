@@ -94,7 +94,7 @@ After editing `models.py` to add/edit/remove models for the database, you'll nee
 The easiest way to do this is to run
 
 ```
-flask db migrate --rev-id <revision_id> -m '<description'>
+flask db migrate --rev-id <revision_id> -m '<description>'
 ```
 
 Our revision IDs increment by 10 each time. Check the output of `flask db show` to find the current
