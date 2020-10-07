@@ -19,14 +19,16 @@ class TestAbrService(unittest.TestCase):
             self.assertEqual(data, expected_parsed_data)
 
         @mock.patch('app.api.services.abr_service.fetch_data')
-        def test_foo(self, mock_requests_get):
+        def test_connecton_error_exception(self, mock_requests_get):
+            """ test the connectionError is raised"""
             mock_requests_get.side_effect = requests.exceptions.ConnectionError()
             with self.assertRaises(requests.exceptions.ConnectionError):
                 abr_service.get_data()
         
 
         @mock.patch('app.api.services.abr_service.fetch_data')
-        def test_foo2(self, mock_requests_get):
+        def test_http_error_exception(self, mock_requests_get):
+            """ test the httpError is raised"""
             mock_requests_get.side_effect = requests.exceptions.HTTPError()
             with self.assertRaises(requests.exceptions.HTTPError):
                 abr_service.get_data()
