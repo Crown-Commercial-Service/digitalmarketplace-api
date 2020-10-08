@@ -47,6 +47,16 @@ class TestAbrService(unittest.TestCase):
             with self.assertRaises(requests.exceptions.SSLError):
                 abr_service.get_data()
 
+        @mock.patch('app.api.services.abr_service.fetch_data')
+        def test_timeout(self):
+            """ test the proxy Error is raised"""
+            # mock_requests_get.side_effect = requests.exceptions.Timeout()
+            with self.assertRaises(Exception) as ex:
+                abr_service.get_data()
+            
+            # import pdb; pdb.set_trace()
+            # assert str(ex) == 'Failed exception raised'
+        
     #  check that they return empty organisation_name, state, postcode
         #timeout error
 
