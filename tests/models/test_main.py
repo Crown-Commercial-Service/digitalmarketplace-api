@@ -2325,8 +2325,8 @@ class TestLot(BaseApplicationTest):
             u'slug': u'user-research-studios',
             u'allowsBrief': False,
             u'oneServiceLimit': False,
-            u'unitSingular': u'lab',
-            u'unitPlural': u'labs',
+            u'unitSingular': u'research studio',
+            u'unitPlural': u'research studios',
         }
 
     def test_lot_serialize_keys_match_api_stub_keys(self):
