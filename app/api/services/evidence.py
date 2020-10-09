@@ -97,19 +97,19 @@ class EvidenceService(Service):
             db.session.query(
                 Domain.name.label('category')
             )
-            .filter(Evidence.id == evidence_id)
             .join(Evidence, Evidence.domain_id == Domain.id)
+            .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
         subquery = (
             db.session.query(
                 domain_criteria_id.c.dc_id,
-                DomainCriteria.name.label("domain_criteria_name"),
+                DomainCriteria.name.label('domain_criteria_name'),
                 Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data'),
             )
-            .filter(Evidence.id == evidence_id)
             .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
+            .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
@@ -162,8 +162,8 @@ class EvidenceService(Service):
             db.session.query(
                 Domain.name.label('domain_name')
             )
-            .filter(Evidence.id == evidence_id)
             .join(Evidence, Evidence.domain_id == Domain.id)
+            .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
@@ -188,7 +188,7 @@ class EvidenceService(Service):
             .join(domain_criteria_name, domain_criteria_name.c.evidence_id == Evidence.id)
         )
 
-        return[evidence._asdict() for evidence in query.all()]
+        return [evidence._asdict() for evidence in query.all()]
 
     def get_all_evidence(self, supplier_code=None):
         query = (
