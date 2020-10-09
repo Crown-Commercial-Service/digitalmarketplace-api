@@ -105,7 +105,7 @@ class EvidenceService(Service):
         subquery = (
             db.session.query(
                 domain_criteria_id.c.dc_id,
-                DomainCriteria.name.label("domain_criteria_name"),
+                DomainCriteria.name.label('domain_criteria_name'),
                 Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data'),
             )
             .filter(Evidence.id == evidence_id)
