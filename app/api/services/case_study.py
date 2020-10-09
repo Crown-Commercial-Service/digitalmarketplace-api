@@ -24,7 +24,7 @@ class CaseStudyService(Service):
             db.session.query(CaseStudy.id.label('cs_id'), CaseStudy.data, domain_name.c.name)
             .filter(CaseStudy.supplier_code == supplier_code,
                     CaseStudy.status == 'approved',
-                    CaseStudy.data['service'].astext == domain_name.c.name,
+                    CaseStudy.data['service'].astext == domain_name.c.name
                     )
         )
 
