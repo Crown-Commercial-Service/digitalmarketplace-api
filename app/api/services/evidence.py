@@ -108,8 +108,8 @@ class EvidenceService(Service):
                 DomainCriteria.name.label('domain_criteria_name'),
                 Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data'),
             )
-            .filter(Evidence.id == evidence_id)
             .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
+            .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
