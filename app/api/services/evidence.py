@@ -97,8 +97,8 @@ class EvidenceService(Service):
             db.session.query(
                 Domain.name.label('category')
             )
-            .filter(Evidence.id == evidence_id)
             .join(Evidence, Evidence.domain_id == Domain.id)
+            .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
