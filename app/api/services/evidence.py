@@ -188,7 +188,7 @@ class EvidenceService(Service):
             .join(domain_criteria_name, domain_criteria_name.c.evidence_id == Evidence.id)
         )
 
-        return[evidence._asdict() for evidence in query.all()]
+        return [evidence._asdict() for evidence in query.all()]
 
     def get_all_evidence(self, supplier_code=None):
         query = (
