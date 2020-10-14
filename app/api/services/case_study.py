@@ -21,11 +21,38 @@ class CaseStudyService(Service):
         )
 
         case_study = (
-            db.session.query(CaseStudy.id.label('cs_id'), CaseStudy.data, domain_name.c.name)
+            db.session.query(CaseStudy.id.label('cs_id'), CaseStudy.data)
             .filter(CaseStudy.supplier_code == supplier_code,
                     CaseStudy.status == 'approved',
                     CaseStudy.data['service'].astext == domain_name.c.name
                     )
         )
+
+        cs_values = case_study.all()
+
+        test = {}
+        for k,v in cs_values:
+            for k1, v1 in v.items():
+                if k1 == 'service':
+                    test['category_name'] = v1
+
+        # results = {}
+        # for x in case_study.all():
+        #     test.update(x._asdict())
+        
+        # results.update(test)
+        # print(test)
+        # results = list(results)
+        # results.append(test)
+        # results = tuple(results)
+        # print("append dic to tuple")
+
+        # return results
+
+        x = [value._asdict() for value in case_study.all()]
+        print(x)
+        test.update(x)
+        
+        # print(test)
 
         return [value._asdict() for value in case_study.all()]
