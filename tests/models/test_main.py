@@ -503,7 +503,6 @@ class TestFrameworks(BaseApplicationTest):
             'isESignatureSupported': False
         }
 
-    @pytest.mark.skip(reason="We need to update test-utils before this will pass")
     def test_framework_serialize_keys_match_api_stub_keys(self):
         # Ensures our dmtestutils.api_model_stubs are kept up to date
         framework = Framework(
