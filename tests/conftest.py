@@ -8,8 +8,7 @@ import mock
 import pytest
 from alembic.command import upgrade
 from alembic.config import Config
-from flask_migrate import Migrate, MigrateCommand
-from flask_script import Manager
+from flask_migrate import Migrate
 from sqlalchemy import inspect
 
 from app import create_app
@@ -26,7 +25,6 @@ def db_migration(request):
     app_env_var_mock.start()
     app = create_app('test')
     Migrate(app, db)
-    Manager(db, MigrateCommand)
     ALEMBIC_CONFIG = os.path.join(os.path.dirname(__file__), '../migrations/alembic.ini')
     config = Config(ALEMBIC_CONFIG)
     config.set_main_option("script_location", "migrations")
