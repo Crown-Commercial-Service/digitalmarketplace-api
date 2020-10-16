@@ -256,25 +256,25 @@ def create_user(
             state = ''
             postcode = ''
             # abn_package will return a false statement if there is a trailing whitespace in a valid abn.
-            validated_abn = abn_package.validate(abn.strip())
-            if validated_abn:
-                try:
+            # validated_abn = abn_package.validate(abn.strip())
+            # if validated_abn:
+            try:
                     # extracts business info using the abn
-                    business_info_values = abr_service.get_url(abn)
-                    business_info_values = json.loads(business_info_values)
+                business_info_values = abr_service.get_url(abn)
+                business_info_values = json.loads(business_info_values)
 
-                    organisation_name = business_info_values["organisation_name"]
-                    state = business_info_values["state"]
-                    postcode = business_info_values["postcode"]
+                organisation_name = business_info_values["organisation_name"]
+                state = business_info_values["state"]
+                postcode = business_info_values["postcode"]
 
                 # If ABR API is down, it will publish a slack message
-                except AbrError:
-                    publish_tasks.user.delay(
-                        user_data,
-                        'abr_failed',
-                        email_address=email_address,
-                        abn=abn
-                    )
+            except AbrError:
+                publish_tasks.user.delay(
+                    user_data,
+                    'abr_failed',
+                    email_address=email_address,
+                    abn=abn
+                )
 
             # adding the abn business info into the seller application
             try:
