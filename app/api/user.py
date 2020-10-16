@@ -251,7 +251,7 @@ def create_user(
         if supplier_code:
             user_data['role'] = 'supplier'
         else:
-            business_info_values = ''
+            # business_info_values = ''
             test = ''
             organisation_name = ''
             state = ''
@@ -261,15 +261,21 @@ def create_user(
             if validated_abn:
                 try:
                     # extracts business info using the abn email_address is not used for info)by_abn might remove it
-                    business_info_values = abr_service.get_business_info_by_abn(abn)
+                    # business_info_values = abr_service.get_business_info_by_abn(abn)
+                    
                     test = abr_service.get_url(abn)
-                    print('business info values')
-                    print(business_info_values)
-                    business_info_values = json.loads(business_info_values)
+                    print('test get_url function')
+                    print(test)
 
-                    organisation_name = business_info_values["organisation_name"]
-                    state = business_info_values["state"]
-                    postcode = business_info_values["postcode"]
+                    print('test load json')
+                    test = json.loads(test)
+                    print(test)
+
+                    # business_info_values = json.loads(business_info_values)
+
+                    organisation_name = test["organisation_name"]
+                    state = test["state"]
+                    postcode = test["postcode"]
 
                 # If ABR API is down, it will publish a slack message
                 except AbrError:

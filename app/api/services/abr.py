@@ -29,8 +29,7 @@ class AbrService(Service):
 
     def __init__(self, *args, **kwargs):
         super(AbrService, self).__init__(*args, **kwargs)
-        self.xmlText = None
-        self.url = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
+        # self.xmlText = None
     
     
 #     def get_business_info_by_abn(self, abn):
@@ -109,19 +108,28 @@ class AbrService(Service):
 # then third methid get_data, if there is data parse it https://medium.com/@kevinhowbrook/mocking-api-request-tests-for-wagtail-with-kanyerest-520a4374f81f
 
 
-
+    # might need to consider changing the name 
     def get_url(self, abn):
         api_key = current_app.config['ABR_API_KEY']
         include_historical_details = 'N'
 
         # resp = requests.get(BASE_UR + '')
-        url = self.url + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
-        return self.url
+        link = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
+        url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
+
+        a = self.fetch_data(url)
+        print("this is a " + a)
+        return a
     
-    def fetch_data(self):
+    def fetch_data(self, url):
         try:
-            response = requests.get(url = self.url)
-            self.xmlText = response.content
+            response = requests.get(url)
+
+            if response.ok:
+                xmlText = response.content
+                c = self.get_data(xmlText)
+                return c
+
             response.raise_for_status()
             
         # might need an else and put all the raise exceptions
@@ -133,7 +141,7 @@ class AbrService(Service):
             raise AbrError('HTTP Error')
 
         except ProxyError as ex:
-            raise AbrError('ProxyError')
+            raise AbrError('ProxyError + reshma')
 
         # this is considered as payload exception
         except Timeout as ex:
@@ -146,31 +154,29 @@ class AbrService(Service):
         except Exception as ex:
                 raise AbrError('Failed exception raised')
 
-        return self.xmlText
 
-    def get_data(self):
-        self.xmlText = self.fetch_data()
-        if self.xmlText:
-            root = ElementTree.fromstring(self.xmlText)
-            # do i need root? if I just reference xmlTree
-            search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', self.xmlText)
-            organisation_name = search_xml_organisation_name[0]
-            # this only works for &, < and > but not ' and ""
-            organisation_name = saxutils.unescape(organisation_name)
+    def get_data(self, xmlText):
+        root = ElementTree.fromstring(xmlText)
+        # do i need root? if I just reference xmlTree
+        search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
+        organisation_name = search_xml_organisation_name[0]
+        # this only works for &, < and > but not ' and ""
+        organisation_name = saxutils.unescape(organisation_name)
 
-            # takes the first postcode
-            search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', self.xmlText)
-            postcode = search_xml_postcode[0]
+        # takes the first postcode
+        search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', xmlText)
+        postcode = search_xml_postcode[0]
 
-            # takes the first state
-            search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', self.xmlText)
-            state = search_xml_state[0]
+        # takes the first state
+        search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', xmlText)
+        state = search_xml_state[0]
+        print("organisation name, postcode and state" + organisation_name + postcode + state)
 
-            return json.dumps({
-                'organisation_name': organisation_name,
-                'postcode': postcode,
-                'state': state
-            })
+        return json.dumps({
+            'organisation_name': organisation_name,
+            'postcode': postcode,
+            'state': state
+        })
 
-        else:
-            return []
+        # else:
+        #     return []
