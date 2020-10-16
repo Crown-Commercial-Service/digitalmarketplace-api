@@ -261,7 +261,7 @@ def create_user(
                 try:
                     # extracts business info using the abn
                     business_info_values = abr_service.get_url(abn)
-                    business_info_values = json.loads(test)
+                    business_info_values = json.loads(business_info_values)
 
                     organisation_name = business_info_values["organisation_name"]
                     state = business_info_values["state"]
