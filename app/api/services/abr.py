@@ -116,18 +116,21 @@ class AbrService(Service):
         # resp = requests.get(BASE_UR + '')
         link = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
         url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
-
+        print("inside get_url function")
         a = self.fetch_data(url)
-        print("this is a " + a)
         return a
     
     def fetch_data(self, url):
         try:
             response = requests.get(url)
+            print("inside try")
 
             if response.ok:
+                print("inside response.ok")
                 xmlText = response.content
                 c = self.get_data(xmlText)
+                print("C")
+                print(c)
                 return c
 
             response.raise_for_status()
@@ -141,7 +144,7 @@ class AbrService(Service):
             raise AbrError('HTTP Error')
 
         except ProxyError as ex:
-            raise AbrError('ProxyError + reshma')
+            raise AbrError('ProxyError')
 
         # this is considered as payload exception
         except Timeout as ex:
@@ -156,8 +159,7 @@ class AbrService(Service):
 
 
     def get_data(self, xmlText):
-        root = ElementTree.fromstring(xmlText)
-        # do i need root? if I just reference xmlTree
+        
         search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
         organisation_name = search_xml_organisation_name[0]
         # this only works for &, < and > but not ' and ""
