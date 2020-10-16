@@ -251,8 +251,7 @@ def create_user(
         if supplier_code:
             user_data['role'] = 'supplier'
         else:
-            # business_info_values = ''
-            test = ''
+            business_info_values = ''
             organisation_name = ''
             state = ''
             postcode = ''
