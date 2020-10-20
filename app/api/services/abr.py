@@ -39,7 +39,7 @@ class AbrService(Service):
         url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
         business_info_by_abn = self.fetch_data(url)
         return business_info_by_abn
-    
+
     def fetch_data(self, url):
         try:
             response = requests.get(url)
@@ -52,7 +52,7 @@ class AbrService(Service):
             response.raise_for_status()
 
         # Rasing different exceptions
-        #timeout is considered as payload exception
+        # timeout is considered as payload exception
         except ConnectionError as ex:
             raise AbrError('Connection Error')
 
@@ -67,7 +67,6 @@ class AbrService(Service):
 
         except Exception as ex:
                 raise AbrError('Failed exception raised')
-
 
     def get_data(self, xmlText):
         print("inside get data function")
@@ -91,7 +90,7 @@ class AbrService(Service):
                 'postcode': postcode,
                 'state': state
             })
-        
+
         # Payload exceptions: https://abr.business.gov.au/Documentation/Exceptions
         else:
             search_exception_code = re.findall(r'<exceptionCode>(.*?)</exceptionCode>', xmlText)
