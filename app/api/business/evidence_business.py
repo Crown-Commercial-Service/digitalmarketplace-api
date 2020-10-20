@@ -48,27 +48,6 @@ def delete_draft_evidence(evidence_id, actioned_by):
     return True
 
 
-def case_studies_by_supplier_code(supplier_code, domain_id):
-    case_studies = {}
-    case_studies['data'] = evidence_service.get_case_studies_by_supplier_code(supplier_code, domain_id)
-    # simplify case_studies data structure
-    get_case_study_data = case_studies.get('data')
-    retrieve_list = get_case_study_data[0]
-    case_studies = retrieve_list[0]
-    return case_studies
-
-
 def get_domain_and_evidence_data(evidence_id):
-    evidence = evidence_service.get_evidence_by_id(evidence_id)
-    data = {}
-    data = evidence.serialize()
-    data['domain_name'] = evidence.domain.name
-
-    domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
-    criteria_from_domain = {}
-
-    for criteria in domain_criteria:
-        criteria_from_domain[criteria.id] = {'name': criteria.name}
-
-    data['domain_criteria'] = criteria_from_domain
+    data = evidence_service.get_data(evidence_id)
     return data

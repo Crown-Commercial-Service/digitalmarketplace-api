@@ -270,10 +270,10 @@ def generate_seller_catalogue_csv(seller_catalogue):
                 if 'expiry' in r['labour_hire']['qld']:
                     licence_qld_expiry = r['labour_hire']['qld']['expiry']
 
-        answers.update({'Labour hire VIC licence': licence_vic_number})
-        answers.update({'Labour hire VIC expiry': licence_vic_expiry})
-        answers.update({'Labour hire QLD licence': licence_qld_number})
-        answers.update({'Labour hire QLD expiry': licence_qld_expiry})
+        answers.update({'VIC labour hire licence': licence_vic_number})
+        answers.update({'VIC licence expiry': licence_vic_expiry})
+        answers.update({'QLD labour hire licence': licence_qld_number})
+        answers.update({'QLD licence expiry': licence_qld_expiry})
 
         for k, v in answers.items():
             answers[k] = csv_cell_sanitize(v)

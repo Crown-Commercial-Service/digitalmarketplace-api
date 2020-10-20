@@ -1,9 +1,10 @@
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import joinedload, raiseload
+from sqlalchemy.types import Integer
 
 from app import db
 from app.api.helpers import Service
-from app.models import Brief, CaseStudy, Domain, Evidence, EvidenceAssessment, Supplier
+from app.models import Brief, Domain, DomainCriteria, Evidence, EvidenceAssessment, Supplier
 
 
 class EvidenceService(Service):
@@ -82,6 +83,112 @@ class EvidenceService(Service):
         )
         evidence = query.first()
         return evidence
+
+    def get_data(self, evidence_id):
+        domain_criteria_id = (
+            db.session.query(
+                func.json_array_elements_text(Evidence.data['criteria']).label('dc_id')
+            )
+            .filter(Evidence.id == evidence_id)
+            .subquery()
+        )
+
+        category_name = (
+            db.session.query(
+                Domain.name.label('category')
+            )
+            .join(Evidence, Evidence.domain_id == Domain.id)
+            .filter(Evidence.id == evidence_id)
+            .subquery()
+        )
+
+        subquery = (
+            db.session.query(
+                domain_criteria_id.c.dc_id,
+                DomainCriteria.name.label('domain_criteria_name'),
+                Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data'),
+            )
+            .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
+            .filter(Evidence.id == evidence_id)
+            .subquery()
+        )
+
+        result = (
+            db.session.query(
+                category_name,
+                Evidence.data['maxDailyRate'].label('maxDailyRate'),
+                subquery
+            )
+            .filter(Evidence.id == evidence_id)
+        )
+
+        return[evidence._asdict() for evidence in result.all()]
+
+    def get_evidence_data(self, evidence_id):
+        evidence_subquery = (
+            db.session.query(
+                Evidence.id.label('evidence_id'),
+                func.json_array_elements_text(Evidence.data['criteria']).label('domain_criteria_id')
+            )
+            .filter(Evidence.id == evidence_id)
+            .subquery()
+        )
+
+        subquery = (
+            db.session.query(
+                evidence_subquery.c.evidence_id,
+                evidence_subquery.c.domain_criteria_id,
+                DomainCriteria.name,
+            )
+            .join(DomainCriteria, DomainCriteria.id == evidence_subquery.c.domain_criteria_id.cast(Integer))
+            .subquery()
+        )
+
+        domain_criteria_name = (
+            db.session.query(
+                subquery.c.evidence_id,
+                func.json_object_agg(
+                    subquery.c.domain_criteria_id,
+                    func.json_build_object(
+                        'name', subquery.c.name
+                    )
+                ).label('domain_criteria')
+            )
+            .group_by(subquery.c.evidence_id)
+            .subquery()
+        )
+
+        category_name = (
+            db.session.query(
+                Domain.name.label('domain_name')
+            )
+            .join(Evidence, Evidence.domain_id == Domain.id)
+            .filter(Evidence.id == evidence_id)
+            .subquery()
+        )
+
+        evidence_assessment_status = (
+            db.session.query(
+                EvidenceAssessment.status.label('status')
+            )
+            .filter(evidence_id == EvidenceAssessment.evidence_id)
+            .subquery()
+        )
+
+        query = (
+            db.session.query(
+                Evidence.id,
+                Evidence.data['criteria'].label('criteria'),
+                Evidence.data['evidence'].label('evidence_data'),
+                Evidence.data['maxDailyRate'].label('maxDailyRate'),
+                evidence_assessment_status.c.status,
+                domain_criteria_name.c.domain_criteria,
+                category_name.c.domain_name
+            )
+            .join(domain_criteria_name, domain_criteria_name.c.evidence_id == Evidence.id)
+        )
+
+        return [evidence._asdict() for evidence in query.all()]
 
     def get_all_evidence(self, supplier_code=None):
         query = (
@@ -190,36 +297,6 @@ class EvidenceService(Service):
             .order_by(Evidence.submitted_at.asc())
         )
         return query.one_or_none()
-
-    def get_case_studies_by_supplier_code(self, supplier_code, domain_id):
-        # from domain_id get domain_name
-        # the domain_name would be used to check against the case_study_data['service']
-        subquery = (
-            db
-            .session
-            .query(Domain.name)
-            .filter(Domain.id == domain_id)
-            .subquery()
-        )
-
-        query = (
-            db
-            .session
-            .query(
-                func.json_agg(
-                    func.json_build_object(
-                        'id', CaseStudy.id,
-                        'data', CaseStudy.data
-                    )
-                    .label('case_study_data')
-                )
-                .filter(
-                    CaseStudy.supplier_code == supplier_code,
-                    subquery.c.name == CaseStudy.data['service'].astext.label('domain_name')
-                )
-            )
-        )
-        return query.all()
 
     def supplier_has_assessment_for_brief(self, supplier_code, brief_id):
         evidence = self.filter(
