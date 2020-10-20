@@ -148,7 +148,7 @@ class Config:
     DM_CLARIFICATION_QUESTION_EMAIL = 'no-reply@marketplace.digital.gov.au'
     DM_FRAMEWORK_AGREEMENTS_EMAIL = 'enquiries@example.com'
 
-    GENERIC_CONTACT_EMAIL = 'marketplace@digital.gov.au'
+    GENERIC_CONTACT_EMAIL = 'marketplace@dta.gov.au'
     DM_GENERIC_NOREPLY_EMAIL = 'no-reply@marketplace.digital.gov.au'
     DM_MAILCHIMP_NOREPLY_EMAIL = 'no-reply@digital.gov.au'
     DM_GENERIC_ADMIN_NAME = 'Digital Marketplace Admin'

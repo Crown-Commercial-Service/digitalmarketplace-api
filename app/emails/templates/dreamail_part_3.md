@@ -10,7 +10,7 @@ If you are no longer interested in selling in that category, please consider rem
 
 #### Questions or concerns
 
-For further information or queries, please email us at [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).
+For further information or queries, please email us at [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au).
 
 Thank you for your cooperation and your ongoing participation in the Marketplace.
   

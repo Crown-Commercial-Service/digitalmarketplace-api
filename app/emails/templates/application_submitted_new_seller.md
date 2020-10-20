@@ -8,7 +8,7 @@ Registered sellers will appear in our seller catalogue, visible to all buyers on
 
 If your application needs any corrections, we'll be in touch to clarify.
 
-For any queries please email us at [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).
+For any queries please email us at [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au).
 
 Looking forward to seeing you on the Marketplace soon!
 
