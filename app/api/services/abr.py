@@ -52,6 +52,7 @@ class AbrService(Service):
             response.raise_for_status()
 
         # Rasing different exceptions
+        #timeout is considered as payload exception
         except ConnectionError as ex:
             raise AbrError('Connection Error')
 
@@ -60,10 +61,6 @@ class AbrService(Service):
 
         except ProxyError as ex:
             raise AbrError('ProxyError')
-
-        # this is considered as payload exception
-        except Timeout as ex:
-            raise AbrError('Timeout')
 
         except SSLError as ex:
             raise AbrError('SSLError')
