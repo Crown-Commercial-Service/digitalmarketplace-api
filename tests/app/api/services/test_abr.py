@@ -49,27 +49,23 @@ class TestAbrService(unittest.TestCase):
 
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_http_exception_message(self, mock_requests_get):
-            # HTTP Error
-            mock_requests_get.side_effect = requests.exceptions.HTTPError()
+            """ test the httpError exception message"""
+            mock_requests_get.side_effect = requests.exceptions.HTTPError('HTTP Error')
             url = 'http://google.com'
-            with pytest.raises(requests.exceptions.HTTPError, match='HTTP Error'):
+            with pytest.raises(requests.exceptions.HTTPError) as excinfo:
                 abr_service.fetch_data(url)
-            # mock_requests_get.side_effect = requests.exceptions.HTTPError()
-            # url = 'http://google.com'
-            # with pytest.raises(requests.exceptions.HTTPError) as excinfo:
-            #     abr_service.fetch_data(url)
 
-            # assert "HTTP Error" in str(excinfo)
+            assert excinfo.value.message == 'HTTP Error'
 
 
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_proxy_exception_message(self, mock_requests_get):
-            mock_requests_get.side_effect = requests.exceptions.ProxyError('ProxyError + reshma')
+            mock_requests_get.side_effect = requests.exceptions.ProxyError('ProxyError')
             url = 'http://google.com'
             with pytest.raises(requests.exceptions.ProxyError) as excinfo:
                 abr_service.fetch_data(url)
 
-            assert excinfo.value.message == 'ProxyError + reshma'
+            assert excinfo.value.message == 'ProxyError'
 
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_exception_message(self, mock_requests_get):
@@ -79,76 +75,3 @@ class TestAbrService(unittest.TestCase):
                 abr_service.fetch_data(url)
 
             assert ex.value.message == 'Failed exception raised'
-
-            # mock_requests_get.side_effect = Exception()
-            # url = 'http://google.com'
-            # try:
-            #     abr_service.fetch_data(url)
-
-            # except requests.exceptions.ConnectionError:
-            #     pass
-
-            # except requests.exceptions.HTTPError:
-            #     pass
-
-            # except requests.exceptions.ProxyError:
-            #     pass
-
-            # # this is considered as payload exception
-            # except requests.exceptions.Timeout:
-            #     pass
-
-            # except requests.exceptions.SSLError:
-            #     pass
-
-            # except Exception as ex:
-            #     import pdb; pdb.set_trace()
-            #     self.fail('Failed exception raised')
-        
-        # @mock.patch('app.api.services.abr_service.fetch_data')
-        # def test_proxy_error_exception(self, proxy_host):
-        #     """ test the proxy Error is raised"""
-        #     # url = 'http://google.com'
-        #     session = requests.Session()
-        #     with pytest,raises(ProxyError):
-        #         session.get()
-            
-
-            # import pdb; pdb.set_trace()
-            # self.assertIn('ProxyError', context.exception)
-            # self.assertTrue('ProxyError()' in context.exception)
-        
-        # @mock.patch('app.api.services.abr_service.fetch_data')
-        # def test_exception(self, mock_requests_get):
-        #     """ test the proxy Error is raised"""
-        #     # mock = Mock()
-        #     mock_requests_get.side_effect = Exception('Boom')
-        #     url = 'http://google.com'
-        #     # with self.assertRaises(requests.exceptions.ProxyError):
-        #     abr_service.fetch_data(url)
-        
-        # @mock.patch('app.api.services.abr_service.fetch_data')
-        # def test_ssl_error_exception(self, mock_requests_get):
-        #     """ test the proxy Error is raised"""
-        #     mock_requests_get.side_effect = requests.exceptions.SSLError()
-        #     with self.assertRaises(requests.exceptions.SSLError):
-        #         abr_service.get_data()
-
-        # @mock.patch('app.api.services.abr_service.fetch_data')
-        # def test_timeout(self):
-        #     """ test the proxy Error is raised"""
-        #     # mock_requests_get.side_effect = requests.exceptions.Timeout()
-        #     with self.assertRaises(Exception) as ex:
-        #         abr_service.get_data()
-            
-            # import pdb; pdb.set_trace()
-            # assert str(ex) == 'Failed exception raised'
-        
-    #  check that they return empty organisation_name, state, postcode
-        #timeout error
-
-        #payload Exceptions
-        #check with internation abn
-
-    # test with spaces and different alternatives of the abn
-    #test for invalid abn
