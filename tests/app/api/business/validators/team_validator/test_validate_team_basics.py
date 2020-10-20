@@ -44,7 +44,7 @@ class TestTeamBasicsValidation(BaseApplicationTest):
     def test_team_fails_validation_when_email_domain_is_different_to_user_domain(self, users, user):
         team = Team(
             name='Marketplace',
-            email_address='marketplace@digital.gov.au'
+            email_address='marketplace@dta.gov.au'
         )
 
         errors = TeamValidator(team, user, ['teamtest.gov.au']).validate_basics()

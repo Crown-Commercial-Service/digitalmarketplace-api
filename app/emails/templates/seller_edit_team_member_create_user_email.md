@@ -6,7 +6,7 @@ To accept, you must activate your account and set a password using the link belo
   
 This link expires in 14 days.  
   
-Please do not reply to this email. If you need any help, email [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).  
+Please do not reply to this email. If you need any help, email [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au).  
   
 Regards,  
   

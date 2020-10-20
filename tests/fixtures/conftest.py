@@ -570,7 +570,7 @@ def teams(client, app):
             Team(
                 id=1,
                 name='Marketplace',
-                email_address='marketplace@digital.gov.au',
+                email_address='marketplace@dta.gov.au',
                 status='completed'
             )
         )

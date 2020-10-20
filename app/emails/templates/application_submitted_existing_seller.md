@@ -12,4 +12,4 @@ The Digital Marketplace team
 
 **Your feedback shapes the Marketplace**
 
-The Digital Marketplace is an agile development. This means it will evolve over time in response to user needs. If you have any questions, feedback or would like to help shape the service by being involved in user research, email [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).
+The Digital Marketplace is an agile development. This means it will evolve over time in response to user needs. If you have any questions, feedback or would like to help shape the service by being involved in user research, email [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au).

@@ -4,10 +4,10 @@ We are writing to let you know that your email was used to sign up to the [Digit
   
 If you didn’t try to sign up, please ignore this email. If you have forgotten your original password, you’ll need to [reset your password here]({{ reset_password_url }}).  
   
-If you need help with this, please email us at [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).  
+If you need help with this, please email us at [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au).  
   
 Thank you  
   
 The Digital Marketplace team  
 Digital Transformation Agency  
-[marketplace@digital.gov.au](mailto:marketplace@digital.gov.au) | [dta.gov.au](https://dta.gov.au)  
+[marketplace@dta.gov.au](mailto:marketplace@dta.gov.au) | [dta.gov.au](https://dta.gov.au)  
