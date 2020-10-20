@@ -72,7 +72,6 @@ class AbrService(Service):
     def get_data(self, xmlText):
         print("inside get data function")
         if re.findall(r'<organisationName>(.*?)</organisationName>', xmlText):
-            print("inside if statement")
             search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
             organisation_name = search_xml_organisation_name[0]
             # this only works for &, < and > but not ' and ""
