@@ -10,7 +10,7 @@ from mock import patch
 class TestAbrService(unittest.TestCase):
 
         def mocked_fetch_data(self):
-            data = '<ABRPayloadSearchResults xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://abr.business.gov.au/ABRXMLSearch/"> <response><stateCode>NSW</stateCode> <postcode>2750</postcode> <organisationName>yay</organisationName></response></ABRPayloadSearchResults>'
+            data = '<ABRPayloadSearchResults xmlns="http://abr.business.gov.au/ABRXMLSearch/"> <response><stateCode>NSW</stateCode> <postcode>2750</postcode> <organisationName>yay</organisationName></response></ABRPayloadSearchResults>'
             return data
 
         @mock.patch("app.api.services.abr_service.fetch_data")
@@ -43,7 +43,7 @@ class TestAbrService(unittest.TestCase):
             url = 'http://google.com'
             with self.assertRaises(requests.exceptions.HTTPError):
                 abr_service.fetch_data(url)
-        
+
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_proxy_error_exception_raised(self, mock_requests_get):
             """ test the httpError is raised"""
