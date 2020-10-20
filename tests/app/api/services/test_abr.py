@@ -6,15 +6,16 @@ import unittest
 import mock
 from mock import patch
 
+
 class TestAbrService(unittest.TestCase):
 
         def mocked_fetch_data(self):
-            data = '<ABRPayloadSearchResults xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://abr.business.gov.au/ABRXMLSearch/"> <response><stateCode>NSW</stateCode> <postcode>2750</postcode> <organisationName>yay</organisationName></response></ABRPayloadSearchResults>'
+            data = '<ABRPayloadSearchResults xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://abr.business.gov.au/ABRXMLSearch/"> <response><stateCode>NSW</stateCode> <postcode>2750</postcode> <organisationName>yay</organisationName></response></ABRPayloadSearchResults>'
             return data
-        
+
         @mock.patch("app.api.services.abr_service.fetch_data")
         def test_fetch(self, mocked_fetch_data):
-            expected_parsed_data =  '{"state": "NSW", "organisation_name": "yay", "postcode": "2750"}'
+            expected_parsed_data = '{"state": "NSW", "organisation_name": "yay", "postcode": "2750"}'
             data = abr_service.get_data(self.mocked_fetch_data())
             self.assertEqual(data, expected_parsed_data)
 
@@ -26,7 +27,7 @@ class TestAbrService(unittest.TestCase):
             url = 'http://google.com'
             with self.assertRaises(requests.exceptions.ConnectionError):
                 abr_service.fetch_data(url)
-        
+
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_ssl_error_exception_raised(self, mock_requests_get):
             """ test the connectionError is raised"""
@@ -34,7 +35,7 @@ class TestAbrService(unittest.TestCase):
             url = 'http://google.com'
             with self.assertRaises(requests.exceptions.SSLError):
                 abr_service.fetch_data(url)
-        
+
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_http_error_exception_raised(self, mock_requests_get):
             """ test the httpError is raised"""
@@ -42,7 +43,6 @@ class TestAbrService(unittest.TestCase):
             url = 'http://google.com'
             with self.assertRaises(requests.exceptions.HTTPError):
                 abr_service.fetch_data(url)
-
         
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_proxy_error_exception_raised(self, mock_requests_get):
@@ -51,7 +51,6 @@ class TestAbrService(unittest.TestCase):
             url = 'http://google.com'
             with self.assertRaises(requests.exceptions.ProxyError):
                 abr_service.fetch_data(url)
-
 
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_http_exception_message(self, mock_requests_get):
@@ -63,7 +62,6 @@ class TestAbrService(unittest.TestCase):
 
             assert excinfo.value.message == 'HTTP Error'
 
-
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_proxy_exception_message(self, mock_requests_get):
             mock_requests_get.side_effect = requests.exceptions.ProxyError('ProxyError')
@@ -72,7 +70,7 @@ class TestAbrService(unittest.TestCase):
                 abr_service.fetch_data(url)
 
             assert excinfo.value.message == 'ProxyError'
-        
+
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_proxy_exception_message(self, mock_requests_get):
             mock_requests_get.side_effect = requests.exceptions.SSLError('SSL Error')
