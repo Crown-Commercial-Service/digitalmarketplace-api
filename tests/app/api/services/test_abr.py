@@ -5,7 +5,6 @@ import requests
 import unittest
 import mock
 from mock import patch
-from app.api.business.errors import AbrError
 
 class TestAbrService(unittest.TestCase):
 
