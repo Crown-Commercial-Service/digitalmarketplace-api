@@ -73,6 +73,15 @@ class TestAbrService(unittest.TestCase):
                 abr_service.fetch_data(url)
 
             assert excinfo.value.message == 'ProxyError'
+        
+        @mock.patch('app.api.services.abr_service.fetch_data')
+        def test_proxy_exception_message(self, mock_requests_get):
+            mock_requests_get.side_effect = requests.exceptions.SSLError('SSL Error')
+            url = 'http://google.com'
+            with pytest.raises(requests.exceptions.SSLError) as excinfo:
+                abr_service.fetch_data(url)
+
+            assert excinfo.value.message == 'SSL Error'
 
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_exception_message(self, mock_requests_get):

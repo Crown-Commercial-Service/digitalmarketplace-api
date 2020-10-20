@@ -63,7 +63,7 @@ class AbrService(Service):
             raise AbrError('ProxyError')
 
         except SSLError as ex:
-            raise AbrError('SSLError')
+            raise AbrError('SSL Error')
 
         except Exception as ex:
                 raise AbrError('Failed exception raised')
