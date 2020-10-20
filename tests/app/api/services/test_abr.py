@@ -28,7 +28,14 @@ class TestAbrService(unittest.TestCase):
             with self.assertRaises(requests.exceptions.ConnectionError):
                 abr_service.fetch_data(url)
         
-
+        @mock.patch('app.api.services.abr_service.fetch_data')
+        def test_ssl_error_exception_raised(self, mock_requests_get):
+            """ test the connectionError is raised"""
+            mock_requests_get.side_effect = requests.exceptions.SSLError()
+            url = 'http://google.com'
+            with self.assertRaises(requests.exceptions.SSLError):
+                abr_service.fetch_data(url)
+        
         @mock.patch('app.api.services.abr_service.fetch_data')
         def test_http_error_exception_raised(self, mock_requests_get):
             """ test the httpError is raised"""
