@@ -145,21 +145,21 @@ class Config:
     # EMAIL CONFIG
     DM_SEND_EMAIL_TO_STDERR = False
 
-    DM_CLARIFICATION_QUESTION_EMAIL = 'no-reply@marketplace.dta.gov.au'
+    DM_CLARIFICATION_QUESTION_EMAIL = 'no-reply@marketplace.digital.gov.au'
     DM_FRAMEWORK_AGREEMENTS_EMAIL = 'enquiries@example.com'
 
     GENERIC_CONTACT_EMAIL = 'marketplace@dta.gov.au'
-    DM_GENERIC_NOREPLY_EMAIL = 'no-reply@marketplace.dta.gov.au'
-    DM_MAILCHIMP_NOREPLY_EMAIL = 'no-reply@dta.gov.au'
+    DM_GENERIC_NOREPLY_EMAIL = 'no-reply@marketplace.digital.gov.au'
+    DM_MAILCHIMP_NOREPLY_EMAIL = 'no-reply@digital.gov.au'
     DM_GENERIC_ADMIN_NAME = 'Digital Marketplace Admin'
     DM_GENERIC_SUPPORT_NAME = 'Digital Marketplace'
 
     RESET_PASSWORD_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
-    RESET_PASSWORD_EMAIL_FROM = 'no-reply@marketplace.dta.gov.au'
+    RESET_PASSWORD_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
     RESET_PASSWORD_EMAIL_SUBJECT = 'Reset your Digital Marketplace password'
 
     INVITE_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
-    INVITE_EMAIL_FROM = 'no-reply@marketplace.dta.gov.au'
+    INVITE_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
     INVITE_EMAIL_SUBJECT = 'Activate your new Marketplace account'
     BUYER_INVITE_MANAGER_CONFIRMATION_SUBJECT = 'Digital Marketplace buyer account request [SEC=UNCLASSIFIED]'
     BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'marketplace@dta.gov.au'
@@ -167,7 +167,7 @@ class Config:
     NEW_SUPPLIER_INVITE_SUBJECT = 'Digital Marketplace - invitation to create seller account'
 
     CLARIFICATION_EMAIL_NAME = DM_GENERIC_ADMIN_NAME
-    CLARIFICATION_EMAIL_FROM = 'no-reply@marketplace.dta.gov.au'
+    CLARIFICATION_EMAIL_FROM = 'no-reply@marketplace.digital.gov.au'
     CLARIFICATION_EMAIL_SUBJECT = 'Thanks for your clarification question'
     DM_FOLLOW_UP_EMAIL_TO = 'digitalmarketplace@mailinator.com'
 
