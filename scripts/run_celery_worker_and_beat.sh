@@ -12,11 +12,11 @@ aws --endpoint-url=http://localhost:4576 sqs create-queue --queue-name dta-marke
 aws --endpoint-url=http://localhost:4576 sqs create-queue --queue-name dta-marketplace-local-slack
 aws --endpoint-url=http://localhost:4575 sns create-topic --name dta-marketplace-local
 aws --endpoint-url=http://localhost:4575 sns subscribe --topic-arn arn:aws:sns:ap-southeast-2:123456789012:dta-marketplace-local --protocol sqs --notification-endpoint http://localhost:4576/queue/dta-marketplace-local-slack
-aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address marketplace@digital.gov.au
-aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address no-reply@marketplace.digital.gov.au
-aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address "Digital Marketplace <no-reply@marketplace.digital.gov.au>"
-aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address "Digital Marketplace Admin <no-reply@marketplace.digital.gov.au>"
-aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address "Digital Marketplace Supplier <no-reply@marketplace.digital.gov.au>"
+aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address marketplace@dta.gov.au
+aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address no-reply@marketplace.dta.gov.au
+aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address "Digital Marketplace <no-reply@marketplace.dta.gov.au>"
+aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address "Digital Marketplace Admin <no-reply@marketplace.dta.gov.au>"
+aws --endpoint-url=http://localhost:4579 ses verify-email-identity --email-address "Digital Marketplace Supplier <no-reply@marketplace.dta.gov.au>"
 
 
 [[ "$CELERY_BEAT_SCHEDULE_FILE" ]] \
