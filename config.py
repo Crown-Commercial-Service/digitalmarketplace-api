@@ -149,8 +149,8 @@ class Config:
     DM_FRAMEWORK_AGREEMENTS_EMAIL = 'enquiries@example.com'
 
     GENERIC_CONTACT_EMAIL = 'marketplace@dta.gov.au'
-    DM_GENERIC_NOREPLY_EMAIL = 'no-reply@marketplace.dta.gov.au'
-    DM_MAILCHIMP_NOREPLY_EMAIL = 'no-reply@dta.gov.au'
+    DM_GENERIC_NOREPLY_EMAIL = 'no-reply@marketplace.digital.gov.au'
+    DM_MAILCHIMP_NOREPLY_EMAIL = 'no-reply@digital.gov.au'
     DM_GENERIC_ADMIN_NAME = 'Digital Marketplace Admin'
     DM_GENERIC_SUPPORT_NAME = 'Digital Marketplace'
 
@@ -162,7 +162,7 @@ class Config:
     INVITE_EMAIL_FROM = 'no-reply@marketplace.dta.gov.au'
     INVITE_EMAIL_SUBJECT = 'Activate your new Marketplace account'
     BUYER_INVITE_MANAGER_CONFIRMATION_SUBJECT = 'Digital Marketplace buyer account request [SEC=UNCLASSIFIED]'
-    BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'marketplace+buyer-request@dta.gov.au'
+    BUYER_INVITE_REQUEST_ADMIN_EMAIL = 'marketplace@dta.gov.au'
 
     NEW_SUPPLIER_INVITE_SUBJECT = 'Digital Marketplace - invitation to create seller account'
 
