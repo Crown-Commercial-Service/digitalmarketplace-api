@@ -16,7 +16,7 @@ class TestTeamService(BaseApplicationTest):
                 Team(
                     id=1,
                     name='Marketplace',
-                    email_address='marketplace@digital.gov.au',
+                    email_address='marketplace@dta.gov.au',
                     status='completed'
                 )
             )
@@ -82,7 +82,7 @@ class TestTeamService(BaseApplicationTest):
     def test_get_team_returns_basic_details(self, team):
         team = team_service.get_team(1)
 
-        assert team['emailAddress'] == 'marketplace@digital.gov.au'
+        assert team['emailAddress'] == 'marketplace@dta.gov.au'
         assert team['id'] == 1
         assert team['name'] == 'Marketplace'
         assert team['status'] == 'completed'

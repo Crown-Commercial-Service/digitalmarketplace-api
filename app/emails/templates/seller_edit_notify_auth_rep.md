@@ -7,7 +7,7 @@ You must [review the Master Agreement]({{ frontend_url }}/2/seller-edit/{{ suppl
 If you don’t have a Digital Marketplace account, you must sign up before you can accept the agreement. We sent you another email with instructions on how to join the
 {{ supplier_name }} team.  
   
-If you have any issues, please contact our support team on [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).  
+If you have any issues, please contact our support team on [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au).  
   
 Regards,  
   
