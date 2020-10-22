@@ -31,7 +31,7 @@ class CaseStudyService(Service):
         cs_values = case_study.all()
 
         test = {}
-        for k,v in cs_values:
+        for k, v in cs_values:
             for k1, v1 in v.items():
                 if k1 == 'service':
                     test['category_name'] = v1
@@ -39,7 +39,7 @@ class CaseStudyService(Service):
         # results = {}
         # for x in case_study.all():
         #     test.update(x._asdict())
-        
+
         # results.update(test)
         # print(test)
         # results = list(results)
@@ -52,7 +52,7 @@ class CaseStudyService(Service):
         x = [value._asdict() for value in case_study.all()]
         print(x)
         test.update(x)
-        
+
         # print(test)
 
         return [value._asdict() for value in case_study.all()]
