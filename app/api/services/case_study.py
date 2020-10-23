@@ -29,21 +29,16 @@ class CaseStudyService(Service):
         )
 
         cs_values = case_study.all()
-
- 
         t = {}
         for value in case_study.all():
             t = value
-        
 
         # print('t')
         # print(t)
-        
         # test = {}
         # for k, v in cs_values:
         #     for k1, v1 in v.items():
         #         if k1 == 'service':
         #             test['category_name'] = v1
-
 
         return [value._asdict() for value in case_study.all()]
