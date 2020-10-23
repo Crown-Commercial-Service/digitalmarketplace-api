@@ -30,29 +30,20 @@ class CaseStudyService(Service):
 
         cs_values = case_study.all()
 
-        test = {}
-        for k, v in cs_values:
-            for k1, v1 in v.items():
-                if k1 == 'service':
-                    test['category_name'] = v1
+ 
+        t = {}
+        for value in case_study.all():
+            t = value
+        
 
-        # results = {}
-        # for x in case_study.all():
-        #     test.update(x._asdict())
+        # print('t')
+        # print(t)
+        
+        # test = {}
+        # for k, v in cs_values:
+        #     for k1, v1 in v.items():
+        #         if k1 == 'service':
+        #             test['category_name'] = v1
 
-        # results.update(test)
-        # print(test)
-        # results = list(results)
-        # results.append(test)
-        # results = tuple(results)
-        # print("append dic to tuple")
-
-        # return results
-
-        x = [value._asdict() for value in case_study.all()]
-        print(x)
-        test.update(x)
-
-        # print(test)
 
         return [value._asdict() for value in case_study.all()]
