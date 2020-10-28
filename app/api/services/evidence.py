@@ -122,7 +122,24 @@ class EvidenceService(Service):
             .filter(Evidence.id == evidence_id)
         )
 
-        return[evidence._asdict() for evidence in result.all()]
+        evidence_data = [evidence._asdict() for evidence in result.all()]
+
+        # evidence_data.get()
+
+
+        evidence = {}
+        evidence['evidence'] = evidence_data
+
+        # for k, v in result.all():
+        #     for k1, v1 in v.items():
+        #         if k1 == 'category':
+        #             x = v1
+        
+        # cs['category_name'] = x
+
+        return evidence
+
+        # return[evidence._asdict() for evidence in result.all()]
 
     def get_evidence_data(self, evidence_id):
         evidence_subquery = (
