@@ -93,6 +93,7 @@ class EvidenceService(Service):
             .subquery()
         )
 
+
         category_name = (
             db.session.query(
                 Domain.name.label('category')
@@ -122,22 +123,32 @@ class EvidenceService(Service):
             .filter(Evidence.id == evidence_id)
         )
 
-        evidence_data = [evidence._asdict() for evidence in result.all()]
+        
+        # x = {}
+        # for d in result.all():
+        #     x = d._asdict()
 
-        # evidence_data.get()
+        # #  store a local copy of category name
+        # category_name = x.get("category")
+
+        # # # remove all instances of category from evidence_data
+        # x.pop('category')
+
+        # test = {}
+        # test['evidence'] = [x]
+
+        # test['category_name'] = category_name
+        # print('test')
+        # print(test)
+
+# works but needs fixing up
+        evidence_data = [evidence._asdict() for evidence in result.all()]
 
 
         evidence = {}
         evidence['evidence'] = evidence_data
 
-        # for k, v in result.all():
-        #     for k1, v1 in v.items():
-        #         if k1 == 'category':
-        #             x = v1
-        
-        # cs['category_name'] = x
-
-        return evidence
+        return c
 
         # return[evidence._asdict() for evidence in result.all()]
 
