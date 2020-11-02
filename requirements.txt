@@ -62,7 +62,7 @@ s3transfer==0.3.3         # via boto3
 six==1.14.0               # via bcrypt, cryptography, jsonschema, pyrsistent, python-dateutil, sqlalchemy-json, sqlalchemy-utils
 sqlalchemy-json==0.4.0    # via -r requirements.in
 sqlalchemy-utils==0.36.8  # via -r requirements.in
-sqlalchemy==1.3.19        # via -r requirements.in, alembic, flask-sqlalchemy, sqlalchemy-json, sqlalchemy-utils
+sqlalchemy==1.3.20        # via -r requirements.in, alembic, flask-sqlalchemy, sqlalchemy-json, sqlalchemy-utils
 strict-rfc3339==0.7       # via -r requirements.in
 unicodecsv==0.14.1        # via digitalmarketplace-utils
 urllib3==1.25.10          # via botocore, requests
