@@ -103,6 +103,15 @@ class EvidenceService(Service):
             .subquery()
         )
 
+        category_name2 = (
+            db.session.query(
+                Domain.name.label('category')
+            )
+            .join(Evidence, Evidence.domain_id == Domain.id)
+            .filter(Evidence.id == evidence_id)
+        )
+
+
         subquery = (
             db.session.query(
                 domain_criteria_id.c.dc_id,
@@ -116,6 +125,8 @@ class EvidenceService(Service):
 
         result = (
             db.session.query(
+                # comment out category_name and maxDailtRate
+                # using category_name 2 query to find out MaxdailyRate and add it
                 category_name,
                 Evidence.data['maxDailyRate'].label('maxDailyRate'),
                 subquery
@@ -123,8 +134,28 @@ class EvidenceService(Service):
             .filter(Evidence.id == evidence_id)
         )
 
-        
-        # x = {}
+
+# works but needs fixing up
+        evidence_data = [evidence._asdict() for evidence in result.all()]
+        evidence = {}
+        evidence['evidence'] = evidence_data
+
+        print('category_name')
+        print(category_name2.all())
+
+        # return c
+        # for k in result.all():
+        #     for x in k:
+        # #     for x in k.items():
+        # #     # for k1, v1 in v.items():
+        #         print(x)
+        #         print('x')
+        #         # print('v1')
+        #         # print(v1)
+
+        return[evidence._asdict() for evidence in result.all()]
+
+               # x = {}
         # for d in result.all():
         #     x = d._asdict()
 
@@ -140,17 +171,6 @@ class EvidenceService(Service):
         # test['category_name'] = category_name
         # print('test')
         # print(test)
-
-# works but needs fixing up
-        evidence_data = [evidence._asdict() for evidence in result.all()]
-
-
-        evidence = {}
-        evidence['evidence'] = evidence_data
-
-        return c
-
-        # return[evidence._asdict() for evidence in result.all()]
 
     def get_evidence_data(self, evidence_id):
         evidence_subquery = (
