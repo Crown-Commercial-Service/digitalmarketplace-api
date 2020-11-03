@@ -105,7 +105,8 @@ class EvidenceService(Service):
 
         category_name2 = (
             db.session.query(
-                Domain.name.label('category')
+                Domain.name.label('category'),
+                Evidence.data['maxDailyRate'].label('maxDailyRate')
             )
             .join(Evidence, Evidence.domain_id == Domain.id)
             .filter(Evidence.id == evidence_id)
@@ -127,8 +128,8 @@ class EvidenceService(Service):
             db.session.query(
                 # comment out category_name and maxDailtRate
                 # using category_name 2 query to find out MaxdailyRate and add it
-                category_name,
-                Evidence.data['maxDailyRate'].label('maxDailyRate'),
+                # category_name,
+                # Evidence.data['maxDailyRate'].label('maxDailyRate'),
                 subquery
             )
             .filter(Evidence.id == evidence_id)
@@ -140,20 +141,14 @@ class EvidenceService(Service):
         evidence = {}
         evidence['evidence'] = evidence_data
 
-        print('category_name')
-        print(category_name2.all())
+        d = {}
+        for c in category_name2.all():
+            d = c._asdict()
 
-        # return c
-        # for k in result.all():
-        #     for x in k:
-        # #     for x in k.items():
-        # #     # for k1, v1 in v.items():
-        #         print(x)
-        #         print('x')
-        #         # print('v1')
-        #         # print(v1)
+        evidence['category'] = d.get("category")
+        evidence['maxRate'] = d.get("maxDailyRate")
 
-        return[evidence._asdict() for evidence in result.all()]
+        return evidence
 
                # x = {}
         # for d in result.all():
