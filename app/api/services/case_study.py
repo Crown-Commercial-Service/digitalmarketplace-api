@@ -36,7 +36,7 @@ class CaseStudyService(Service):
             for k1, v1 in v.items():
                 if k1 == 'service':
                     x = v1
-        
+
         cs['category_name'] = x
 
         return cs
