@@ -11,7 +11,7 @@ class TestAbrService(unittest.TestCase):
 
         def mocked_fetch_data(self):
             data = '<ABR><response><stateCode>NSW</stateCode><postcode>2750</postcode>'\
-                    '<organisationName>yay</organisationName></response></ABR>'
+                   '<organisationName>yay</organisationName></response></ABR>'
             return data
 
         @mock.patch("app.api.services.abr_service.fetch_data")
