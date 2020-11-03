@@ -93,17 +93,7 @@ class EvidenceService(Service):
             .subquery()
         )
 
-
-        category_name = (
-            db.session.query(
-                Domain.name.label('category')
-            )
-            .join(Evidence, Evidence.domain_id == Domain.id)
-            .filter(Evidence.id == evidence_id)
-            .subquery()
-        )
-
-        category_name2 = (
+        category_name_max_daily_rate = (
             db.session.query(
                 Domain.name.label('category'),
                 Evidence.data['maxDailyRate'].label('maxDailyRate')
@@ -112,8 +102,7 @@ class EvidenceService(Service):
             .filter(Evidence.id == evidence_id)
         )
 
-
-        subquery = (
+        result = (
             db.session.query(
                 domain_criteria_id.c.dc_id,
                 DomainCriteria.name.label('domain_criteria_name'),
@@ -121,51 +110,20 @@ class EvidenceService(Service):
             )
             .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
             .filter(Evidence.id == evidence_id)
-            .subquery()
         )
 
-        result = (
-            db.session.query(
-                # comment out category_name and maxDailtRate
-                # using category_name 2 query to find out MaxdailyRate and add it
-                # category_name,
-                # Evidence.data['maxDailyRate'].label('maxDailyRate'),
-                subquery
-            )
-            .filter(Evidence.id == evidence_id)
-        )
-
-
-# works but needs fixing up
         evidence_data = [evidence._asdict() for evidence in result.all()]
         evidence = {}
         evidence['evidence'] = evidence_data
 
-        d = {}
-        for c in category_name2.all():
-            d = c._asdict()
+        category_max_rate = {}
+        for c in category_name_max_daily_rate.all():
+            category_max_rate = c._asdict()
 
-        evidence['category'] = d.get("category")
-        evidence['maxDailyRate'] = d.get("maxDailyRate")
+        evidence['category'] = category_max_rate.get("category")
+        evidence['maxDailyRate'] = category_max_rate.get("maxDailyRate")
 
         return evidence
-
-               # x = {}
-        # for d in result.all():
-        #     x = d._asdict()
-
-        # #  store a local copy of category name
-        # category_name = x.get("category")
-
-        # # # remove all instances of category from evidence_data
-        # x.pop('category')
-
-        # test = {}
-        # test['evidence'] = [x]
-
-        # test['category_name'] = category_name
-        # print('test')
-        # print(test)
 
     def get_evidence_data(self, evidence_id):
         evidence_subquery = (
