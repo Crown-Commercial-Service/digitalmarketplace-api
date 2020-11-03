@@ -55,7 +55,7 @@ After this date, if you have not been assessed as offering VFM — you will no l
   
   
 ## Questions or concerns
-If you need further information or have any queries, please email us at [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au)
+If you need further information or have any queries, please email us at [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au)
   
 Thank you for your cooperation and your ongoing participation in the Marketplace. We look
 forward to reviewing your updated profile information soon.

@@ -6,13 +6,13 @@
 
   To authorise use of the Digital Marketplace you must be an employee under the Commonwealth Public Service Act (1999) or equivalent state or territory legislation. 
 
-  **If you are, and you wish to authorise {{ applicant_name }} to use the Digital Marketplace, please forward this email to [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au) with the comment 'approved'.**
+  **If you are, and you wish to authorise {{ applicant_name }} to use the Digital Marketplace, please forward this email to [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au) with the comment 'approved'.**
 
-  To find out more about the Digital Marketplace, or to create your own buyer account, visit [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).
+  To find out more about the Digital Marketplace, or to create your own buyer account, visit [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au).
 
   
   
   The Digital Marketplace team
 
   Your feedback shapes the Marketplace
-	The Digital Marketplace is an agile development. This means it evolves over time in response to user needs. If you have any questions, feedback or would like to take part in user research, please email [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).
+	The Digital Marketplace is an agile development. This means it evolves over time in response to user needs. If you have any questions, feedback or would like to take part in user research, please email [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au).

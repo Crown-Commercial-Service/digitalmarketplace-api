@@ -18,7 +18,7 @@ If you need help with what to write, we have provided two notification templates
 - Template 1: [response to sellers still waiting during the shortlisting stage]({{ frontend_url }}/api/2/brief/{{ brief_id }}/notification/template_1_response_to_sellers_still_waiting_during_the_shortlisting_stage)  
 - Template 2: [response to unsuccessful sellers]({{ frontend_url }}/api/2/brief/{{ brief_id }}/notification/template_2_response_to_unsuccessful_sellers)  
   
-If you need further help, please email us at [marketplace@digital.gov.au](mailto:marketplace@digital.gov.au).  
+If you need further help, please email us at [marketplace@dta.gov.au](mailto:marketplace@dta.gov.au).  
   
 Thank you,  
   
