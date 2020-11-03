@@ -146,7 +146,7 @@ class EvidenceService(Service):
             d = c._asdict()
 
         evidence['category'] = d.get("category")
-        evidence['maxRate'] = d.get("maxDailyRate")
+        evidence['maxDailyRate'] = d.get("maxDailyRate")
 
         return evidence
 
