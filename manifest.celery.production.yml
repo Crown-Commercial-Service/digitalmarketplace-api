@@ -3,7 +3,7 @@ buildpack: python2_buildpack
 health-check-type: process
 instances: 1
 memory: 2G
-disk_quota: 1G
+disk_quota: 2G
 services:
 - pgdb-96-prod
 - ups-dm-common
