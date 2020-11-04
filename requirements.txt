@@ -7,7 +7,6 @@
 --no-binary psycopg2
 
 alembic==1.4.0            # via flask-migrate
-asn1crypto==1.3.0         # via cryptography
 attrs==19.3.0             # via jsonschema
 bcrypt==3.1.7             # via flask-bcrypt
 blinker==1.4              # via gds-metrics
@@ -18,10 +17,10 @@ cffi==1.14.0              # via bcrypt, cryptography
 chardet==3.0.4            # via requests
 click==7.0                # via flask
 contextlib2==0.6.0.post1  # via digitalmarketplace-utils
-cryptography==2.3.1       # via digitalmarketplace-utils
+cryptography==3.2.1       # via digitalmarketplace-utils
 defusedxml==0.6.0         # via odfpy
 git+https://github.com/alphagov/digitalmarketplace-apiclient.git@21.5.0#egg=digitalmarketplace-apiclient==21.5.0  # via -r requirements.in
-git+https://github.com/alphagov/digitalmarketplace-utils.git@54.0.0#egg=digitalmarketplace-utils==54.0.0  # via -r requirements.in
+git+https://github.com/alphagov/digitalmarketplace-utils.git@54.1.1#egg=digitalmarketplace-utils==54.1.1  # via -r requirements.in
 docopt==0.6.2             # via notifications-python-client
 docutils==0.15.2          # via botocore
 flask-bcrypt==0.7.1       # via -r requirements.in
@@ -35,7 +34,7 @@ fleep==1.0.1              # via digitalmarketplace-utils
 future==0.18.2            # via notifications-python-client
 gds-metrics==0.2.0        # via digitalmarketplace-utils
 govuk-country-register==0.5.0  # via digitalmarketplace-utils
-idna==2.9                 # via cryptography, requests
+idna==2.9                 # via requests
 importlib-metadata==1.6.0  # via jsonschema
 itsdangerous==1.1.0       # via -r requirements.in, flask, flask-wtf
 jinja2==2.11.1            # via flask
