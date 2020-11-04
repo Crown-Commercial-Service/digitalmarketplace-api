@@ -85,14 +85,6 @@ class EvidenceService(Service):
         return evidence
 
     def get_data(self, evidence_id):
-        domain_criteria_id = (
-            db.session.query(
-                func.json_array_elements_text(Evidence.data['criteria']).label('dc_id')
-            )
-            .filter(Evidence.id == evidence_id)
-            .subquery()
-        )
-
         category_name_max_daily_rate = (
             db.session.query(
                 Domain.name.label('category'),
@@ -100,6 +92,14 @@ class EvidenceService(Service):
             )
             .join(Evidence, Evidence.domain_id == Domain.id)
             .filter(Evidence.id == evidence_id)
+        )
+
+        domain_criteria_id = (
+            db.session.query(
+                func.json_array_elements_text(Evidence.data['criteria']).label('dc_id')
+            )
+            .filter(Evidence.id == evidence_id)
+            .subquery()
         )
 
         result = (
