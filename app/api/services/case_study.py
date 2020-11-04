@@ -29,14 +29,14 @@ class CaseStudyService(Service):
         )
 
         cs_data = [value._asdict() for value in case_study.all()]
-        cs = {}
-        cs['cs_data'] = cs_data
+        case_studies = {}
+        case_studies['cs_data'] = cs_data
 
         for k, v in case_study.all():
             for k1, v1 in v.items():
                 if k1 == 'service':
-                    x = v1
+                    category_name = v1
 
-        cs['category_name'] = x
+        case_studies['category_name'] = category_name
 
-        return cs
+        return case_studies
