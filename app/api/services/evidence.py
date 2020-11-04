@@ -117,8 +117,8 @@ class EvidenceService(Service):
         evidence['evidence'] = evidence_data
 
         category_max_rate = {}
-        for c in category_name_max_daily_rate.all():
-            category_max_rate = c._asdict()
+        for c_values in category_name_max_daily_rate.all():
+            category_max_rate = c_values._asdict()
 
         evidence['category'] = category_max_rate.get("category")
         evidence['maxDailyRate'] = category_max_rate.get("maxDailyRate")
