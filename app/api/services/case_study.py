@@ -21,11 +21,22 @@ class CaseStudyService(Service):
         )
 
         case_study = (
-            db.session.query(CaseStudy.id.label('cs_id'), CaseStudy.data, domain_name.c.name)
+            db.session.query(CaseStudy.id.label('cs_id'), CaseStudy.data)
             .filter(CaseStudy.supplier_code == supplier_code,
                     CaseStudy.status == 'approved',
                     CaseStudy.data['service'].astext == domain_name.c.name
                     )
         )
 
-        return [value._asdict() for value in case_study.all()]
+        cs_data = [value._asdict() for value in case_study.all()]
+        case_studies = {}
+        case_studies['cs_data'] = cs_data
+
+        for k, v in case_study.all():
+            for k1, v1 in v.items():
+                if k1 == 'service':
+                    category_name = v1
+
+        case_studies['category_name'] = category_name
+
+        return case_studies

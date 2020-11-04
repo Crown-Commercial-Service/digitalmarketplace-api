@@ -85,6 +85,15 @@ class EvidenceService(Service):
         return evidence
 
     def get_data(self, evidence_id):
+        category_name_max_daily_rate = (
+            db.session.query(
+                Domain.name.label('category'),
+                Evidence.data['maxDailyRate'].label('maxDailyRate')
+            )
+            .join(Evidence, Evidence.domain_id == Domain.id)
+            .filter(Evidence.id == evidence_id)
+        )
+
         domain_criteria_id = (
             db.session.query(
                 func.json_array_elements_text(Evidence.data['criteria']).label('dc_id')
@@ -93,16 +102,7 @@ class EvidenceService(Service):
             .subquery()
         )
 
-        category_name = (
-            db.session.query(
-                Domain.name.label('category')
-            )
-            .join(Evidence, Evidence.domain_id == Domain.id)
-            .filter(Evidence.id == evidence_id)
-            .subquery()
-        )
-
-        subquery = (
+        result = (
             db.session.query(
                 domain_criteria_id.c.dc_id,
                 DomainCriteria.name.label('domain_criteria_name'),
@@ -110,19 +110,19 @@ class EvidenceService(Service):
             )
             .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
             .filter(Evidence.id == evidence_id)
-            .subquery()
         )
+        evidence = {}
+        evidence_data = [evidence._asdict() for evidence in result.all()]
+        evidence['evidence'] = evidence_data
 
-        result = (
-            db.session.query(
-                category_name,
-                Evidence.data['maxDailyRate'].label('maxDailyRate'),
-                subquery
-            )
-            .filter(Evidence.id == evidence_id)
-        )
+        category_max_rate = {}
+        for c_values in category_name_max_daily_rate.all():
+            category_max_rate = c_values._asdict()
 
-        return[evidence._asdict() for evidence in result.all()]
+        evidence['category'] = category_max_rate.get("category")
+        evidence['maxDailyRate'] = category_max_rate.get("maxDailyRate")
+
+        return evidence
 
     def get_evidence_data(self, evidence_id):
         evidence_subquery = (
