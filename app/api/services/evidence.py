@@ -111,12 +111,9 @@ class EvidenceService(Service):
             .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
             .filter(Evidence.id == evidence_id)
         )
-
         evidence = {}
-        for values in result.all():
-            evidence_data = values._asdict()
-
-        evidence['evidence'] = [evidence_data]
+        evidence_data = [evidence_values._asdict() for evidence_values in result.all()]
+        evidence['evidence'] = evidence_data
 
         category_max_rate = {}
         for c_values in category_name_max_daily_rate.all():
