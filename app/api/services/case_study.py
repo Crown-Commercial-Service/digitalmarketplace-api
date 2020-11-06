@@ -32,6 +32,8 @@ class CaseStudyService(Service):
         case_studies = {}
         case_studies['cs_data'] = cs_data
 
+        # incase there is no category name provide an empty string
+        category_name = ""
         for k, v in case_study.all():
             for k1, v1 in v.items():
                 if k1 == 'service':
