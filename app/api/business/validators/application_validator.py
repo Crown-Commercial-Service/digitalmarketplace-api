@@ -102,12 +102,24 @@ class ApplicationValidator(object):
             'business-info'
         )
         seller_type = self.application.data.get('seller_type', None)
+        # if (
+        #     seller_type and 'sme' in seller_type and seller_type['sme'] and
+        #     self.application.data.get('number_of_employees', None) == '200+'
+        # ):
+        #     errors.append({
+        #         'field': 'sme',
+        #         'message': 'Your company has more than 200 employees and does not qualify as an SME',
+        #         'severity': 'error',
+        #         'step': 'business-info'
+        #     })
+
+            # abn validation
         if (
-            seller_type and 'sme' in seller_type and seller_type['sme'] and
+            seller_type and 'start-up' in seller_type and seller_type['start_up'] and
             self.application.data.get('number_of_employees', None) == '200+'
         ):
             errors.append({
-                'field': 'sme',
+                'field': 'start-up',
                 'message': 'Your company has more than 200 employees and does not qualify as an SME',
                 'severity': 'error',
                 'step': 'business-info'
