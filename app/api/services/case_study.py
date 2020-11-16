@@ -30,12 +30,13 @@ class CaseStudyService(Service):
         result = (
             db
             .session
-            .query(subquery.c.category_name,
-            func.json_agg(
-                func.json_build_object(
-                    'id', subquery.c.cs_id,
-                    'data', subquery.c.case_study_data
-                )
+            .query(
+                subquery.c.category_name,
+                func.json_agg(
+                    func.json_build_object(
+                        'id', subquery.c.cs_id,
+                        'data', subquery.c.case_study_data
+                    )
                 ).label('cs_data')
             )
             .group_by(subquery.c.category_name)
