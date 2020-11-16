@@ -23,8 +23,7 @@ class CaseStudyService(Service):
             .join(Domain, Domain.name == CaseStudy.data['service'].astext)
             .filter(CaseStudy.supplier_code == supplier_code,
                     CaseStudy.status == 'approved',
-                    Domain.id == domain_id
-                )
+                    Domain.id == domain_id)
             .subquery()
         )
 
@@ -33,10 +32,10 @@ class CaseStudyService(Service):
             .session
             .query(subquery.c.category_name,
             func.json_agg(
-                    func.json_build_object(
-                        'id', subquery.c.cs_id,
-                        'data', subquery.c.case_study_data
-                    )
+                func.json_build_object(
+                    'id', subquery.c.cs_id,
+                    'data', subquery.c.case_study_data
+                )
                 ).label('cs_data')
             )
             .group_by(subquery.c.category_name)
@@ -45,5 +44,5 @@ class CaseStudyService(Service):
         values = {}
         for a in result.all():
             values = a._asdict()
-        
+
         return values
