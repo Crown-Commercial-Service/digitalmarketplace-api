@@ -31,6 +31,10 @@ class TestSuppliersService(BaseApplicationTest):
                 'sa': {
                     'expiry': expiry,
                     'licenceNumber': 'S123456'
+                },
+                'act': {
+                    'expiry': expiry,
+                    'licenceNumber': 'A123456'
                 }
             }
         )
@@ -151,12 +155,12 @@ class TestSuppliersService(BaseApplicationTest):
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=2)
         assert len(suppliers_with_expired_licences) == 0
 
-    def test_get_expired_licences_returns_vic_and_qld(self, supplier, users):
+    def test_get_expired_licences_returns_act_vic_and_qld(self, supplier, users):
         expiry_date = date.today() + timedelta(days=10)
         expiry = '{}-{}-{}'.format(expiry_date.year, expiry_date.month, expiry_date.day)
 
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
-        assert len(suppliers_with_expired_licences[0]['labour_hire_licences']) == 2
+        assert len(suppliers_with_expired_licences[0]['labour_hire_licences']) == 3
 
     @pytest.mark.parametrize(
         'supplier', [
@@ -193,12 +197,16 @@ class TestSuppliersService(BaseApplicationTest):
                     'vic': {
                         'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d'),
                         'licenceNumber': 'V123456'
+                    },
+                    'act': {
+                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d'),
+                        'licenceNumber': 'A123456'
                     }
                 }
             }
         ], indirect=True
     )
-    def test_ignore_sa_expired_licences_and_return_vic_only(self, supplier, users):
+    def test_ignore_sa_expired_licences_and_return_vic_and_act(self, supplier, users):
         expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d')
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
 
@@ -207,6 +215,11 @@ class TestSuppliersService(BaseApplicationTest):
                 'expiry': expiry,
                 'state': 'vic',
                 'licenceNumber': 'V123456'
+            },
+            {
+                'expiry': expiry,
+                'state': 'act',
+                'licenceNumber': 'A123456'
             }
         ]
 
