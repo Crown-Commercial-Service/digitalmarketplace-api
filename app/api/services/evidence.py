@@ -96,7 +96,7 @@ class EvidenceService(Service):
             .subquery()
         )
 
-        evidence_subquery = (
+        evidence_domain_criteria_subquery = (
             db.session.query(
                 Evidence.id.label('evidence_id'),
                 func.json_array_elements_text(Evidence.data['criteria']).label('domain_criteria_id')
@@ -107,23 +107,22 @@ class EvidenceService(Service):
 
         subquery = (
             db.session.query(
-                evidence_subquery.c.evidence_id,
-                evidence_subquery.c.domain_criteria_id,
-                DomainCriteria.name,
-                Evidence.data['evidence'][evidence_subquery.c.domain_criteria_id].label('evidence_data')
+                evidence_domain_criteria_subquery.c.domain_criteria_id,
+                DomainCriteria.name.label('dc_name'),
+                Evidence.data['evidence'][evidence_domain_criteria_subquery.c.domain_criteria_id].label('evidence_data')
             )
-            .join(DomainCriteria, DomainCriteria.id == evidence_subquery.c.domain_criteria_id.cast(Integer))
+            .join(DomainCriteria, DomainCriteria.id == evidence_domain_criteria_subquery.c.domain_criteria_id.cast(Integer))
             .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
-        evidence_data_subquery = (
+        evidence_data = (
             db.session.query(
                 category_name_max_daily_rate.c.category,
                 func.json_agg(
                     func.json_build_object(
                         'dc_id', subquery.c.domain_criteria_id,
-                        'domain_criteria_name', subquery.c.name,
+                        'domain_criteria_name', subquery.c.dc_name,
                         'evidence_data', subquery.c.evidence_data
                     )
                 ).label('evidence')
@@ -132,17 +131,16 @@ class EvidenceService(Service):
             .subquery()
             )
 
-        test = (
+        result = (
             db.session.query(
             category_name_max_daily_rate.c.category,
             category_name_max_daily_rate.c.maxDailyRate,
-            evidence_data_subquery.c.evidence
+            evidence_data.c.evidence
             )
         )
-            
 
         evidence = {}
-        for values in test.all():
+        for values in result.all():
             evidence = values._asdict()
 
         return evidence
