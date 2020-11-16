@@ -24,21 +24,20 @@ class CaseStudyService(Service):
             .filter(CaseStudy.supplier_code == supplier_code,
                     CaseStudy.status == 'approved',
                     Domain.id == domain_id
-            )
+                )
             .subquery()
         )
 
         result = (
             db
             .session
-            .query(subquery.c.category_name,  
+            .query(subquery.c.category_name,
             func.json_agg(
                     func.json_build_object(
                         'id', subquery.c.cs_id,
                         'data', subquery.c.case_study_data
                     )
-                )
-            .label('cs_data')
+                ).label('cs_data')
             )
             .group_by(subquery.c.category_name)
         )
