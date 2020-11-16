@@ -85,7 +85,6 @@ class EvidenceService(Service):
         return evidence
 
     def get_data(self, evidence_id):
-
         category_name_max_daily_rate = (
             db.session.query(
                 Domain.name.label('category'),
