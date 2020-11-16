@@ -84,7 +84,47 @@ class EvidenceService(Service):
         evidence = query.first()
         return evidence
 
+    # def get_data(self, evidence_id):
+    #     category_name_max_daily_rate = (
+    #         db.session.query(
+    #             Domain.name.label('category'),
+    #             Evidence.data['maxDailyRate'].label('maxDailyRate')
+    #         )
+    #         .join(Evidence, Evidence.domain_id == Domain.id)
+    #         .filter(Evidence.id == evidence_id)
+    #         .subquery()
+    #     )
+
+    #     domain_criteria_id = (
+    #         db.session.query(
+    #             Evidence.id.label('evidence_id'),
+    #             func.json_array_elements_text(Evidence.data['criteria']).label('dc_id')
+    #         )
+    #         .filter(Evidence.id == evidence_id)
+    #         .subquery()
+    #     )
+
+    #     result = (
+    #         db.session.query(
+    #             domain_criteria_id.c.evidence_id,
+    #             func.json_object_agg(
+                    
+    #             )
+    #             domain_criteria_id.c.dc_id,
+    #             DomainCriteria.name.label('domain_criteria_name'),
+    #             Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data'),
+    #         )
+    #         .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
+    #         .filter(Evidence.id == evidence_id)
+    #     )
+    #     evidence = {}
+    #     for evidence_values in result.all():
+    #         evidence = evidence_values._asdict()
+
+    #     return evidence
+
     def get_data(self, evidence_id):
+
         category_name_max_daily_rate = (
             db.session.query(
                 Domain.name.label('category'),
@@ -92,39 +132,9 @@ class EvidenceService(Service):
             )
             .join(Evidence, Evidence.domain_id == Domain.id)
             .filter(Evidence.id == evidence_id)
-        )
-
-        domain_criteria_id = (
-            db.session.query(
-                func.json_array_elements_text(Evidence.data['criteria']).label('dc_id')
-            )
-            .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
-        result = (
-            db.session.query(
-                domain_criteria_id.c.dc_id,
-                DomainCriteria.name.label('domain_criteria_name'),
-                Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data'),
-            )
-            .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
-            .filter(Evidence.id == evidence_id)
-        )
-        evidence = {}
-        evidence_data = [evidence_values._asdict() for evidence_values in result.all()]
-        evidence['evidence'] = evidence_data
-
-        category_max_rate = {}
-        for c_values in category_name_max_daily_rate.all():
-            category_max_rate = c_values._asdict()
-
-        evidence['category'] = category_max_rate.get("category")
-        evidence['maxDailyRate'] = category_max_rate.get("maxDailyRate")
-
-        return evidence
-
-    def get_evidence_data(self, evidence_id):
         evidence_subquery = (
             db.session.query(
                 Evidence.id.label('evidence_id'),
@@ -139,56 +149,43 @@ class EvidenceService(Service):
                 evidence_subquery.c.evidence_id,
                 evidence_subquery.c.domain_criteria_id,
                 DomainCriteria.name,
+                Evidence.data['evidence'][evidence_subquery.c.domain_criteria_id].label('evidence_data')
             )
             .join(DomainCriteria, DomainCriteria.id == evidence_subquery.c.domain_criteria_id.cast(Integer))
+            .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
         domain_criteria_name = (
             db.session.query(
-                subquery.c.evidence_id,
-                func.json_object_agg(
-                    subquery.c.domain_criteria_id,
+                category_name_max_daily_rate.c.category,
+                func.json_agg(
                     func.json_build_object(
-                        'name', subquery.c.name
+                        'dc_id', subquery.c.domain_criteria_id,
+                        'domain_criteria_name', subquery.c.name,
+                        'evidence_data', subquery.c.evidence_data
                     )
-                ).label('domain_criteria')
+                ).label('evidence')
             )
-            .group_by(subquery.c.evidence_id)
+            .group_by(category_name_max_daily_rate.c.category)
             .subquery()
-        )
-
-        category_name = (
-            db.session.query(
-                Domain.name.label('domain_name')
             )
-            .join(Evidence, Evidence.domain_id == Domain.id)
-            .filter(Evidence.id == evidence_id)
-            .subquery()
-        )
 
-        evidence_assessment_status = (
+        test = (
             db.session.query(
-                EvidenceAssessment.status.label('status')
+            category_name_max_daily_rate.c.category,
+            category_name_max_daily_rate.c.maxDailyRate,
+            domain_criteria_name.c.evidence
             )
-            .filter(evidence_id == EvidenceAssessment.evidence_id)
-            .subquery()
         )
+            
 
-        query = (
-            db.session.query(
-                Evidence.id,
-                Evidence.data['criteria'].label('criteria'),
-                Evidence.data['evidence'].label('evidence_data'),
-                Evidence.data['maxDailyRate'].label('maxDailyRate'),
-                evidence_assessment_status.c.status,
-                domain_criteria_name.c.domain_criteria,
-                category_name.c.domain_name
-            )
-            .join(domain_criteria_name, domain_criteria_name.c.evidence_id == Evidence.id)
-        )
+        evidence = {}
+        for values in test.all():
+            evidence = values._asdict()
 
-        return [evidence._asdict() for evidence in query.all()]
+        return evidence
+
 
     def get_all_evidence(self, supplier_code=None):
         query = (
