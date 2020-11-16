@@ -96,7 +96,7 @@ class EvidenceService(Service):
             .subquery()
         )
 
-        evidence_domain_criteria_subquery = (
+        evidence_domain_criteria = (
             db.session.query(
                 Evidence.id.label('evidence_id'),
                 func.json_array_elements_text(Evidence.data['criteria']).label('domain_criteria_id')
@@ -107,11 +107,11 @@ class EvidenceService(Service):
 
         subquery = (
             db.session.query(
-                evidence_domain_criteria_subquery.c.domain_criteria_id,
+                evidence_domain_criteria.c.domain_criteria_id,
                 DomainCriteria.name.label('dc_name'),
-                Evidence.data['evidence'][evidence_domain_criteria_subquery.c.domain_criteria_id].label('evidence_data')
+                Evidence.data['evidence'][evidence_domain_criteria.c.domain_criteria_id].label('evidence_data')
             )
-            .join(DomainCriteria, DomainCriteria.id == evidence_domain_criteria_subquery.c.domain_criteria_id.cast(Integer))
+            .join(DomainCriteria, DomainCriteria.id == evidence_domain_criteria.c.domain_criteria_id.cast(Integer))
             .filter(Evidence.id == evidence_id)
             .subquery()
         )
