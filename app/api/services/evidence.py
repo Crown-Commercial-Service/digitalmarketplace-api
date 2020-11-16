@@ -84,45 +84,6 @@ class EvidenceService(Service):
         evidence = query.first()
         return evidence
 
-    # def get_data(self, evidence_id):
-    #     category_name_max_daily_rate = (
-    #         db.session.query(
-    #             Domain.name.label('category'),
-    #             Evidence.data['maxDailyRate'].label('maxDailyRate')
-    #         )
-    #         .join(Evidence, Evidence.domain_id == Domain.id)
-    #         .filter(Evidence.id == evidence_id)
-    #         .subquery()
-    #     )
-
-    #     domain_criteria_id = (
-    #         db.session.query(
-    #             Evidence.id.label('evidence_id'),
-    #             func.json_array_elements_text(Evidence.data['criteria']).label('dc_id')
-    #         )
-    #         .filter(Evidence.id == evidence_id)
-    #         .subquery()
-    #     )
-
-    #     result = (
-    #         db.session.query(
-    #             domain_criteria_id.c.evidence_id,
-    #             func.json_object_agg(
-                    
-    #             )
-    #             domain_criteria_id.c.dc_id,
-    #             DomainCriteria.name.label('domain_criteria_name'),
-    #             Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data'),
-    #         )
-    #         .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
-    #         .filter(Evidence.id == evidence_id)
-    #     )
-    #     evidence = {}
-    #     for evidence_values in result.all():
-    #         evidence = evidence_values._asdict()
-
-    #     return evidence
-
     def get_data(self, evidence_id):
 
         category_name_max_daily_rate = (
