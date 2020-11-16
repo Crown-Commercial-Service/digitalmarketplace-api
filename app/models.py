@@ -1116,7 +1116,8 @@ class DomainCriteria(db.Model):
     def serialize(self):
         serialized = {
             "id": self.id,
-            "name": self.name
+            "name": self.name,
+            "essential": self.essential
         }
         return serialized
 
