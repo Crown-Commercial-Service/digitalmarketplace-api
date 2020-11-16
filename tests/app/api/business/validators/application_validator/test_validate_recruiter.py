@@ -145,6 +145,10 @@ def test_valid_for_recruiter_and_labour_hire():
                 'vic': {
                     'expiry': expiry,
                     'licenceNumber': 'foobar-licence'
+                },
+                'act': {
+                    'expiry': expiry,
+                    'licenceNumber': 'foobar-licence'
                 }
             }
         }
