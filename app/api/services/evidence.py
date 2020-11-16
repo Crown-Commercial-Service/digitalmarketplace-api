@@ -117,7 +117,7 @@ class EvidenceService(Service):
             .subquery()
         )
 
-        domain_criteria_name = (
+        evidence_data_subquery = (
             db.session.query(
                 category_name_max_daily_rate.c.category,
                 func.json_agg(
@@ -136,7 +136,7 @@ class EvidenceService(Service):
             db.session.query(
             category_name_max_daily_rate.c.category,
             category_name_max_daily_rate.c.maxDailyRate,
-            domain_criteria_name.c.evidence
+            evidence_data_subquery.c.evidence
             )
         )
             
