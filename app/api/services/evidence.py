@@ -128,13 +128,13 @@ class EvidenceService(Service):
             )
             .group_by(category_name_max_daily_rate.c.category)
             .subquery()
-            )
+        )
 
         result = (
             db.session.query(
-            category_name_max_daily_rate.c.category,
-            category_name_max_daily_rate.c.maxDailyRate,
-            evidence_data.c.evidence
+                category_name_max_daily_rate.c.category,
+                category_name_max_daily_rate.c.maxDailyRate,
+                evidence_data.c.evidence
             )
         )
 
@@ -143,7 +143,6 @@ class EvidenceService(Service):
             evidence = values._asdict()
 
         return evidence
-
 
     def get_all_evidence(self, supplier_code=None):
         query = (
