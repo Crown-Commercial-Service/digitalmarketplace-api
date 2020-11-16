@@ -40,6 +40,7 @@ class CaseStudyService(Service):
             )
             .group_by(test.c.category_name)
         )
+        # check if all values are being returned or just one 
         values = {}
         for a in result.all():
             values = a._asdict()
