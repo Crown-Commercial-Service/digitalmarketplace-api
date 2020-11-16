@@ -1110,6 +1110,7 @@ class DomainCriteria(db.Model):
     domain_id = db.Column(db.Integer,
                           db.ForeignKey('domain.id'),
                           nullable=False)
+    essential = db.Column(db.Boolean, nullable=False)
     domain = relationship("Domain", back_populates="criteria")
 
     def serialize(self):
