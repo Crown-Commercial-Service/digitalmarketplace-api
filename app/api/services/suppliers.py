@@ -266,11 +266,11 @@ class SuppliersService(Service):
                                   func.to_date(Supplier.data['labourHire']['qld']['expiry'].astext, 'YYYY-MM-DD') ==
                                   (today.date() + timedelta(days=days)))))
         act_expiry = (select([Supplier.code, Supplier.name, literal('act').label('state'),
-                        Supplier.data['labourHire']['act']['licenceNumber'].astext.label('licenceNumber'),
-                        Supplier.data['labourHire']['act']['expiry'].astext.label('expiry')])
-                .where(and_(Supplier.data['labourHire']['act']['expiry'].isnot(None),
-                            func.to_date(Supplier.data['labourHire']['act']['expiry'].astext, 'YYYY-MM-DD') ==
-                            (today.date() + timedelta(days=days)))))
+                              Supplier.data['labourHire']['act']['licenceNumber'].astext.label('licenceNumber'),
+                              Supplier.data['labourHire']['act']['expiry'].astext.label('expiry')])
+                      .where(and_(Supplier.data['labourHire']['act']['expiry'].isnot(None),
+                                  func.to_date(Supplier.data['labourHire']['act']['expiry'].astext, 'YYYY-MM-DD') ==
+                                  (today.date() + timedelta(days=days)))))
 
         expiry_dates = union(vic_expiry, qld_expiry, act_expiry).alias('expiry_dates')
         # Aggregate the licence details so they can be returned with the results
