@@ -1278,9 +1278,9 @@ class TestApplication(BaseApplicationTest):
 
             expected = {
                 'act': {
-                    'expiry': '2040-10-22',	
-                    'licenceNumber': '123'	
-                }	
+                    'expiry': '2040-10-22',
+                    'licenceNumber': '123'
+                }
             }
 
             labour_hire = new_application.data.get('labourHire')
@@ -1312,10 +1312,10 @@ class TestApplication(BaseApplicationTest):
             assert existing_application.status == 'approved'
 
             expected = {
-                'act': {	
-                    'expiry': '2040-10-22',	
-                    'licenceNumber': '123'	
-                }	
+                'act': {
+                    'expiry': '2040-10-22',
+                    'licenceNumber': '123'
+                }
             }
 
             labour_hire = existing_application.data.get('labourHire')
