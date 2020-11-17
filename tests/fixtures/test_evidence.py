@@ -312,3 +312,33 @@ def test_evidence_validate_evidence_response(domains, evidence):
     }
     valid = EvidenceDataValidator(data, ev).validate_evidence_responses()
     assert not valid
+
+
+def test_all_essential_criteria_have_been_selected(domains, evidence):
+    platform_category = (
+        next(domain for domain in domains if domain.name == 'Platform integration')
+    )
+
+    ev = next(x for x in evidence if x.domain.id == platform_category.id)
+
+    data = {
+        'criteria': [85, 86]
+    }
+
+    valid = EvidenceDataValidator(data, ev).validate_selected_essential_criteria()
+    assert valid
+
+
+def test_some_essential_criteria_have_been_selected(domains, evidence):
+    platform_category = (
+        next(domain for domain in domains if domain.name == 'Platform integration')
+    )
+
+    ev = next(x for x in evidence if x.domain.id == platform_category.id)
+
+    data = {
+        'criteria': [86]
+    }
+
+    valid = EvidenceDataValidator(data, ev).validate_selected_essential_criteria()
+    assert not valid
