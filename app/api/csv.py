@@ -272,10 +272,10 @@ def generate_seller_catalogue_csv(seller_catalogue):
                     licence_qld_number = r['labour_hire']['qld']['licenceNumber']
                 if 'expiry' in r['labour_hire']['qld']:
                     licence_qld_expiry = r['labour_hire']['qld']['expiry']
-            if 'act' in r['labour_hire']:	
-                if 'licenceNumber' in r['labour_hire']['act']:	
-                    licence_act_number = r['labour_hire']['act']['licenceNumber']	
-                if 'expiry' in r['labour_hire']['act']:	
+            if 'act' in r['labour_hire']:
+                if 'licenceNumber' in r['labour_hire']['act']:
+                    licence_act_number = r['labour_hire']['act']['licenceNumber']
+                if 'expiry' in r['labour_hire']['act']:
                     licence_act_expiry = r['labour_hire']['act']['expiry']
 
         answers.update({'VIC labour hire licence': licence_vic_number})
