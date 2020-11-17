@@ -255,8 +255,9 @@ def create_user(
             organisation_name = ''
             state = ''
             postcode = ''
+            age_of_abn = ''
             # abn_package will return a false statement if there is a trailing whitespace in a valid abn.
-            # validated_abn = abn_package.validate(abn.strip())
+            #validated_abn = abn_package.validate(abn.strip())
             # if validated_abn:
             try:
                     # extracts business info using the abn
@@ -266,6 +267,7 @@ def create_user(
                 organisation_name = business_info_values["organisation_name"]
                 state = business_info_values["state"]
                 postcode = business_info_values["postcode"]
+                age_of_abn = business_info_values["age_abn"]
 
                 # If ABR API is down, it will publish a slack message
             except AbrError:
@@ -280,7 +282,7 @@ def create_user(
             try:
                 application = create_application(
                     email_address=email_address, name=name, abn=abn, organisation_name=organisation_name,
-                    postcode=postcode, state=state)
+                    postcode=postcode, state=state, age_of_abn=age_of_abn)
                 user_data['application_id'] = application.id
             except (InvalidRequestError, IntegrityError):
                 return jsonify(message="An application with this email address already exists"), 409

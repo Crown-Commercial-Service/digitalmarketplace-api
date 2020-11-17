@@ -114,6 +114,8 @@ class ApplicationValidator(object):
         #     })
 
             # abn validation
+        print("age of abn")
+        print(self.application.data.get('age_of_abn', None))
         if (
             seller_type and 'start-up' in seller_type and seller_type['start_up'] and
             self.application.data.get('number_of_employees', None) == '200+'
