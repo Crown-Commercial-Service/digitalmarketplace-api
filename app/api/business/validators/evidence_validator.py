@@ -39,6 +39,17 @@ class EvidenceDataValidator(object):
 
         return True
 
+    def validate_essential_criteria_responses(self):
+        essential_criteria_ids = [criterion.id for criterion in self.domain_criteria if criterion.essential]
+        used_criteria_ids = [int(key) for key in self.data['evidence'].keys()]
+        for criterion_id in essential_criteria_ids:
+            if criterion_id not in used_criteria_ids:
+                return False
+            if 'response' not in self.data['evidence'][str(criterion_id)]:
+                return False
+
+        return True
+
     def validate_max_rate(self):
         if 'maxDailyRate' not in self.data:
             return False
@@ -167,6 +178,8 @@ class EvidenceDataValidator(object):
             errors.append('The domain id associated with this evidence is invalid')
         if not self.validate_selected_essential_criteria():
             errors.append('You must select all essential criteria')
+        if not self.validate_essential_criteria_responses():
+            errors.append('You must respond to all essential criteria')
         if not self.validate_criteria():
             errors.append('You must select which criteria you are responding to')
         if not self.validate_evidence_dates():
