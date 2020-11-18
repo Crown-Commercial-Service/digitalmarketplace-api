@@ -1,5 +1,8 @@
 import pendulum
 from app.api.helpers import state_to_long_name
+from dateutil.relativedelta import relativedelta
+from datetime import date
+import datetime, re
 
 
 class ApplicationValidator(object):
@@ -114,8 +117,19 @@ class ApplicationValidator(object):
         #     })
 
             # abn validation
-        print("age of abn")
-        print(self.application.data.get('age_of_abn', None))
+        print("age of abn that comes from the abr service")
+        # age of abn is YYYY-MM-DD format
+        date_of_abn = self.application.data.get('age_of_abn', None)
+        match = re.search('\d{4}-\d{2}-\d{2}', date_of_abn)
+        date_of_abn = datetime.datetime.strptime(match.group(), '%Y-%m-%d').date()
+        print(date_of_abn)
+        print("date of abn is converted")
+        
+        current_date = date.today()
+
+        time_difference = relativedelta(current_date, date_of_abn)
+        print(time_difference)
+        print("time difference")
         if (
             seller_type and 'start-up' in seller_type and seller_type['start_up'] and
             self.application.data.get('number_of_employees', None) == '200+'
