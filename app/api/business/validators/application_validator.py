@@ -105,45 +105,39 @@ class ApplicationValidator(object):
             'business-info'
         )
         seller_type = self.application.data.get('seller_type', None)
-        # if (
-        #     seller_type and 'sme' in seller_type and seller_type['sme'] and
-        #     self.application.data.get('number_of_employees', None) == '200+'
-        # ):
-        #     errors.append({
-        #         'field': 'sme',
-        #         'message': 'Your company has more than 200 employees and does not qualify as an SME',
-        #         'severity': 'error',
-        #         'step': 'business-info'
-        #     })
-
-            # abn validation
+        # abn validation
         print("age of abn that comes from the abr service")
         # age of abn is YYYY-MM-DD format
         date_of_abn = self.application.data.get('age_of_abn', None)
-        match = re.search('\d{4}-\d{2}-\d{2}', date_of_abn)
-        date_of_abn = datetime.datetime.strptime(match.group(), '%Y-%m-%d').date()
-        print(date_of_abn)
-        print("date of abn is converted")
-        
-        current_date = date.today()
+        if date_of_abn is not None:
+            match = re.search('\d{4}-\d{2}-\d{2}', date_of_abn)
+            date_of_abn = datetime.datetime.strptime(match.group(), '%Y-%m-%d').date()
 
-        time_difference = relativedelta(current_date, date_of_abn)
-        print(time_difference)
-        print("time difference")
+            current_date = date.today()
+            time_difference = relativedelta(current_date, date_of_abn)
+            start_up_age = int(time_difference.years)
 
-        # print("Dayes:",time_difference.days," Months:",time_difference.months," Years:", time_difference.years)
-        # print("HERE")
-        start_up_age = int(time_difference.years)
+            if (
+                seller_type and 'start-up' in seller_type and seller_type['start_up'] and
+                start_up_age > 5
+            ):
+                errors.append({
+                    'field': 'start-up',
+                    'message': 'abn is old',
+                    'severity': 'error',
+                    'step': 'business-info'
+                })
         if (
-            seller_type and 'start-up' in seller_type and seller_type['start_up'] and
-            start_up_age > 5
+            seller_type and 'sme' in seller_type and seller_type['sme'] and
+            self.application.data.get('number_of_employees', None) == '200+'
         ):
             errors.append({
-                'field': 'start-up',
-                'message': 'abn is old',
+                'field': 'sme',
+                'message': 'Your company has more than 200 employees and does not qualify as an SME',
                 'severity': 'error',
                 'step': 'business-info'
             })
+        
         return errors
 
     def validate_contacts(self):
