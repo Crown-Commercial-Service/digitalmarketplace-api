@@ -14,15 +14,6 @@ from app.models import (CaseStudy,
                         SupplierDomain,
                         SupplierFramework,
                         User)
-import requests
-from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, ProxyError)
-import re
-from app.tasks import publish_tasks
-from app.api.business.errors import AbrError
-from flask import current_app
-import xml.etree.ElementTree as ElementTree
-import json
-from xml.sax import saxutils
 
 
 class SuppliersService(Service):
