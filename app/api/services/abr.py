@@ -69,7 +69,6 @@ class AbrService(Service):
                 raise AbrError('Failed exception raised')
 
     def get_data(self, xmlText):
-        print("inside get data function")
         if re.findall(r'<organisationName>(.*?)</organisationName>', xmlText):
             search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
             organisation_name = search_xml_organisation_name[0]
