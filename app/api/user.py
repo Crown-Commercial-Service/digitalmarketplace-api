@@ -17,7 +17,6 @@ from app.api.helpers import get_email_domain
 from app.api.services import abr_service
 import json
 from app.api.business.errors import AbrError
-import abn as abn_package
 
 
 def add_user(data):
@@ -255,11 +254,7 @@ def create_user(
             organisation_name = ''
             state = ''
             postcode = ''
-            # abn_package will return a false statement if there is a trailing whitespace in a valid abn.
-            # validated_abn = abn_package.validate(abn.strip())
-            # if validated_abn:
             try:
-                    # extracts business info using the abn
                 business_info_values = abr_service.get_url(abn)
                 business_info_values = json.loads(business_info_values)
 
