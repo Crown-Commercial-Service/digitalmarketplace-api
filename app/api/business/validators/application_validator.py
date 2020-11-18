@@ -130,13 +130,17 @@ class ApplicationValidator(object):
         time_difference = relativedelta(current_date, date_of_abn)
         print(time_difference)
         print("time difference")
+
+        # print("Dayes:",time_difference.days," Months:",time_difference.months," Years:", time_difference.years)
+        # print("HERE")
+        start_up_age = int(time_difference.years)
         if (
             seller_type and 'start-up' in seller_type and seller_type['start_up'] and
-            self.application.data.get('number_of_employees', None) == '200+'
+            start_up_age > 5
         ):
             errors.append({
                 'field': 'start-up',
-                'message': 'Your company has more than 200 employees and does not qualify as an SME',
+                'message': 'abn is old',
                 'severity': 'error',
                 'step': 'business-info'
             })
