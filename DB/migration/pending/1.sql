@@ -5,7 +5,7 @@ DO $$
 		)
 		THEN
 			ALTER TABLE public.domain_criteria ADD COLUMN essential boolean;
-			UPDATE public.domain_criteria SET essential = false WHERE id NOT IN (2001, 2002);
+			UPDATE public.domain_criteria SET essential = false;
 			ALTER TABLE public.domain_criteria ALTER COLUMN essential SET NOT NULL;
 		END IF;
 	END;
