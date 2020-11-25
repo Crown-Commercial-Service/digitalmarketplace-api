@@ -316,7 +316,7 @@ def test_evidence_validate_evidence_response(domains, evidence):
 
 def test_all_essential_criteria_have_been_selected(domains, evidence):
     platform_category = (
-        next(domain for domain in domains if domain.name == 'Platform integration')
+        next(domain for domain in domains if domain.name == 'Platforms integration')
     )
 
     ev = next(x for x in evidence if x.domain.id == platform_category.id)
@@ -331,7 +331,7 @@ def test_all_essential_criteria_have_been_selected(domains, evidence):
 
 def test_some_essential_criteria_have_been_selected(domains, evidence):
     platform_category = (
-        next(domain for domain in domains if domain.name == 'Platform integration')
+        next(domain for domain in domains if domain.name == 'Platforms integration')
     )
 
     ev = next(x for x in evidence if x.domain.id == platform_category.id)
@@ -346,7 +346,7 @@ def test_some_essential_criteria_have_been_selected(domains, evidence):
 
 def test_all_essential_criteria_have_responses(domains, evidence):
     platform_category = (
-        next(domain for domain in domains if domain.name == 'Platform integration')
+        next(domain for domain in domains if domain.name == 'Platforms integration')
     )
 
     ev = next(x for x in evidence if x.domain.id == platform_category.id)
@@ -369,7 +369,7 @@ def test_all_essential_criteria_have_responses(domains, evidence):
 
 def test_some_essential_criteria_have_responses(domains, evidence):
     platform_category = (
-        next(domain for domain in domains if domain.name == 'Platform integration')
+        next(domain for domain in domains if domain.name == 'Platforms integration')
     )
 
     ev = next(x for x in evidence if x.domain.id == platform_category.id)

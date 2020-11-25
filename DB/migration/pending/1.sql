@@ -14,7 +14,7 @@ $$;
 INSERT INTO 
 	public.domain (id, name, ordering, price_minimum, price_maximum, criteria_needed)
 VALUES 
-	(20, 'Platform integration', 17, 500, 2500, 4)
+	(20, 'Platforms integration', 17, 500, 2500, 4)
 ON CONFLICT (id) DO NOTHING;
 	
 INSERT INTO 

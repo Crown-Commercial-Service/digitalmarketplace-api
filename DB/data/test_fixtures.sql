@@ -170,7 +170,7 @@ INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_n
 INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_needed) VALUES (15, 'ICT managed services'                   , 15, 0, 10000, 2);
 INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_needed) VALUES (16, 'Digital sourcing and ICT procurement'   , 16, 0, 10000, 3);
 INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_needed) VALUES (17, 'Training, Learning and Development'     , 17, 0, 10000, 3);
-INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_needed) VALUES (18, 'Platform integration'                   , 18, 0, 10000, 4);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_needed) VALUES (18, 'Platforms integration'                   , 18, 0, 10000, 4);
 
 --
 -- Data for Name: domain_criteria; Type: TABLE DATA; Schema: public; Owner: -
