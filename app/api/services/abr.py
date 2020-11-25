@@ -85,9 +85,9 @@ class AbrService(Service):
             print("organisation name, postcode and state" + organisation_name + postcode + state)
 
             return json.dumps({
-                'organisation_name': organisation_name,
-                'postcode': postcode,
-                'state': state
+                'organisation_name':organisation_name,
+                'postcode':postcode,
+                'state':state
             })
 
         # Payload exceptions: https://abr.business.gov.au/Documentation/Exceptions
