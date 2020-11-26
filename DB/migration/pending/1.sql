@@ -20,7 +20,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO 
 	public.domain_criteria (id, name, domain_id, essential)
 VALUES 
-	(2001, 'Experience with the Information Security Manual (ISM) and other Government security frameworks in relation to large transformation programs and the ability to manage a consortia within these government security frameworks.', 20, true),
+	(2001, 'Experience with the Information Security Manual (ISM) and other Government security frameworks in relation to large transformation programs and experience in managing a consortia within these government security frameworks.', 20, true),
 	(2002, 'Experience in leading large transformational programs that deliver strategic digital platforms and experience in providing ongoing management and support of these platforms.', 20, true),
 	(2003, 'Demonstrated ability to work with providers to enable a scalable, reusable platform that can support multiple, distinct use cases.', 20, false),
 	(2004, 'Experience in providing ongoing management, support and continual improvement of these platforms with clear transparency of services and associated SLAs.', 20, false),
