@@ -165,7 +165,10 @@ def get_evidence_feedback(evidence_id):
     criteria_from_domain = {}
     domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
     for criteria in domain_criteria:
-        criteria_from_domain[str(criteria.id)] = criteria.name
+        criteria_from_domain[str(criteria.id)] = {
+            "name": criteria.name,
+            "essential": criteria.essential
+        }
 
     criteria = {}
     failed_criteria = evidence_assessment.data.get('failed_criteria', {})
@@ -174,7 +177,10 @@ def get_evidence_feedback(evidence_id):
         has_feedback = True if criteria_id in failed_criteria.keys() else False
         criteria[criteria_id] = {
             "response": criteria_response,
-            "name": criteria_from_domain[criteria_id] if criteria_id in criteria_from_domain else '',
+            "name": criteria_from_domain[criteria_id]['name'] if criteria_id in criteria_from_domain else '',
+            "essential": (
+                criteria_from_domain[criteria_id]['essential'] if criteria_id in criteria_from_domain else False
+            ),
             "has_feedback": has_feedback,
             "assessment": failed_criteria[criteria_id] if has_feedback else {}
         }
