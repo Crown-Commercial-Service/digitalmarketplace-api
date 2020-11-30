@@ -42,8 +42,4 @@ class CaseStudyService(Service):
             .group_by(subquery.c.category_name)
         )
 
-        values = {}
-        for a in result.all():
-            values = a._asdict()
-
-        return values
+        return result.one_or_none()._asdict()
