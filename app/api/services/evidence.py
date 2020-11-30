@@ -138,11 +138,7 @@ class EvidenceService(Service):
             )
         )
 
-        evidence = {}
-        for values in result.all():
-            evidence = values._asdict()
-
-        return evidence
+        return result.one_or_none()._asdict()
 
     def get_all_evidence(self, supplier_code=None):
         query = (
