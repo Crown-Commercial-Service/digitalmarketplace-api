@@ -4,7 +4,6 @@ pip-tools>=5.4.0
 
 # For tests
 coverage
-coveralls
 flake8
 freezegun
 mock
