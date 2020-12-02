@@ -213,6 +213,19 @@ def _framework_fixture_inner(request, app, slug, **kwargs):
 
 _generic_framework_agreement_details = {"frameworkAgreementVersion": "v1.0"}
 
+_g12_framework_defaults = {
+    "slug": "g-cloud-12",
+    "framework": "g-cloud",
+    "framework_agreement_details": _generic_framework_agreement_details,
+    "applications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "intention_to_award_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_close_at_utc": "2000-01-01T00:00:00.000000Z",
+    "clarifications_publish_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_live_at_utc": "2000-01-01T00:00:00.000000Z",
+    "framework_expires_at_utc": "2000-01-01T00:00:00.000000Z",
+    "has_direct_award": True,
+    "has_further_competition": False,
+}
 _g8_framework_defaults = {
     "slug": "g-cloud-8",
     "framework": "g-cloud",
@@ -446,6 +459,14 @@ def open_g6_framework(request, app):
 @pytest.fixture()
 def expired_g6_framework(request, app):
     return _framework_fixture_inner(request, app, **dict(_g6_framework_defaults, status="expired"))
+
+
+@pytest.fixture()
+def live_g12_framework(request, app):
+    framework = _framework_fixture_inner(request, app, **dict(_g12_framework_defaults, status="live"))
+    lots = ["cloud-hosting", "cloud-software", "cloud-support"]
+    _add_lots_for_framework(request, app, _g12_framework_defaults["slug"], lots)
+    return framework
 
 
 @pytest.fixture()

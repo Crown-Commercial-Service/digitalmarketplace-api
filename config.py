@@ -67,6 +67,8 @@ class Config:
         },
     }
 
+    DM_G12_RECOVERY_SUPPLIER_IDS = None
+
 
 class Test(Config):
     SERVER_NAME = '127.0.0.1:5000'
@@ -85,6 +87,8 @@ class Test(Config):
 
     DM_API_PROJECTS_PAGE_SIZE = 5
 
+    DM_G12_RECOVERY_SUPPLIER_IDS = "577184"
+
 
 class Development(Config):
     DEBUG = True
@@ -94,6 +98,8 @@ class Development(Config):
     DM_API_CALLBACK_AUTH_TOKENS = 'myToken'
     DM_SEARCH_API_AUTH_TOKEN = 'myToken'
     DM_SEARCH_API_URL = f"http://localhost:{os.getenv('DM_SEARCH_API_PORT', 5009)}"
+
+    DM_G12_RECOVERY_SUPPLIER_IDS = "577184"
 
 
 class Live(Config):

@@ -1,6 +1,7 @@
 import inspect
+from typing import Union
 
-from flask import abort
+from flask import abort, current_app
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import lazyload
 
@@ -123,3 +124,18 @@ def update_open_declarations_with_company_details(db, supplier_id, updater_json,
                 },
             )
         )
+
+
+def is_g12_recovery_supplier(supplier_id: Union[str, int]) -> bool:
+    supplier_ids_string = current_app.config.get('DM_G12_RECOVERY_SUPPLIER_IDS') or ''
+
+    try:
+        supplier_ids = [int(s) for s in supplier_ids_string.split(sep=',')]
+    except AttributeError as e:
+        current_app.logger.error("DM_G12_RECOVERY_SUPPLIER_IDS not a string", extra={'error': str(e)})
+        return False
+    except ValueError as e:
+        current_app.logger.error("DM_G12_RECOVERY_SUPPLIER_IDS not a list of supplier IDs", extra={'error': str(e)})
+        return False
+
+    return int(supplier_id) in supplier_ids
