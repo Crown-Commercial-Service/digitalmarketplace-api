@@ -3,6 +3,17 @@ on: [pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
@@ -19,10 +30,13 @@ jobs:
       with:
         path: venv
         key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/requirements-dev.txt') }}
+    
+    - name: Create test DB
+      run: psql -c 'create database digitalmarketplace_test;' -U postgres
 
     - name: Run python tests
       env:
-        PYTEST_ARGS: --cov=app --cov-report=term-missing
+        SQLALCHEMY_DATABASE_URI: postgresql://postgres:@localhost:5432/digitalmarketplace_test
       run: |
         make requirements-dev
         make test
