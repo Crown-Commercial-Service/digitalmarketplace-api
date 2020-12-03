@@ -8,6 +8,9 @@ jobs:
         image: postgres
         env:
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: digitalmarketplace_test
+        ports:
+          - 5432:5432
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -31,9 +34,6 @@ jobs:
         path: venv
         key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/requirements-dev.txt') }}
     
-    - name: Create test DB
-      run: psql -c 'create database digitalmarketplace_test;' -U postgres
-
     - name: Run python tests
       env:
         SQLALCHEMY_DATABASE_URI: postgresql://postgres:@localhost:5432/digitalmarketplace_test
