@@ -1,28 +1,47 @@
 name: Test
 on: [pull_request]
+
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+    services:
+      postgres:
+        image: postgres:9.5
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: digitalmarketplace_test
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+
     steps:
-    - uses: actions/checkout@v2
+      - name: Check out repository code
+        uses: actions/checkout@v2
 
-    - name: Setup python (${{ matrix.python-version }})
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Setup python (${{ matrix.python-version }})
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Setup Python cache
-      uses: actions/cache@v2
-      with:
-        path: venv
-        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/requirements-dev.txt') }}
+      - name: Setup Python cache
+        uses: actions/cache@v2
+        with:
+          path: venv
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
 
-    - name: Run python tests
-      env:
-        PYTEST_ARGS: --cov=app --cov-report=term-missing
-      run: |
-        make requirements-dev
-        make test
+
+      - name: Install packages and run tests
+        run: |
+          make requirements-dev
+          make test
+        env:
+          SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@localhost:5432/digitalmarketplace_test
