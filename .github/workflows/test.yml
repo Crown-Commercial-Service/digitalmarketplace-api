@@ -37,7 +37,7 @@ jobs:
     
     - name: Run python tests
       env:
-        SQLALCHEMY_DATABASE_URI: postgresql://postgres:@localhost:5432/digitalmarketplace_test
+        SQLALCHEMY_DATABASE_URI: postgresql://postgres:@postgres:5432/digitalmarketplace_test
       run: |
         make requirements-dev
         make test
