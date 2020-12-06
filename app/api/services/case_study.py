@@ -42,4 +42,5 @@ class CaseStudyService(Service):
             .group_by(subquery.c.category_name)
         )
 
-        return result.one_or_none()._asdict()
+        results = result.one_or_none()._asdict()
+        return results if results else {}
