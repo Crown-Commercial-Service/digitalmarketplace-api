@@ -431,7 +431,14 @@ class TestGetApplication(BaseApplicationsTest):
             )
 
             db.session.add(
-                Domain(id=domain_id + 1, name='test domain', ordering=1, price_minimum=123, price_maximum=1234, criteria_needed=1)
+                Domain(
+                    id=domain_id + 1,
+                    name='test domain',
+                    ordering=1,
+                    price_minimum=123,
+                    price_maximum=1234,
+                    criteria_needed=1
+                )
             )
             db.session.commit()
 
