@@ -12,31 +12,35 @@ class CaseStudyService(Service):
         super(CaseStudyService, self).__init__(*args, **kwargs)
 
     def get_approved_case_studies_by_supplier_code(self, supplier_code, domain_id):
-        domain_name = (
+        subquery = (
             db
             .session
-            .query(Domain.name)
-            .filter(Domain.id == domain_id)
+            .query(
+                CaseStudy.id.label('cs_id'),
+                CaseStudy.data.label('case_study_data'),
+                Domain.name.label('category_name')
+            )
+            .join(Domain, Domain.name == CaseStudy.data['service'].astext)
+            .filter(CaseStudy.supplier_code == supplier_code,
+                    CaseStudy.status == 'approved',
+                    Domain.id == domain_id)
             .subquery()
         )
 
-        case_study = (
-            db.session.query(CaseStudy.id.label('cs_id'), CaseStudy.data)
-            .filter(CaseStudy.supplier_code == supplier_code,
-                    CaseStudy.status == 'approved',
-                    CaseStudy.data['service'].astext == domain_name.c.name
+        result = (
+            db
+            .session
+            .query(
+                subquery.c.category_name,
+                func.json_agg(
+                    func.json_build_object(
+                        'id', subquery.c.cs_id,
+                        'data', subquery.c.case_study_data
                     )
+                ).label('cs_data')
+            )
+            .group_by(subquery.c.category_name)
         )
 
-        cs_data = [value._asdict() for value in case_study.all()]
-        case_studies = {}
-        case_studies['cs_data'] = cs_data
-
-        for k, v in case_study.all():
-            for k1, v1 in v.items():
-                if k1 == 'service':
-                    category_name = v1
-
-        case_studies['category_name'] = category_name
-
-        return case_studies
+        results = result.one_or_none()._asdict()
+        return results if results else {}

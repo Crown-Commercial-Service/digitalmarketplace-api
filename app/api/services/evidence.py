@@ -84,7 +84,7 @@ class EvidenceService(Service):
         evidence = query.first()
         return evidence
 
-    def get_data(self, evidence_id):
+    def get_approved_evidence(self, evidence_id):
         category_name_max_daily_rate = (
             db.session.query(
                 Domain.name.label('category'),
@@ -92,40 +92,10 @@ class EvidenceService(Service):
             )
             .join(Evidence, Evidence.domain_id == Domain.id)
             .filter(Evidence.id == evidence_id)
-        )
-
-        domain_criteria_id = (
-            db.session.query(
-                func.json_array_elements_text(Evidence.data['criteria']).label('dc_id')
-            )
-            .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
-        result = (
-            db.session.query(
-                domain_criteria_id.c.dc_id,
-                DomainCriteria.name.label('domain_criteria_name'),
-                Evidence.data['evidence'][domain_criteria_id.c.dc_id].label('evidence_data'),
-            )
-            .join(DomainCriteria, DomainCriteria.id == domain_criteria_id.c.dc_id.cast(Integer))
-            .filter(Evidence.id == evidence_id)
-        )
-        evidence = {}
-        evidence_data = [evidence._asdict() for evidence in result.all()]
-        evidence['evidence'] = evidence_data
-
-        category_max_rate = {}
-        for c_values in category_name_max_daily_rate.all():
-            category_max_rate = c_values._asdict()
-
-        evidence['category'] = category_max_rate.get("category")
-        evidence['maxDailyRate'] = category_max_rate.get("maxDailyRate")
-
-        return evidence
-
-    def get_evidence_data(self, evidence_id):
-        evidence_subquery = (
+        evidence_domain_criteria = (
             db.session.query(
                 Evidence.id.label('evidence_id'),
                 func.json_array_elements_text(Evidence.data['criteria']).label('domain_criteria_id')
@@ -136,59 +106,40 @@ class EvidenceService(Service):
 
         subquery = (
             db.session.query(
-                evidence_subquery.c.evidence_id,
-                evidence_subquery.c.domain_criteria_id,
-                DomainCriteria.name,
+                evidence_domain_criteria.c.domain_criteria_id,
+                DomainCriteria.name.label('dc_name'),
+                Evidence.data['evidence'][evidence_domain_criteria.c.domain_criteria_id].label('evidence_data')
             )
-            .join(DomainCriteria, DomainCriteria.id == evidence_subquery.c.domain_criteria_id.cast(Integer))
-            .subquery()
-        )
-
-        domain_criteria_name = (
-            db.session.query(
-                subquery.c.evidence_id,
-                func.json_object_agg(
-                    subquery.c.domain_criteria_id,
-                    func.json_build_object(
-                        'name', subquery.c.name
-                    )
-                ).label('domain_criteria')
-            )
-            .group_by(subquery.c.evidence_id)
-            .subquery()
-        )
-
-        category_name = (
-            db.session.query(
-                Domain.name.label('domain_name')
-            )
-            .join(Evidence, Evidence.domain_id == Domain.id)
+            .join(DomainCriteria, DomainCriteria.id == evidence_domain_criteria.c.domain_criteria_id.cast(Integer))
             .filter(Evidence.id == evidence_id)
             .subquery()
         )
 
-        evidence_assessment_status = (
+        evidence_data = (
             db.session.query(
-                EvidenceAssessment.status.label('status')
+                category_name_max_daily_rate.c.category,
+                func.json_agg(
+                    func.json_build_object(
+                        'dc_id', subquery.c.domain_criteria_id,
+                        'domain_criteria_name', subquery.c.dc_name,
+                        'evidence_data', subquery.c.evidence_data
+                    )
+                ).label('evidence')
             )
-            .filter(evidence_id == EvidenceAssessment.evidence_id)
+            .group_by(category_name_max_daily_rate.c.category)
             .subquery()
         )
 
-        query = (
+        result = (
             db.session.query(
-                Evidence.id,
-                Evidence.data['criteria'].label('criteria'),
-                Evidence.data['evidence'].label('evidence_data'),
-                Evidence.data['maxDailyRate'].label('maxDailyRate'),
-                evidence_assessment_status.c.status,
-                domain_criteria_name.c.domain_criteria,
-                category_name.c.domain_name
+                category_name_max_daily_rate.c.category,
+                category_name_max_daily_rate.c.maxDailyRate,
+                evidence_data.c.evidence
             )
-            .join(domain_criteria_name, domain_criteria_name.c.evidence_id == Evidence.id)
         )
 
-        return [evidence._asdict() for evidence in query.all()]
+        results = result.one_or_none()._asdict()
+        return results if results else {}
 
     def get_all_evidence(self, supplier_code=None):
         query = (
