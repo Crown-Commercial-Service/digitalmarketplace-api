@@ -35,4 +35,4 @@ jobs:
           make requirements-dev
           make test
         env:
-          SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@localhost:5432/digitalmarketplace_test
+          SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@postgres:5432/digitalmarketplace_test
