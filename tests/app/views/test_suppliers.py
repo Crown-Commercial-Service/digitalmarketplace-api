@@ -753,7 +753,8 @@ class TestDomains(BaseApplicationTest):
             'ICT managed services',
             'Digital sourcing and ICT procurement',
             'Training, Learning and Development',
-            'Platforms integration'
+            'Platforms integration',
+            'Service Integration and Management'
         ]
 
     @mock.patch('app.tasks.publish_tasks.supplier_domain')
