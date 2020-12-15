@@ -1,32 +1,38 @@
-name: CI
-
+name: PostgreSQL service example
 on: [pull_request]
 
 jobs:
-  test:
-    name: Test against different Python versions
+  # Label of the container job
+  container-job:
+    # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python: [3.6.x, 3.7.x]
+    # Docker Hub image that `container-job` executes in
+    container: python:3.6-slim-buster
+
+    # Service containers to run with `container-job`
     services:
+      # Label used to access the service container
       postgres:
-        image: postgres:11
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
-        ports:
-        - 5432:5432
-        # needed because the postgres container does not provide a healthcheck
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python }}
-        architecture: x64
-    - name: Install packages and run tests
-      run: |
-        make requirements-dev
-        make test
-      env:
-        SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@localhost:5432/digitalmarketplace_test
+      # Downloads a copy of the code in your repository before running CI tests
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Install packages and run tests
+        run: |
+          make requirements-dev
+          make test
+        env:
+          SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@localhost:5432/digitalmarketplace_test
