@@ -6,8 +6,11 @@ jobs:
   test:
     # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
     # Docker Hub image that `container-job` executes in
-    container: python:3.6-buster
+    container: python:${{ matrix.python-version }}-buster
 
     # Service containers to run with `container-job`
     services:
