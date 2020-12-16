@@ -1,9 +1,9 @@
-name: PostgreSQL service example
+name: Test
 on: [pull_request]
 
 jobs:
   # Label of the container job
-  container-job:
+  test:
     # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
     # Docker Hub image that `container-job` executes in
@@ -26,9 +26,14 @@ jobs:
           --health-retries 5
 
     steps:
-      # Downloads a copy of the code in your repository before running CI tests
       - name: Check out repository code
         uses: actions/checkout@v2
+
+      - name: Setup Python cache
+        uses: actions/cache@v2
+        with:
+          path: venv
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
 
       - name: Install packages and run tests
         run: |
