@@ -171,6 +171,7 @@ INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_n
 INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_needed) VALUES (16, 'Digital sourcing and ICT procurement'   , 16, 0, 10000, 3);
 INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_needed) VALUES (17, 'Training, Learning and Development'     , 17, 0, 10000, 3);
 INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_needed) VALUES (18, 'Platforms integration'                  , 18, 0, 10000, 4);
+INSERT INTO domain (id, name, ordering, price_minimum, price_maximum, criteria_needed) VALUES (19, 'Service Integration and Management'     , 19, 0, 10000, 4);
 
 --
 -- Data for Name: domain_criteria; Type: TABLE DATA; Schema: public; Owner: -
@@ -268,6 +269,11 @@ INSERT INTO domain_criteria (name, domain_id, essential) VALUES ('Experience in 
 INSERT INTO domain_criteria (name, domain_id, essential) VALUES ('Ability to participate in development of transformational strategy, implementation planning / execution and operating model changes required to optimise outcomes.', 18, false);
 INSERT INTO domain_criteria (name, domain_id, essential) VALUES ('Ability to manage a consortia of vendors and integrators to deliver a holistic solution / service.', 18, false);
 INSERT INTO domain_criteria (name, domain_id, essential) VALUES ('Demonstrated ability to support Australian Industry and Indigenous participation.', 18, false);
+INSERT INTO domain_criteria (name, domain_id, essential) VALUES ('Demonstrated organisational experience and capability to conduct and/or support IT service management and coordinated service delivery in large, multi-sourced, multi-service tower, security conscious enterprise environments. Sellers need to demonstrate a sound knowledge and experience managing: end to end IT services; Governance and coordination of multiple service providers; service design and architecture, service portfolios, ITSM tools, and service catalogues; ICT Systems and Security Management including regulatory compliance requirements; ITIL based service management or equivalent ITSM Service management frameworks.', 19, true);
+INSERT INTO domain_criteria (name, domain_id, essential) VALUES ('Service Managers must provide a statement that they hold appropriate recognised industry qualifications and/or certifications pertaining to ICT service management and governance.', 19, true);
+INSERT INTO domain_criteria (name, domain_id, essential) VALUES ('Manage the complex inter-relationships and issues between service tower providers, and conflicts of interest in a multi-sourced, managed service provider enterprise environment.', 19, false);
+INSERT INTO domain_criteria (name, domain_id, essential) VALUES ('Provide a statement that your company holds recognised industry certifications relevant to quality and risk management, health and safety, project and programme management, environmental systems.', 19, false);
+INSERT INTO domain_criteria (name, domain_id, essential) VALUES ('Support of Australian industry, indigenous enterprises and small-to-medium enterprises (including as subcontractors) in the supply chain.', 19, false);
 
 --
 -- Data for Name: brief; Type: TABLE DATA; Schema: public; Owner: -
