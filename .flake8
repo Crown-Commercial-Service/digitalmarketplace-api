@@ -12,3 +12,4 @@ max-line-length = 120
 per-file-ignores =
     app/*/__init__.py : E402, F401
     app/explorer/__init__.py : E402
+    tasks.py: F401
