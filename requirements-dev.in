@@ -13,7 +13,7 @@ python-dotenv  # used to load .flaskenv
 requests-mock
 testfixtures
 
-git+https://github.com/alphagov/digitalmarketplace-test-utils.git@2.6.1#egg=digitalmarketplace-test-utils
+git+https://github.com/alphagov/digitalmarketplace-test-utils.git@update-stub-esignature#egg=digitalmarketplace-test-utils
 
 # For schema generation
 alchemyjsonschema==0.5.0
