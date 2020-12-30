@@ -38,10 +38,12 @@ jobs:
           path: venv
           key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
 
+      - name: Install developer tools
+        run: make bootstrap
 
       - name: Install packages and run tests
         run: |
-          make requirements-dev
-          make test
+          invoke requirements-dev
+          invoke test
         env:
           SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@localhost:5432/digitalmarketplace_test
