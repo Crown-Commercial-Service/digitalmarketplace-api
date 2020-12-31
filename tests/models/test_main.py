@@ -462,6 +462,7 @@ class TestFrameworks(BaseApplicationTest):
             'variations': {},
             'hasDirectAward': True,
             'hasFurtherCompetition': False,
+            'isESignatureSupported': False
         }
 
     def test_framework_serialization_with_default_datetimes(self):
@@ -499,6 +500,7 @@ class TestFrameworks(BaseApplicationTest):
             'variations': {},
             'hasDirectAward': True,
             'hasFurtherCompetition': False,
+            'isESignatureSupported': False
         }
 
     def test_framework_serialize_keys_match_api_stub_keys(self):
@@ -509,7 +511,7 @@ class TestFrameworks(BaseApplicationTest):
             slug='foo-109',
             framework='g-cloud',
             has_direct_award=True,
-            has_further_competition=False,
+            has_further_competition=False
         )
         db.session.add(framework)
         db.session.commit()

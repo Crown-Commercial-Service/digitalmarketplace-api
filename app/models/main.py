@@ -230,6 +230,7 @@ class Framework(db.Model):
             'variations': (self.framework_agreement_details or {}).get("variations", {}),
             'hasDirectAward': self.has_direct_award,
             'hasFurtherCompetition': self.has_further_competition,
+            'isESignatureSupported': self.framework_live_at_utc > datetime(2020, 9, 28),
         }
 
     def get_supplier_ids_for_completed_service(self):
