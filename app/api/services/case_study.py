@@ -26,21 +26,27 @@ class CaseStudyService(Service):
                     Domain.id == domain_id)
             .subquery()
         )
-
-        result = (
-            db
-            .session
-            .query(
-                subquery.c.category_name,
-                func.json_agg(
-                    func.json_build_object(
-                        'id', subquery.c.cs_id,
-                        'data', subquery.c.case_study_data
-                    )
-                ).label('cs_data')
+        # Handles approved categories that have no data i.e none
+        # This occurs when a category is approved in the supplier_domain
+        # but has no relevant data in the case_study or evidence table
+        sub = subquery.first()
+        if sub:
+            result = (
+                db
+                .session
+                .query(
+                    subquery.c.category_name,
+                    func.json_agg(
+                        func.json_build_object(
+                            'id', subquery.c.cs_id,
+                            'data', subquery.c.case_study_data
+                        )
+                    ).label('cs_data')
+                )
+                .group_by(subquery.c.category_name)
             )
-            .group_by(subquery.c.category_name)
-        )
 
-        results = result.one_or_none()._asdict()
-        return results if results else {}
+            results = result.one_or_none()._asdict()
+            return results if results else {}
+        else:
+            return {}
