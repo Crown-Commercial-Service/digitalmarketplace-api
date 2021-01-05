@@ -7,11 +7,12 @@ jobs:
     strategy:
       matrix:
         python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        postgres-version: [ 9.5, 10.15 ]
     services:
       postgres:
-        image: postgres:9.5
+        image: postgres:${{ matrix.postgres-version }}
         env:
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: postgres # pragma: allowlist secret
           POSTGRES_DB: digitalmarketplace_test
         # Set health checks to wait until postgres has started
         options: >-
@@ -44,4 +45,4 @@ jobs:
           make requirements-dev
           make test
         env:
-          SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@localhost:5432/digitalmarketplace_test
+          SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@localhost:5432/digitalmarketplace_test # pragma: allowlist secret
