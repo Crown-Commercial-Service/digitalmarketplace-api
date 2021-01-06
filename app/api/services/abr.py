@@ -32,14 +32,10 @@ class AbrService(Service):
 
     def fetch_data2(self, abn):
         url = self.build_url(abn)
-        # result = ''
-        # try:
         response = requests.get(url)
         xml_data = self.get_response(response)
         result = self.get_data2(xml_data)
         return result
-        # else:
-        #     return result
 
     def build_url(self, abn):
         api_key = current_app.config['ABR_API_KEY']
