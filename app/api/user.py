@@ -256,6 +256,7 @@ def create_user(
             postcode = ''
             try:
                 business_info_values = abr_service.get_url(abn)
+                # business_info_values = abr_service.fetch_data2(abn)
                 business_info_values = json.loads(business_info_values)
 
                 organisation_name = business_info_values["organisation_name"]
