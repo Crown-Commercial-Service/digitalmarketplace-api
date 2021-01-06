@@ -49,12 +49,13 @@ class AbrService(Service):
         return url
 
     def get_response(self, response):
-        if response.ok:
-            xmlText = response.content
-            return xmlText
+        try:
+            response.raise_for_status()
+            if response.ok:
+                xmlText = response.content
+                return xmlText
         # is this the right place to put this?
         # this raises for 400 or 500 calls
-        response.raise_for_status()
 
     # Raising different exceptions
     # timeout is considered as payload exception hence why it is not included
