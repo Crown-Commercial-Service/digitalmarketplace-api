@@ -32,10 +32,11 @@ class AbrService(Service):
 
     def fetch_data2(self, abn):
         url = self.build_url(abn)
+        result = ''
         try:
             xml_data = self.get_response(requests.get(url))
             # xml_data = get_response(response)
-        result = get_data2(xml_data)
+            result = get_data2(xml_data)
         return result
 
     def build_url(self, abn):
