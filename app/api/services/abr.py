@@ -44,7 +44,7 @@ class AbrService(Service):
         link = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
         url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
         return url
-    
+
     def get_response(self, response):
         if response.ok:
             xmlText = response.content
@@ -69,7 +69,7 @@ class AbrService(Service):
 
         except Exception as ex:
                 raise AbrError('Failed exception raised')
-    
+
     def get_data2(self, xmlText):
         # check and see if xmlText contains organisation Name
         if re.findall(r'<organisationName>(.*?)</organisationName>', xmlText):
