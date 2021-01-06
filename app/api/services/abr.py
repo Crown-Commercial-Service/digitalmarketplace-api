@@ -34,9 +34,9 @@ class AbrService(Service):
         url = self.build_url(abn)
         result = ''
         try:
-            xml_data = self.get_response(requests.get(url))
-            # xml_data = get_response(response)
-            result = get_data2(xml_data)
+            response = requests.get(url)
+            xml_data = self.get_response(response)
+            result = self.get_data2(xml_data)
         return result
 
     def build_url(self, abn):
