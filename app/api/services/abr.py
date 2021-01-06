@@ -38,7 +38,8 @@ class AbrService(Service):
             xml_data = self.get_response(response)
             result = self.get_data2(xml_data)
             return result
-        
+        except:
+            pass
         else:
             return result
 
