@@ -32,24 +32,26 @@ class AbrService(Service):
 
     def fetch_data2(self, abn):
         url = self.build_url(abn)
-        response = requests.get(url)
-        xml_data = self.get_response(response)
+        xml_data = self.get_response(url)
         result = self.get_data2(xml_data)
         return result
 
     def build_url(self, abn):
         api_key = current_app.config['ABR_API_KEY']
         include_historical_details = 'N'
+        # add a config value for abr link
         link = 'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByABNv201205?searchString='
         url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
         return url
 
-    def get_response(self, response):
+    def get_response(self, url):
         try:
-            response.raise_for_status()
+            response = requests.get(url)
             if response.ok:
                 xmlText = response.content
                 return xmlText
+
+            response.raise_for_status()
         # is this the right place to put this?
         # this raises for 400 or 500 calls
 
