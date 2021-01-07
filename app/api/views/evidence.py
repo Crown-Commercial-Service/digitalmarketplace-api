@@ -1,13 +1,14 @@
 from app.api import api
 from flask import request, jsonify, current_app
 from flask_login import current_user, login_required
-from app.api.helpers import not_found, role_required, abort
+from app.api.helpers import not_found, role_required, abort, exception_logger
 from app.api.services import (
     evidence_service, evidence_assessment_service, domain_service, suppliers, briefs, assessments,
     domain_criteria_service
 )
 from app.api.business.validators import EvidenceDataValidator
 from app.api.business.domain_criteria import DomainCriteria
+from app.api.business.evidence_business import get_domain_and_evidence_data
 from app.tasks.jira import create_evidence_assessment_in_jira
 from app.tasks import publish_tasks
 from app.emails.evidence_assessments import send_evidence_assessment_requested_notification
@@ -133,6 +134,15 @@ def get_evidence(evidence_id):
     return jsonify(data)
 
 
+@api.route('/evidence/<int:evidence_id>/view', methods=['GET'])
+@exception_logger
+@login_required
+@role_required('supplier')
+def get_domain_and_evidence(evidence_id):
+    data = get_domain_and_evidence_data(evidence_id)
+    return jsonify(data)
+
+
 @api.route('/evidence/<int:evidence_id>/feedback', methods=['GET'])
 @login_required
 @role_required('supplier')
@@ -155,7 +165,10 @@ def get_evidence_feedback(evidence_id):
     criteria_from_domain = {}
     domain_criteria = domain_criteria_service.get_criteria_by_domain_id(evidence.domain.id)
     for criteria in domain_criteria:
-        criteria_from_domain[str(criteria.id)] = criteria.name
+        criteria_from_domain[str(criteria.id)] = {
+            "name": criteria.name,
+            "essential": criteria.essential
+        }
 
     criteria = {}
     failed_criteria = evidence_assessment.data.get('failed_criteria', {})
@@ -164,7 +177,10 @@ def get_evidence_feedback(evidence_id):
         has_feedback = True if criteria_id in failed_criteria.keys() else False
         criteria[criteria_id] = {
             "response": criteria_response,
-            "name": criteria_from_domain[criteria_id] if criteria_id in criteria_from_domain else '',
+            "name": criteria_from_domain[criteria_id]['name'] if criteria_id in criteria_from_domain else '',
+            "essential": (
+                criteria_from_domain[criteria_id]['essential'] if criteria_id in criteria_from_domain else False
+            ),
             "has_feedback": has_feedback,
             "assessment": failed_criteria[criteria_id] if has_feedback else {}
         }
@@ -223,7 +239,7 @@ def update_evidence(evidence_id):
         if current_app.config['JIRA_FEATURES']:
             create_evidence_assessment_in_jira.delay(evidence_id)
         try:
-            send_evidence_assessment_requested_notification(evidence.domain_id, current_user.email_address)
+            send_evidence_assessment_requested_notification(evidence_id, evidence.domain_id, current_user.email_address)
         except Exception as e:
             current_app.logger.warn(
                 'Failed to send requested assessment email for evidence id: {}, {}'.format(evidence_id, e)
