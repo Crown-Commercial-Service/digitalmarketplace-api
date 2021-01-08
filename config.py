@@ -65,6 +65,9 @@ class Config:
         'digital-outcomes-and-specialists-4': {
             'briefs': 'briefs-digital-outcomes-and-specialists'
         },
+        'digital-outcomes-and-specialists-5': {
+            'briefs': 'briefs-digital-outcomes-and-specialists'
+        },
     }
 
     DM_G12_RECOVERY_SUPPLIER_IDS = None
