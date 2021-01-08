@@ -15,7 +15,7 @@ class TestAbrService(unittest.TestCase):
             return data
 
         # new version
-        @mock.patch("app.api.services.abr_service.get_response")
+        # @mock.patch("app.api.services.abr_service.get_response")
         def test_fetch2(self, mocked_fetch_data):
             expected_parsed_data = '{"state": "NSW", "organisation_name": "yay", "postcode": "2750"}'
             data = abr_service.get_data2(self.mocked_fetch_data())
