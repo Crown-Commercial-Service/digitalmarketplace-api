@@ -1,19 +1,3 @@
-from datetime import datetime, timedelta
-
-import pytz
-from sqlalchemy import and_, case, func, literal, or_, select, union
-from sqlalchemy.orm import joinedload, noload, raiseload
-from sqlalchemy.dialects.postgresql import aggregate_order_by
-
-from app import db
-from app.api.helpers import Service
-from app.models import (CaseStudy,
-                        Domain,
-                        Framework,
-                        Supplier,
-                        SupplierDomain,
-                        SupplierFramework,
-                        User)
 import requests
 from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, ProxyError)
 import re
