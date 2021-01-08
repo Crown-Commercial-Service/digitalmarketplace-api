@@ -1,3 +1,5 @@
+from app.api.helpers import Service
+
 import requests
 from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, ProxyError)
 import re
