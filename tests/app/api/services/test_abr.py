@@ -21,6 +21,15 @@ class TestAbrService(unittest.TestCase):
             data = abr_service.get_data2(self.mocked_fetch_data())
             self.assertEqual(data, expected_parsed_data)
 
+# assertRaises only checks if an exception was raised
+        @mock.patch('app.api.services.abr_service.fetch_data2')
+        def test_connecton_error_exception_raised(self, mock_requests_get):
+            """ test the connectionError is raised"""
+            mock_requests_get.side_effect = requests.exceptions.ConnectionError()
+            url = 'http://google.com'
+            with self.assertRaises(requests.exceptions.ConnectionError):
+                abr_service.fetch_data2(url)
+
 # old tests
 
         # @mock.patch("app.api.services.abr_service.fetch_data")
