@@ -138,8 +138,8 @@ class EvidenceService(Service):
             )
         )
 
-        results = result.one_or_none()._asdict()
-        return results if results else {}
+        results = result.one_or_none()
+        return results._asdict() if results else {}
 
     def get_all_evidence(self, supplier_code=None):
         query = (
