@@ -128,6 +128,13 @@ class AbrService(Service):
 
         except Exception as ex:
                 raise AbrError('Failed exception raised')
+    
+    def get_foo():
+        try:
+            return requests.get("http://www.bongani.com")
+        except requests.exceptions.ConnectionError:
+            print("Error")
+            raise AbrError('Hi')
 
     def get_data(self, xmlText):
         if re.findall(r'<organisationName>(.*?)</organisationName>', xmlText):
