@@ -128,7 +128,7 @@ class AbrService(Service):
 
         except Exception as ex:
                 raise AbrError('Failed exception raised')
-    
+
     def get_foo():
         try:
             return requests.get("http://www.bongani.com")
