@@ -98,7 +98,4 @@ class TestAbrService(unittest.TestCase):
         the_exception = cm.exception 
         assertEqual(the_exception.value.message,'SSL Error')
         
-# with self.assertRaises(SomeException) as cm:  
-#         do_something()  
-#     the_exception = cm.exception  
-#     self.assertEqual(the_exception.error_code, 3)  
+# test payload exceptions
