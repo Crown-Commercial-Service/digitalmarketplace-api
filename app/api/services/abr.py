@@ -37,13 +37,8 @@ class AbrService(Service):
                 xmlText = response.content
                 return xmlText
 
-            response.raise_for_status()
-        # is this the right place to put this?
-        # this raises for 400 or 500 calls
-
         # Raising different exceptions
         # Timeout error is considered as payload exception hence why it is not included
-
         except ConnectionError as ex:
             raise AbrError('Connection Error')
 

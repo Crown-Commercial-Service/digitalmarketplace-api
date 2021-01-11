@@ -107,4 +107,4 @@ class TestAbrService(unittest.TestCase):
         url = 'http://google.com'
         with pytest.raises(requests.exceptions.SSLError) as cm:
             abr_service.get_response(url)
-        assertEqual(cm.value.message, 'SSL Error')
+        self.assertEqual(cm.value.message, 'SSL Error')
