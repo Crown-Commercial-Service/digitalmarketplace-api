@@ -16,8 +16,8 @@ class TestAbrService(unittest.TestCase):
 
     def mocked_fetch_data_payload_exception(self):
         data = '<ABR><response><exception><exceptionDescription>Search text is not a'\
-        'valid ABN or ACN</exceptionDescription><exceptionCode>WEBSERVICES</exceptionCode>'\
-        '</exception></response></ABR>'
+            'valid ABN or ACN</exceptionDescription><exceptionCode>WEBSERVICES</exceptionCode>'\
+            '</exception></response></ABR>'
         return data
 
     @mock.patch("app.api.services.abr_service.get_response")
