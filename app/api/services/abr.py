@@ -22,7 +22,7 @@ class AbrService(Service):
         result = self.get_data2(get_xml_data)
         return result
 
-# using the supplier's abn to set up the link to be sent ABR API
+    # using the supplier's abn to set up the link to be sent ABR API
     def build_url(self, abn):
         api_key = current_app.config['ABR_API_KEY']
         include_historical_details = 'N'
@@ -38,7 +38,7 @@ class AbrService(Service):
                 return xmlText
 
         # Raising different exceptions
-        # Timeout error is considered as payload exception hence why it is not included
+        # Timeout error is considered as payload exception hence it is not included
         except ConnectionError as ex:
             raise AbrError('Connection Error')
 
@@ -55,7 +55,7 @@ class AbrService(Service):
                 raise AbrError('Failed exception raised')
 
     def get_data2(self, xmlText):
-        # checks to see if xmlText contains organisation Name
+        # checks to see if xmlText contains organisation name
         if re.findall(r'<organisationName>(.*?)</organisationName>', xmlText):
             # takes the first organisation name
             search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
