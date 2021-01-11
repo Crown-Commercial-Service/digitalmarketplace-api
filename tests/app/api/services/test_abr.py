@@ -27,9 +27,9 @@ class TestAbrService(unittest.TestCase):
         self.assertEqual(data, expected_parsed_data)
 
     @mock.patch("app.api.services.abr_service.get_response")
-    def test_payload_exceptions(self, mocked_fetch_data):
+    def test_payload_exceptions(self, mocked_fetch_data_payload_exception):
         expected_parsed_data = 'WEBSERVICES: "Search text is not a valid ABN or ACN'
-        data = abr_service.get_data2(self.mocked_fetch_data())
+        data = abr_service.get_data2(self.mocked_fetch_data_payload_exception())
         self.assertEqual(data, expected_parsed_data)
 
     @mock.patch('app.api.services.abr_service.get_response')
