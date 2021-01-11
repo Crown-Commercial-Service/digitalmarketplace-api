@@ -18,8 +18,8 @@ class AbrService(Service):
 
     def fetch_data2(self, abn):
         url = self.build_url(abn)
-        xml_data = self.get_response(url)
-        result = self.get_data2(xml_data)
+        get_xml_data = self.get_response(url)
+        result = self.get_data2(get_xml_data)
         return result
 
     def build_url(self, abn):
