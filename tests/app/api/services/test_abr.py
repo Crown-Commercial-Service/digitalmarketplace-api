@@ -13,6 +13,10 @@ class TestAbrService(unittest.TestCase):
         data = '<ABR><response><stateCode>NSW</stateCode><postcode>2750</postcode>'\
             '<organisationName>yay</organisationName></response></ABR>'
         return data
+    def mocked_fetch_data_payload_exception(self):
+        data = '<ABR><response><exception><exceptionDescription>Search text is not a valid ABN or ACN</exceptionDescription>'\
+            '<exceptionCode>WEBSERVICES</exceptionCode></exception></response></ABR>'
+        return data
 
     @mock.patch("app.api.services.abr_service.get_response")
     def test_fetch2(self, mocked_fetch_data):
