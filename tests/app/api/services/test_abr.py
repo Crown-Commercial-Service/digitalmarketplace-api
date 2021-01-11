@@ -102,5 +102,3 @@ class TestAbrService(unittest.TestCase):
         with pytest.raises(requests.exceptions.SSLError) as cm:
             abr_service.get_response(url)
         assertEqual(cm.value.message, 'SSL Error')
-
-# test payload exceptions
