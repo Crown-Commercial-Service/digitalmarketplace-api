@@ -134,7 +134,7 @@ class AbrService(Service):
             return requests.get("http://www.bongani.com")
         except requests.exceptions.ConnectionError:
             print("Error")
-            raise AbrError('Hi')
+            raise
 
     def get_data(self, xmlText):
         if re.findall(r'<organisationName>(.*?)</organisationName>', xmlText):
