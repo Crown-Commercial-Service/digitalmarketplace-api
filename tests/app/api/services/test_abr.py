@@ -84,7 +84,7 @@ class TestAbrService(unittest.TestCase):
         assert ex_msg.value.message == 'Proxy Error'
 
     @mock.patch('app.api.services.abr_service.get_response')
-    def test_proxy_exception_message(self, mock_requests_get):
+    def test_ssl_exception_message(self, mock_requests_get):
         mock_requests_get.side_effect = requests.exceptions.SSLError('SSL Error')
         url = 'http://google.com'
         with pytest.raises(requests.exceptions.SSLError) as ex_msg:
@@ -100,11 +100,3 @@ class TestAbrService(unittest.TestCase):
             abr_service.get_response(url)
 
         assert ex_msg.value.message == 'Failed exception raised'
-
-    @mock.patch('app.api.services.abr_service.get_response')
-    def test_proxy_exception_message(self, mock_requests_get):
-        mock_requests_get.side_effect = requests.exceptions.SSLError('SSL Error')
-        url = 'http://google.com'
-        with pytest.raises(requests.exceptions.SSLError) as cm:
-            abr_service.get_response(url)
-        self.assertEqual(cm.value.message, 'SSL Error')
