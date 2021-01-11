@@ -38,13 +38,14 @@ class TestAbrService(unittest.TestCase):
         with self.assertRaises(requests.exceptions.SSLError):
             abr_service.fetch_data2(url)
 # get response wip
+
     @mock.patch('requests.get')
     def test_foo(self, mock_requests_get):
         mock_requests_get.side_effect = requests.exceptions.ConnectionError()
         url = 'http://google.com'
         with self.assertRaises(requests.exceptions.ConnectionError) as cm:
             abr_service.get_response(url)
-        # the_exception = cm.exception  
+        # the_exception = cm.exception
 #     self.assertEqual(the_exception.error_code, 3)
 
     @mock.patch('requests.get')
@@ -104,11 +105,6 @@ class TestAbrService(unittest.TestCase):
             abr_service.fetch_data2(url)
 
         assert ex.value.message == 'Failed exception raised'
-
-# with self.assertRaises(SomeException) as cm:  
-#         do_something()  
-#     the_exception = cm.exception  
-#     self.assertEqual(the_exception.error_code, 3)
 # old tests
 
         # @mock.patch("app.api.services.abr_service.fetch_data")
