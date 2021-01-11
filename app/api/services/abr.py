@@ -55,8 +55,7 @@ class AbrService(Service):
                 raise AbrError('Failed exception raised')
 
     def get_data(self, xmlText):
-        # checks to see if xmlText contains organisation name
-        if re.findall(r'<organisationName>(.*?)</organisationName>', xmlText):
+        try:
             # takes the first organisation name
             search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
             organisation_name = search_xml_organisation_name[0]
@@ -78,7 +77,7 @@ class AbrService(Service):
             })
 
         # Payload exceptions: https://abr.business.gov.au/Documentation/Exceptions
-        else:
+        except Exception as ex:
             search_exception_code = re.findall(r'<exceptionCode>(.*?)</exceptionCode>', xmlText)
             exception_code = search_exception_code[0]
 
