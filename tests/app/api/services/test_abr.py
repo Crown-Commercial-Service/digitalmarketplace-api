@@ -96,6 +96,10 @@ class TestAbrService(unittest.TestCase):
 
         assert ex.value.message == 'Failed exception raised'
 
+# with self.assertRaises(SomeException) as cm:  
+#         do_something()  
+#     the_exception = cm.exception  
+#     self.assertEqual(the_exception.error_code, 3)
 # old tests
 
         # @mock.patch("app.api.services.abr_service.fetch_data")
