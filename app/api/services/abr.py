@@ -16,7 +16,7 @@ class AbrService(Service):
     def __init__(self, *args, **kwargs):
         super(AbrService, self).__init__(*args, **kwargs)
 
-    def fetch_data2(self, abn):
+    def fetch_data(self, abn):
         url = self.build_url(abn)
         get_xml_data = self.get_response(url)
         result = self.get_data2(get_xml_data)
@@ -54,7 +54,7 @@ class AbrService(Service):
         except Exception as ex:
                 raise AbrError('Failed exception raised')
 
-    def get_data2(self, xmlText):
+    def get_data(self, xmlText):
         # checks to see if xmlText contains organisation name
         if re.findall(r'<organisationName>(.*?)</organisationName>', xmlText):
             # takes the first organisation name
