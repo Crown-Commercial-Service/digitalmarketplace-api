@@ -19,7 +19,7 @@ class AbrService(Service):
     def fetch_data(self, abn):
         url = self.build_url(abn)
         get_xml_data = self.get_response(url)
-        result = self.get_data2(get_xml_data)
+        result = self.get_data(get_xml_data)
         return result
 
     # using the supplier's abn to set up the link to be sent ABR API
