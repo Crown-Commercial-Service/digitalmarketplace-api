@@ -70,6 +70,9 @@ To re-create an empty test database without migrations (this is a useful trouble
 make test-bootstrap
 ```
 
+### Updating test API model stubs
+The tests validate API responses against the model stubs in https://github.com/alphagov/digitalmarketplace-test-utils/tree/master/dmtestutils/api_model_stubs. To update these, point the API requirements-dev to a branch of `digitalmarketplace-test-utils`. Once your changes are approved in a PR you should make a new release of `digitalmarketplace-test-utils` and update the version in `digitalmarketplace-api` to use it.
+
 
 ### Updating Python dependencies
 
