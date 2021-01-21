@@ -1,3 +1,5 @@
+from typing import Dict, Union
+
 import pytest
 from tests.bases import BaseApplicationTest, JSONUpdateTestMixin
 from datetime import datetime
@@ -13,7 +15,7 @@ from tests.helpers import FixtureMixin, load_example_listing
 class DraftsHelpersMixin(BaseApplicationTest, FixtureMixin):
     service_id = None
     updater_json = None
-    create_draft_json = None
+    create_draft_json: Dict[str, Union[str, dict]] = None
     basic_questions_json = None
     exclude_questions_json = None
 
@@ -934,12 +936,12 @@ class TestDraftServices(DraftsHelpersMixin):
 
     def test_should_create_draft_for_g12_recovery_supplier(self, live_g12_framework):
         draft_json = self.create_draft_json.copy()
+        draft_json['updated_by'] = "test@digital.cabinet-office.gov.uk"
         draft_json['services'] = {
             'frameworkSlug': 'g-cloud-12',
             'lot': 'cloud-hosting',
-            'supplierId': 1
+            'supplierId': 1,
         }
-        self.app.config['DM_G12_RECOVERY_SUPPLIER_IDS'] = "1"
 
         res = self.client.post(
             '/draft-services',

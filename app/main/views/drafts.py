@@ -8,7 +8,6 @@ from datetime import datetime
 
 from .. import main
 from ... import db
-from ...supplier_utils import is_g12_recovery_supplier
 from ...validation import is_valid_service_id_or_400
 from ...models import Service, DraftService, Supplier, AuditEvent, Framework, Lot
 from ...utils import (
@@ -510,7 +509,7 @@ def create_new_draft_service():
     framework, lot, supplier = validate_and_return_related_objects(draft_json)
 
     if not (framework.status == 'open' or
-            (framework.slug == 'g-cloud-12' and is_g12_recovery_supplier(supplier.supplier_id))):
+            (framework.slug == 'g-cloud-12' and updater_json['updated_by'].endswith('@digital.cabinet-office.gov.uk'))):
         abort(400, "'{}' is not open for submissions".format(framework.slug))
 
     if lot.one_service_limit:
