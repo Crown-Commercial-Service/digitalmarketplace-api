@@ -12,6 +12,7 @@ from requests.utils import default_headers
 from sqlalchemy import true
 
 from app import db
+from app.tasks import publish_tasks
 from app.api.services import AuditTypes as audit_types
 from app.api.services import audit_service, audit_types, suppliers, briefs
 from app.models import (AuditEvent, Brief, Framework, Supplier, SupplierDomain,
@@ -65,10 +66,22 @@ def create_campaign(client, recipients, settings=None):
                                 .format(response['id'], recipients['list_id']))
         return response
     except RequestException as e:
+        # publish error in slack and rollbar
+        publish_tasks.mailchimp.delay(
+            'error',
+            message='Mailchimp API error occurred when creating a campaign',
+            error=e.message
+        )
         current_app.logger.error(
             'A Mailchimp API error occurred while creating a campaign, aborting: {} {}'.format(e, e.response))
         rollbar.report_exc_info()
         raise e
+    except Exception as error:
+        publish_tasks.mailchimp.delay(
+            'error',
+            message='Mailchimp API error occurred when creating a campaign',
+            error=error.message
+        )
 
 
 def update_campaign_content(client, campaign_id, email_body):
@@ -83,11 +96,23 @@ def update_campaign_content(client, campaign_id, email_body):
         current_app.logger.info('Content updated for Mailchimp campaign {}'.format(campaign_id))
         return response
     except RequestException as e:
+        # publish error in slack and rollbar
+        publish_tasks.mailchimp.delay(
+            'error',
+            message='Mailchimp API error occurred when updating campaign content',
+            error=e.message
+        )
         current_app.logger.error(
             'A Mailchimp API error occurred while updating content for campaign {}, aborting: {} {}'
             .format(campaign_id, e, e.response))
         rollbar.report_exc_info()
         raise e
+    except Exception as error:
+        publish_tasks.mailchimp.delay(
+            'error',
+            message='Mailchimp API error occurred when updating campaign content',
+            error=error.message
+        )
 
 
 def schedule_campaign(client, campaign_id, schedule_time):
@@ -98,11 +123,23 @@ def schedule_campaign(client, campaign_id, schedule_time):
         current_app.logger.info('Mailchimp campaign {} scheduled for {}'.format(campaign_id, schedule_time))
         return response
     except RequestException as e:
+        # publish error in slack and rollbar
+        publish_tasks.mailchimp.delay(
+            'error',
+            message='Mailchimp API error occurred when scheduling campaign',
+            error=e.message
+        )
         current_app.logger.error(
             'A Mailchimp API error occurred while scheduling campaign {}, aborting: {} {}'
             .format(campaign_id, e, e.response))
         rollbar.report_exc_info()
         raise e
+    except Exception as error:
+        publish_tasks.mailchimp.delay(
+            'error',
+            message='Mailchimp API error occurred when scheduling campaign',
+            error=error.message
+        )
 
 
 def add_members_to_list(client, list_id, email_addresses):
@@ -122,11 +159,23 @@ def add_members_to_list(client, list_id, email_addresses):
 
         return response
     except RequestException as e:
+        # publish error in slack and rollbar
+        publish_tasks.mailchimp.delay(
+            'error',
+            message='Mailchimp API error occurred while adding a member to list',
+            error=e.message
+        )
         current_app.logger.error(
             'A Mailchimp API error occurred while adding a member to list {}, aborting: {} {}'
             .format(list_id, e, e.response))
         rollbar.report_exc_info()
         raise e
+    except Exception as error:
+        publish.task.mailchimp.delay(
+            'error',
+            message='Mailchimp API error occurred while adding a member to list',
+            error=error.message
+        )
 
 
 def send_document_expiry_campaign(client, sellers):
