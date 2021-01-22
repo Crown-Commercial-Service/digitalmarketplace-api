@@ -9,6 +9,7 @@ from six.moves import zip as izip
 from app.models import (Application, AuditEvent, Domain, Framework,
                         MasterAgreement, Product, User, db, utcnow)
 from tests.app.helpers import BaseApplicationTest
+from sqlalchemy import func
 
 application_data = {
     'number_of_employees': 'Sole trader',
@@ -422,8 +423,22 @@ class TestGetApplication(BaseApplicationsTest):
         self.application_id = self.setup_dummy_application()
 
         with self.app.app_context():
+            domain_id = (
+                db
+                .session
+                .query(func.max(Domain.id))
+                .scalar()
+            )
+
             db.session.add(
-                Domain(id=18, name='test domain', ordering=1, price_minimum=123, price_maximum=1234, criteria_needed=1)
+                Domain(
+                    id=domain_id + 1,
+                    name='test domain',
+                    ordering=1,
+                    price_minimum=123,
+                    price_maximum=1234,
+                    criteria_needed=1
+                )
             )
             db.session.commit()
 

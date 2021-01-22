@@ -25,6 +25,9 @@ class Publish(object):
     def evidence(self, evidence, event_type, **kwargs):
         return self.__generic('evidence', event_type, evidence=evidence, **kwargs)
 
+    def mailchimp(self, event_type, **kwargs):
+        return self.__generic('mailchimp', event_type, **kwargs)
+
     def supplier(self, supplier, event_type, **kwargs):
         return self.__generic('supplier', event_type, supplier=supplier, **kwargs)
 

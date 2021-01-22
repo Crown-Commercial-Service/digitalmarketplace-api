@@ -196,6 +196,8 @@ def test_send_new_briefs_email_fails_with_empty_list_id(app, mocker):
 def test_send_new_briefs_email_fails_mailchimp_api_call_with_requests_error(app, briefs, mocker):
     mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
     requestEx = mocker.patch('app.tasks.mailchimp.RequestException')
+    Ex = mocker.patch('app.tasks.mailchimp.Exception')
+
     client = MagicMock()
 
     mailchimp.return_value = client
@@ -209,6 +211,8 @@ def test_send_new_briefs_email_fails_mailchimp_api_call_with_requests_error(app,
             assert False
         except RequestException as e:
             assert True
+        except Ex as error:
+            assert False
 
 
 brief_response_data = {
