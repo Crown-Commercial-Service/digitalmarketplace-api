@@ -50,7 +50,7 @@ flask-gzip==0.2
     # via digitalmarketplace-utils
 flask-login==0.5.0
     # via digitalmarketplace-utils
-flask-migrate==2.5.3
+flask-migrate==2.6.0
     # via -r requirements.in
 flask-sqlalchemy==2.4.4
     # via
