@@ -9,7 +9,7 @@ from mock import patch
 
 class TestAbrService(unittest.TestCase):
 
-    def mocked_fetch_data(self):
+    def mocked_find_business_by_abn(self):
         data = '<ABR><response><stateCode>NSW</stateCode><postcode>2750</postcode>'\
             '<organisationName>yay</organisationName></response></ABR>'
         return data
@@ -21,10 +21,10 @@ class TestAbrService(unittest.TestCase):
         return data
 
     @mock.patch("app.api.services.abr_service.call_abr_api")
-    def test_parsed_data(self, mocked_fetch_data):
+    def test_parsed_data(self, mocked_find_business_by_abn):
         """ test expected parsed data"""
         expected_parsed_data = '{"state": "NSW", "organisation_name": "yay", "postcode": "2750"}'
-        data = abr_service.get_data(self.mocked_fetch_data())
+        data = abr_service.get_data(self.mocked_find_business_by_abn())
         self.assertEqual(data, expected_parsed_data)
 
     @mock.patch("app.api.services.abr_service.call_abr_api")

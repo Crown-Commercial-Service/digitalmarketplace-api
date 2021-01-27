@@ -15,7 +15,7 @@ class AbrService(Service):
     def __init__(self, *args, **kwargs):
         super(AbrService, self).__init__(*args, **kwargs)
 
-    def fetch_data(self, abn):
+    def find_business_by_abn(self, abn):
         url = self.build_abn_search_url(abn)
         get_xml_data = self.call_abr_api(url)
         result = self.get_data(get_xml_data)
