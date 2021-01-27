@@ -3,7 +3,6 @@ from app.api.helpers import Service
 import requests
 from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, ProxyError)
 import re
-from app.tasks import publish_tasks
 from app.api.business.errors import AbrError
 from flask import current_app
 import xml.etree.ElementTree as ElementTree
