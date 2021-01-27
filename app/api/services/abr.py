@@ -20,7 +20,6 @@ class AbrService(Service):
         result = self.get_data(get_xml_data)
         return result
 
-    # using the supplier's abn to set up the link to be sent ABR API
     def build_abn_search_url(self, abn):
         api_key = current_app.config['ABR_API_KEY']
         include_historical_details = 'N'
