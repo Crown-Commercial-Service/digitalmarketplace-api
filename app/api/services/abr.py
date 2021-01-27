@@ -16,13 +16,13 @@ class AbrService(Service):
         super(AbrService, self).__init__(*args, **kwargs)
 
     def fetch_data(self, abn):
-        url = self.build_url(abn)
+        url = self.build_abn_search_url(abn)
         get_xml_data = self.get_response(url)
         result = self.get_data(get_xml_data)
         return result
 
     # using the supplier's abn to set up the link to be sent ABR API
-    def build_url(self, abn):
+    def build_abn_search_url(self, abn):
         api_key = current_app.config['ABR_API_KEY']
         include_historical_details = 'N'
         link = current_app.config['ABR_API_LINK']
