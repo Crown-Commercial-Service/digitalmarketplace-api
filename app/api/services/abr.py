@@ -17,7 +17,7 @@ class AbrService(Service):
 
     def fetch_data(self, abn):
         url = self.build_abn_search_url(abn)
-        get_xml_data = self.get_response(url)
+        get_xml_data = self.call_abr_api(url)
         result = self.get_data(get_xml_data)
         return result
 
@@ -29,7 +29,7 @@ class AbrService(Service):
         url = link + abn + '&includeHistoricalDetails=' + include_historical_details + '&authenticationGuid=' + api_key
         return url
 
-    def get_response(self, url):
+    def call_abr_api(self, url):
         try:
             response = requests.get(url)
             if response.ok:
