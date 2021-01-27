@@ -50,7 +50,7 @@ class AbrService(Service):
             raise AbrError('SSL Error')
 
         except Exception as ex:
-                raise AbrError('Failed exception raised')
+            raise AbrError('Unexpected request error')
 
     def get_data(self, xml_text):
         try:
