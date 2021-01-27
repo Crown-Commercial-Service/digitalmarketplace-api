@@ -34,8 +34,8 @@ class AbrService(Service):
         try:
             response = requests.get(url)
             if response.ok:
-                xmlText = response.content
-                return xmlText
+                xml_text = response.content
+                return xml_text
 
         # Raising different exceptions
         # Timeout error is considered as payload exception hence it is not included
@@ -54,20 +54,20 @@ class AbrService(Service):
         except Exception as ex:
                 raise AbrError('Failed exception raised')
 
-    def get_data(self, xmlText):
+    def get_data(self, xml_text):
         try:
             # takes the first organisation name
-            search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xmlText)
+            search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xml_text)
             organisation_name = search_xml_organisation_name[0]
             # this only works for &, < and > but not ' and ""
             organisation_name = saxutils.unescape(organisation_name)
 
             # takes the first postcode
-            search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', xmlText)
+            search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', xml_text)
             postcode = search_xml_postcode[0]
 
             # takes the first state
-            search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', xmlText)
+            search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', xml_text)
             state = search_xml_state[0]
 
             return json.dumps({
@@ -78,10 +78,10 @@ class AbrService(Service):
 
         # Payload exceptions: https://abr.business.gov.au/Documentation/Exceptions
         except Exception as ex:
-            search_exception_code = re.findall(r'<exceptionCode>(.*?)</exceptionCode>', xmlText)
+            search_exception_code = re.findall(r'<exceptionCode>(.*?)</exceptionCode>', xml_text)
             exception_code = search_exception_code[0]
 
-            search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', xmlText)
+            search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', xml_text)
             exception_description = search_exception_description[0]
 
             raise AbrError(exception_code + ': ' + exception_description)
