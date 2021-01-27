@@ -5,7 +5,6 @@ from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, 
 import re
 from app.api.business.errors import AbrError
 from flask import current_app
-import xml.etree.ElementTree as ElementTree
 import json
 from xml.sax import saxutils
 
