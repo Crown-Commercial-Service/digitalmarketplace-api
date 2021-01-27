@@ -16,8 +16,8 @@ class AbrService(Service):
 
     def find_business_by_abn(self, abn):
         url = self.build_abn_search_url(abn)
-        get_xml_data = self.call_abr_api(url)
-        result = self.get_data(get_xml_data)
+        response = self.call_abr_api(url)
+        result = self.get_data(response)
         return result
 
     def build_abn_search_url(self, abn):
