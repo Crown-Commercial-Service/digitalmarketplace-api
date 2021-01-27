@@ -5,7 +5,6 @@ from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, 
 import re
 from app.api.business.errors import AbrError
 from flask import current_app
-import xml.etree.ElementTree as ElementTree
 import json
 from xml.sax import saxutils
 
@@ -51,7 +50,7 @@ class AbrService(Service):
             raise AbrError('SSL Error')
 
         except Exception as ex:
-                raise AbrError('Failed exception raised')
+            raise AbrError('Unexpected request error')
 
     def get_data(self, xml_text):
         try:
