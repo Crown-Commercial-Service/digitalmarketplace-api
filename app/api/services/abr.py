@@ -56,17 +56,17 @@ class AbrService(Service):
         try:
             # takes the first organisation name
             search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xml_text)
-            organisation_name = search_xml_organisation_name[0]
+            organisation_name = search_xml_organisation_name[0] if len(search_xml_organisation_name) > 0 else ''
             # this only works for &, < and > but not ' and ""
             organisation_name = saxutils.unescape(organisation_name)
 
             # takes the first postcode
             search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', xml_text)
-            postcode = search_xml_postcode[0]
+            postcode = search_xml_postcode[0] if len(search_xml_postcode) > 0 else ''
 
             # takes the first state
             search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', xml_text)
-            state = search_xml_state[0]
+            state = search_xml_state[0] if len(search_xml_state) > 0 else ''
 
             return json.dumps({
                 'organisation_name': organisation_name,
@@ -77,9 +77,9 @@ class AbrService(Service):
         # Payload exceptions: https://abr.business.gov.au/Documentation/Exceptions
         except Exception as ex:
             search_exception_code = re.findall(r'<exceptionCode>(.*?)</exceptionCode>', xml_text)
-            exception_code = search_exception_code[0]
+            exception_code = search_exception_code[0] if len(search_exception_code) > 0 else 'Exception code not found'
 
             search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', xml_text)
-            exception_description = search_exception_description[0]
+            exception_description = search_exception_description[0] if len(search_exception_description) > 0 else 'Exception description not found'
 
             raise AbrError(exception_code + ': ' + exception_description)
