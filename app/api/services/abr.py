@@ -34,8 +34,7 @@ class AbrService(Service):
                 xml_text = response.content
                 return xml_text
 
-        # Raising different exceptions
-        # Timeout error is considered as payload exception hence it is not included
+        # Timeout error is a payload exception hence it is not included
         except ConnectionError as ex:
             raise AbrError('Connection Error')
 
