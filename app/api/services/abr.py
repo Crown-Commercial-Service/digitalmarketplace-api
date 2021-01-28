@@ -33,7 +33,7 @@ class AbrService(Service):
             if response.ok:
                 xml_text = response.content
                 error = get_abr_exception(xml_text)
-                if error is None then:
+                if error is None:
                     return xml_text
                 else:
                     raise AbrError(error)
