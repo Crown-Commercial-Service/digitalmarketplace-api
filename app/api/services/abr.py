@@ -80,7 +80,7 @@ class AbrService(Service):
 
             search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', xml_text)
             if len(search_exception_description) > 0:
-                exception_description = search_exception_description[0]  
+                exception_description = search_exception_description[0]
             else:
                 exception_description = 'Exception description not found'
 
