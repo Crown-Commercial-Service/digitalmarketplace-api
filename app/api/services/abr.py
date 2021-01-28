@@ -53,7 +53,7 @@ class AbrService(Service):
 
         except RequestException as ex:
             raise AbrError('Unexpected request error')
-    
+
     def get_abr_exception(self, xml_text):
         exception_code = 'No exception code found'
         exception_description = 'No exception description found'
@@ -64,7 +64,7 @@ class AbrService(Service):
             exception_code = search_exception_code[0]
 
         search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', xml_text)
-        if len(search_exception_description)> 0:
+        if len(search_exception_description) > 0:
             exception_description = search_exception_description[0]
 
         if (exception_code != 'No exception code found') or (exception_description != 'No exception description found'):
@@ -72,7 +72,7 @@ class AbrService(Service):
             return error
         # If the xml text contains no exception descriptions return error is None
         else:
-            return error=None
+            return error = None
 
     def get_data(self, xml_text):
         try:
