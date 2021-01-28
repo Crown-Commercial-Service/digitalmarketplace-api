@@ -31,10 +31,10 @@ class AbrService(Service):
         try:
             response = requests.get(url)
             if response.ok:
-                xml_text = response.content
-                error = get_abr_exception(xml_text)
+                get_seller_details = response.content
+                error = get_abr_exception(get_seller_details)
                 if error is None:
-                    return xml_text
+                    return get_seller_details
                 else:
                     raise AbrError(error)
 
@@ -54,15 +54,15 @@ class AbrService(Service):
         except RequestException as ex:
             raise AbrError('Unexpected request error')
 
-    def get_abr_exception(self, xml_text):
+    def get_abr_exception(self, get_seller_details):
         exception_code = 'No exception code found'
         exception_description = 'No exception description found'
 
-        search_exception_code = re.findall(r'<exceptionCode>(.*?)</exceptionCode>', xml_text)
+        search_exception_code = re.findall(r'<exceptionCode>(.*?)</exceptionCode>', get_seller_details)
         if len(search_exception_code) > 0:
             exception_code = search_exception_code[0]
 
-        search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', xml_text)
+        search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', get_seller_details)
         if len(search_exception_description) > 0:
             exception_description = search_exception_description[0]
 
@@ -73,20 +73,20 @@ class AbrService(Service):
         else:
             return None
 
-    def get_data(self, xml_text):
+    def get_data(self, get_seller_details):
         try:
             # takes the first organisation name
-            search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', xml_text)
+            search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', get_seller_details)
             organisation_name = search_xml_organisation_name[0] if len(search_xml_organisation_name) > 0 else ''
             # this only works for &, < and > but not ' and ""
             organisation_name = saxutils.unescape(organisation_name)
 
             # takes the first postcode
-            search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', xml_text)
+            search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', get_seller_details)
             postcode = search_xml_postcode[0] if len(search_xml_postcode) > 0 else ''
 
             # takes the first state
-            search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', xml_text)
+            search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', get_seller_details)
             state = search_xml_state[0] if len(search_xml_state) > 0 else ''
             abn_dict = {
                 'organisation_name': organisation_name,
@@ -97,10 +97,10 @@ class AbrService(Service):
 
         # Payload exceptions: https://abr.business.gov.au/Documentation/Exceptions
         except Exception as ex:
-            search_exception_code = re.findall(r'<exceptionCode>(.*?)</exceptionCode>', xml_text)
+            search_exception_code = re.findall(r'<exceptionCode>(.*?)</exceptionCode>', get_seller_details)
             exception_code = search_exception_code[0] if len(search_exception_code) > 0 else 'Exception code not found'
 
-            search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', xml_text)
+            search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', get_seller_details)
             if len(search_exception_description) > 0:
                 exception_description = search_exception_description[0]
             else:
