@@ -1,7 +1,7 @@
 from app.api.helpers import Service
 
 import requests
-from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, ProxyError)
+from requests.exceptions import (HTTPError, Timeout, ConnectionError, SSLError, ProxyError, RequestException)
 import re
 from app.api.business.errors import AbrError
 from flask import current_app
@@ -47,7 +47,7 @@ class AbrService(Service):
         except SSLError as ex:
             raise AbrError('SSL Error')
 
-        except Exception as ex:
+        except RequestException as ex:
             raise AbrError('Unexpected request error')
 
     def get_data(self, xml_text):
