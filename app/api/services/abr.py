@@ -79,7 +79,9 @@ class AbrService(Service):
             exception_code = search_exception_code[0] if len(search_exception_code) > 0 else 'Exception code not found'
 
             search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', xml_text)
-            exception_description = search_exception_description[0] if len(search_exception_description) > 0 
-            else 'Exception description not found'
+            if len(search_exception_description) > 0:
+                exception_description = search_exception_description[0]  
+            else:
+                exception_description = 'Exception description not found'
 
             raise AbrError(exception_code + ': ' + exception_description)
