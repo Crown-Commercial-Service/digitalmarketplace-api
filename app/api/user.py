@@ -256,12 +256,9 @@ def create_user(
             postcode = ''
             try:
                 business_info_values = abr_service.find_business_by_abn(abn)
-                business_info_values = json.loads(business_info_values)
-
-                organisation_name = business_info_values["organisation_name"]
-                state = business_info_values["state"]
-                postcode = business_info_values["postcode"]
-
+                organisation_name = business_info_values.get('organisation_name')
+                state = business_info_values.get('state')
+                postcode = business_info_values.get('postcode')
                 # If ABR API is down, it will publish a slack message
             except AbrError:
                 publish_tasks.user.delay(
