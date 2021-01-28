@@ -66,7 +66,7 @@ class AbrService(Service):
             search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', xml_text)
             state = search_xml_state[0] if len(search_xml_state) > 0 else ''
             abn_dict = {}
-            return abn_dict = {
+            return abn_dict{
                 'organisation_name': organisation_name,
                 'postcode': postcode,
                 'state': state
