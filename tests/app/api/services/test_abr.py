@@ -27,14 +27,14 @@ class TestAbrService(unittest.TestCase):
         data = abr_service.get_data(self.mocked_find_business_by_abn())
         self.assertEqual(data, expected_parsed_data)
 
-    @mock.patch("app.api.services.abr_service.call_abr_api")
-    def test_payload_exceptions(self, mocked_payload_exception):
-        """ test payload exception"""
-        expected_msg = 'WEBSERVICES: Search text is not a valid ABN or ACN'
-        with pytest.raises(Exception) as ex_msg:
-            abr_service.get_data(self.mocked_payload_exception())
+    # @mock.patch("app.api.services.abr_service.call_abr_api")
+    # def test_payload_exceptions(self, mocked_payload_exception):
+    #     """ test payload exception"""
+    #     expected_msg = 'WEBSERVICES: Search text is not a valid ABN or ACN'
+    #     with pytest.raises(Exception) as ex_msg:
+    #         abr_service.get_data(self.mocked_payload_exception())
 
-        assert ex_msg.value.message == expected_msg
+    #     assert ex_msg.value.message == expected_msg
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
     def test_connecton_error_exception_raised(self, mock_requests_get):
