@@ -59,11 +59,11 @@ class AbrService(Service):
         exception_code = 'No exception code found'
         exception_description = 'No exception description found'
 
-        search_exception_code = re.findall(r'<exceptionCode>(.*?)</exceptionCode>', get_seller_details)
+        search_exception_code = re.findall(r'<exceptionCode>(.+)</exceptionCode>', get_seller_details)
         if len(search_exception_code) > 0:
             exception_code = search_exception_code[0]
 
-        search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>',
+        search_exception_description = re.findall(r'<exceptionDescription>(.+)</exceptionDescription>',
                                                   get_seller_details)
         if len(search_exception_description) > 0:
             exception_description = search_exception_description[0]
@@ -77,17 +77,17 @@ class AbrService(Service):
 
     def get_data(self, get_seller_details):
         # takes the first organisation name
-        search_xml_organisation_name = re.findall(r'<organisationName>(.*?)</organisationName>', get_seller_details)
+        search_xml_organisation_name = re.findall(r'<organisationName>(.+)</organisationName>', get_seller_details)
         organisation_name = search_xml_organisation_name[0] if len(search_xml_organisation_name) > 0 else ''
         # this only works for &, < and > but not ' and ""
         organisation_name = saxutils.unescape(organisation_name)
 
         # takes the first postcode
-        search_xml_postcode = re.findall(r'<postcode>(.*?)</postcode>', get_seller_details)
+        search_xml_postcode = re.findall(r'<postcode>(.+)</postcode>', get_seller_details)
         postcode = search_xml_postcode[0] if len(search_xml_postcode) > 0 else ''
 
         # takes the first state
-        search_xml_state = re.findall(r'<stateCode>(.*?)</stateCode>', get_seller_details)
+        search_xml_state = re.findall(r'<stateCode>(.+)</stateCode>', get_seller_details)
         state = search_xml_state[0] if len(search_xml_state) > 0 else ''
         abn_dict = {
             'organisation_name': organisation_name,
