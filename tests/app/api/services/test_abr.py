@@ -31,8 +31,8 @@ class TestAbrService():
     def test_payload_exceptions(self, mocked_payload_exception):
         """ test payload exception"""
         expected_msg = 'WEBSERVICES: Search text is not a valid ABN or ACN'
-        abr_service.get_abr_exception(self.mocked_payload_exception())
-        assert AbrError is True
+        result = abr_service.get_abr_exception(self.mocked_payload_exception())
+        assert result == expected_msg
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
     def test_connecton_error_exception_raised(self, mock_requests_get):
