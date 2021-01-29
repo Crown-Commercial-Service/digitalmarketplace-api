@@ -54,8 +54,7 @@ class AbrService(Service):
         except RequestException as ex:
             raise AbrError('Unexpected request error')
 
-
-# Payload exceptions: https://abr.business.gov.au/Documentation/Exceptions
+    # Payload exceptions: https://abr.business.gov.au/Documentation/Exceptions
     def get_abr_exception(self, get_seller_details):
         exception_code = 'No exception code found'
         exception_description = 'No exception description found'
@@ -64,7 +63,8 @@ class AbrService(Service):
         if len(search_exception_code) > 0:
             exception_code = search_exception_code[0]
 
-        search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>', get_seller_details)
+        search_exception_description = re.findall(r'<exceptionDescription>(.*?)</exceptionDescription>',
+                                                    get_seller_details)
         if len(search_exception_description) > 0:
             exception_description = search_exception_description[0]
 
