@@ -41,7 +41,7 @@ class TestAbrService():
         """ test that connection error is raised"""
         mock_requests_get.side_effect = requests.exceptions.ConnectionError()
         url = 'http://google.com'
-        with self.assertRaises(requests.exceptions.ConnectionError):
+        with pytest.raises(requests.exceptions.ConnectionError):
             abr_service.call_abr_api(url)
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
@@ -49,7 +49,7 @@ class TestAbrService():
         """ test that SSL error is raised"""
         mock_requests_get.side_effect = requests.exceptions.SSLError()
         url = 'http://google.com'
-        with self.assertRaises(requests.exceptions.SSLError):
+        with pytest.raises(requests.exceptions.SSLError):
             abr_service.call_abr_api(url)
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
@@ -57,7 +57,7 @@ class TestAbrService():
         """ test that HTTP error is raised"""
         mock_requests_get.side_effect = requests.exceptions.HTTPError()
         url = 'http://google.com'
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             abr_service.call_abr_api(url)
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
@@ -65,7 +65,7 @@ class TestAbrService():
         """ test that proxy error is raised"""
         mock_requests_get.side_effect = requests.exceptions.ProxyError()
         url = 'http://google.com'
-        with self.assertRaises(requests.exceptions.ProxyError):
+        with pytest.raises(requests.exceptions.ProxyError):
             abr_service.call_abr_api(url)
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
