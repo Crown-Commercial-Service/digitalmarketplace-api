@@ -1,6 +1,7 @@
 import pytest
 
 from app.api.services import abr_service
+from app.api.business.errors import AbrError
 import requests
 import mock
 from mock import patch
@@ -30,7 +31,7 @@ class TestAbrService():
     def test_payload_exceptions(self, mocked_payload_exception):
         """ test payload exception"""
         expected_msg = 'WEBSERVICES: Search text is not a valid ABN or ACN'
-        with pytest.raises(abr_service.AbrError) as ex_msg:
+        with pytest.raises(AbrError) as ex_msg:
             abr_service.get_abr_exception(self.mocked_payload_exception())
 
         assert ex_msg.value.message == expected_msg
