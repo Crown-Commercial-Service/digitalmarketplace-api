@@ -263,9 +263,9 @@ def create_user(
 
             except AbrError as error:
                 publish.task.abr.delay(
-                'abr_failed',
-                message='ABR failed please investigate',
-                error=error.message
+                    'abr_failed',
+                    message='ABR failed please investigate',
+                    error=error.message
                 )
 
             # adding the abn business info into the seller application
