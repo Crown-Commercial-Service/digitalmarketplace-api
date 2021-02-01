@@ -260,12 +260,12 @@ def create_user(
                 state = business_info_values.get('state')
                 postcode = business_info_values.get('postcode')
                 # If ABR API is down, it will publish a slack message
-            except AbrError:
-                publish_tasks.user.delay(
-                    user_data,
-                    'abr_failed',
-                    email_address=email_address,
-                    abn=abn
+
+            except AbrError as error:
+                publish.task.abr.delay(
+                'abr_failed',
+                message='ABR failed please investigate',
+                error=error.message
                 )
 
             # adding the abn business info into the seller application
