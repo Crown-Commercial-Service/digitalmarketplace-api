@@ -8,6 +8,7 @@ from . import celery
 def abr(event_type, **kwargs):
     publish.abr(event_type, **kwargs)
 
+
 @celery.task
 def agency(agency, event_type, **kwargs):
     publish.agency(agency, event_type, **kwargs)
