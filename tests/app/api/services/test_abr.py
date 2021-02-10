@@ -77,7 +77,6 @@ class TestAbrService():
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
     def test_proxy_exception_message(self, mock_requests_get):
-        """ test that proxy error exception message"""
         mock_requests_get.side_effect = requests.exceptions.ProxyError('Proxy Error')
         url = 'http://google.com'
         with pytest.raises(requests.exceptions.ProxyError) as ex_msg:
