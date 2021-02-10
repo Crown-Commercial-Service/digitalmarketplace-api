@@ -68,7 +68,6 @@ class TestAbrService():
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
     def test_http_exception_message(self, mock_requests_get):
-        """ test that HTTP error exception message"""
         mock_requests_get.side_effect = requests.exceptions.HTTPError('HTTP Error')
         url = 'http://google.com'
         with pytest.raises(requests.exceptions.HTTPError) as ex_info:
