@@ -131,12 +131,19 @@ def get_previous_evidence_and_feedback(evidence_id):
 def evidence_approve(evidence_id):
     json_payload = get_json_from_request()
 
+    failed_criteria = json_payload.get('failed_criteria', None)
+    print("failed criteria in evidence apprval")
+    print(failed_criteria)
+    vfm = json_payload.get('vfm', None)
+    print("vfm")
+    print(vfm)
+
     try:
         action = DomainApproval(
             actioned_by=json_payload.get('actioned_by', None),
             evidence_id=evidence_id
         )
-        evidence_assessment = action.approve_domain()
+        evidence_assessment = action.approve_domain(failed_criteria, vfm)
     except DomainApprovalException as e:
         abort(400, str(e))
 
@@ -148,6 +155,37 @@ def evidence_approve(evidence_id):
         current_app.logger.warn('Failed to send approval email for evidence id: {}, {}'.format(evidence_id, e))
 
     return jsonify(evidence_assessment=evidence_assessment.serialize()), 200
+
+
+# @main.route('/evidence/<int:evidence_id>/approve', methods=['POST'])
+# def evidence_approve(evidence_id):
+    # json_payload = get_json_from_request()
+    # failed_criteria = json_payload.get('failed_criteria', None)
+    # vfm = json_payload.get('vfm', None)
+
+    # # print("approved domain with its failed_criteria!!!!!")
+    # # print("failed_criteria")
+    # # print(failed_criteria)
+
+    # print(json_payload)
+
+    # try:
+    #     action = DomainApproval(
+    #         actioned_by=json_payload.get('actioned_by', None),
+    #         evidence_id=evidence_id
+    #     )
+    #     evidence_assessment = action.approve_domain(failed_criteria, vfm)
+    # except DomainApprovalException as e:
+    #     abort(400, str(e))
+
+    # try:
+    #     evidence = evidence_service.get_evidence_by_id(evidence_id)
+    #     if evidence:
+    #         send_evidence_assessment_approval_notification(evidence)
+    # except Exception as e:
+    #     current_app.logger.warn('Failed to send approval email for evidence id: {}, {}'.format(evidence_id, e))
+
+    # return jsonify(evidence_assessment=evidence_assessment.serialize()), 200
 
 
 @main.route('/evidence/<int:evidence_id>/reject', methods=['POST'])
