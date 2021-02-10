@@ -53,7 +53,7 @@ class AbrService(Service):
             raise AbrError('Unexpected request error')
 
     # Payload exceptions: https://abr.business.gov.au/Documentation/Exceptions
-    def get_abr_exception(self, get_seller_details):
+    def get_abr_exception(self, response):
         exception_code = 'No exception code found'
         exception_description = 'No exception description found'
 
