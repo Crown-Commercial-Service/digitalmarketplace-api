@@ -96,7 +96,6 @@ class TestAbrService():
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
     def test_exception_message(self, mock_requests_get):
-        """ test other exception message"""
         mock_requests_get.side_effect = requests.exceptions.RequestException('Unexpected request error')
         url = 'http://google.com'
         with pytest.raises(requests.exceptions.RequestException) as ex_msg:
