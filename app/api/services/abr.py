@@ -80,7 +80,7 @@ class AbrService(Service):
         organisation_name = saxutils.unescape(organisation_name)
 
         # takes the first postcode
-        search_xml_postcode = re.findall(r'<postcode>(.+)</postcode>', get_seller_details)
+        search_xml_postcode = re.findall(r'<postcode>(.+)</postcode>', response)
         postcode = search_xml_postcode[0] if len(search_xml_postcode) > 0 else ''
 
         # takes the first state
