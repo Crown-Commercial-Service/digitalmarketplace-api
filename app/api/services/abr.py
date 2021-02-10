@@ -57,7 +57,7 @@ class AbrService(Service):
         exception_code = 'No exception code found'
         exception_description = 'No exception description found'
 
-        search_exception_code = re.findall(r'<exceptionCode>(.+)</exceptionCode>', get_seller_details)
+        search_exception_code = re.findall(r'<exceptionCode>(.+)</exceptionCode>', response)
         if len(search_exception_code) > 0:
             exception_code = search_exception_code[0]
 
