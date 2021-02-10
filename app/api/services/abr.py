@@ -71,7 +71,6 @@ class AbrService(Service):
         if (exception_code != 'No exception code found') or (exception_description != 'No exception description found'):
             error = exception_code + ': ' + exception_description
             return error
-        # If the xml text contains no exception descriptions return error is None
         else:
             return None
 
