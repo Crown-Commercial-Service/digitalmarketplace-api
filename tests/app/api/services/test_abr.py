@@ -21,8 +21,7 @@ class TestAbrService():
         return data
 
     @mock.patch("app.api.services.abr_service.call_abr_api")
-    def test_parsed_data(self, mocked_find_business_by_abn):
-        """ test expected parsed data"""
+    def test_abr_response_can_be_parsed(self, mocked_find_business_by_abn):
         expected_parsed_data = {'state': 'NSW', 'organisation_name': 'yay', 'postcode': '2750'}
         data = abr_service.get_data(self.mocked_find_business_by_abn())
         assert data == expected_parsed_data
