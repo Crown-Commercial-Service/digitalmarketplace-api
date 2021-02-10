@@ -31,10 +31,9 @@ class AbrService(Service):
         try:
             response = requests.get(url)
             if response.ok:
-                get_seller_details = response.content
-                error = self.get_abr_exception(get_seller_details)
+                error = self.get_abr_exception(response.content)
                 if error is None:
-                    return get_seller_details
+                    return response.content
                 else:
                     raise AbrError(error)
 
