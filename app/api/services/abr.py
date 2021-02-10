@@ -84,7 +84,7 @@ class AbrService(Service):
         postcode = search_xml_postcode[0] if len(search_xml_postcode) > 0 else ''
 
         # takes the first state
-        search_xml_state = re.findall(r'<stateCode>(.+)</stateCode>', get_seller_details)
+        search_xml_state = re.findall(r'<stateCode>(.+)</stateCode>', response)
         state = search_xml_state[0] if len(search_xml_state) > 0 else ''
         abn_dict = {
             'organisation_name': organisation_name,
