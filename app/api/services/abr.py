@@ -74,7 +74,7 @@ class AbrService(Service):
 
     def get_data(self, response):
         # takes the first organisation name
-        search_xml_organisation_name = re.findall(r'<organisationName>(.+)</organisationName>', get_seller_details)
+        search_xml_organisation_name = re.findall(r'<organisationName>(.+)</organisationName>', response)
         organisation_name = search_xml_organisation_name[0] if len(search_xml_organisation_name) > 0 else ''
         # this only works for &, < and > but not ' and ""
         organisation_name = saxutils.unescape(organisation_name)
