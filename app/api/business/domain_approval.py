@@ -24,7 +24,7 @@ class DomainApproval(object):
         except DBAPIError as e:
             db.session.rollback()
             raise DomainApprovalException("Database Error: {0}".format(e))
-    
+
     def approve_domain(self, failed_criteria, vfm):
         data = {
             "failed_criteria": {}
@@ -61,7 +61,6 @@ class DomainApproval(object):
             pass
 
         return evidence_assessment
-
 
     def reject_domain(self, failed_criteria, vfm):
 
