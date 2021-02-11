@@ -150,8 +150,8 @@ def get_evidence_feedback(evidence_id):
     evidence = evidence_service.get_evidence_by_id(evidence_id)
     if not evidence or current_user.supplier_code != evidence.supplier_code:
         not_found("No evidence for id '%s' found" % (evidence_id))
-    if not evidence.status == 'rejected':
-        abort('Only rejected submissions can contain feedback')
+    # if not evidence.status == 'rejected':
+    #     abort('Only rejected submissions can contain feedback')
     evidence_assessment = evidence_assessment_service.get_assessment_for_rejected_evidence(evidence_id)
     if not evidence_assessment:
         abort('Failed to get the evidence assessment')

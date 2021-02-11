@@ -33,7 +33,7 @@ class DomainApproval(object):
             data['failed_criteria'] = failed_criteria
         if vfm is not None:
             data['vfm'] = vfm
-        # set the evidence as rejected
+        # set the evidence as approved
         self.evidence.approve()
         evidence_service.save_evidence(self.evidence, do_commit=False)
 
