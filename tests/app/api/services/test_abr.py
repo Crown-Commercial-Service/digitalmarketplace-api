@@ -19,6 +19,18 @@ class TestAbrService():
             'valid ABN or ACN</exceptionDescription><exceptionCode>WEBSERVICES</exceptionCode>'\
             '</exception></response></ABR>'
         return data
+    
+    def mocked_payload_exception_with_no_description(self):
+        data = '<ABR><response><exception><exceptionCode>WEBSERVICES</exceptionCode>'\
+            '</exception></response></ABR>'
+        return data
+    
+    def mocked_payload_exception_with_no_code(self):
+        data = '<ABR><response><exception><exceptionDescription>Search text is not a '\
+            'valid ABN or ACN</exceptionDescription>'\
+            '</exception></response></ABR>'
+        return data
+    
 
     @mock.patch("app.api.services.abr_service.call_abr_api")
     def test_abr_response_can_be_parsed(self, mocked_find_business_by_abn):
@@ -30,6 +42,20 @@ class TestAbrService():
     def test_abr_exception_can_be_parsed(self, mocked_payload_exception):
         expected_msg = 'WEBSERVICES: Search text is not a valid ABN or ACN'
         result = abr_service.get_abr_exception(self.mocked_payload_exception())
+        assert result == expected_msg
+    
+    # when exception code exists but no descriptions
+    @mock.patch("app.api.services.abr_service.call_abr_api")
+    def test_abr_exception_can_be_parsed_with_no_exception_description(self, mocked_payload_exception_with_no_description):
+        expected_msg = 'WEBSERVICES: No exception description found'
+        result = abr_service.get_abr_exception(self.mocked_payload_exception_with_no_description())
+        assert result == expected_msg
+    
+    # when exception code exists but no descriptions
+    @mock.patch("app.api.services.abr_service.call_abr_api")
+    def test_abr_exception_can_be_parsed_with_no_exception_code(self, mocked_payload_exception_with_no_code):
+        expected_msg = 'No exception code found: Search text is not a valid ABN or ACN'
+        result = abr_service.get_abr_exception(self.mocked_payload_exception_with_no_code())
         assert result == expected_msg
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
