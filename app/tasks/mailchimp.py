@@ -152,11 +152,6 @@ def add_members_to_list(client, list_id, email_addresses):
         }
 
         response = client.lists.update_members(list_id=list_id, data=data)
-
-        current_app.logger.info(
-            '{} were added to Mailchimp list {}'.format(', '.join(email_addresses), list_id)
-        )
-
         return response
     except RequestException as e:
         # publish error in slack and rollbar
