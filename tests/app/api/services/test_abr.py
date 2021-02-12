@@ -34,7 +34,6 @@ class TestAbrService():
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
     def test_connecton_error_exception_raised(self, mock_requests_get):
-        """ test that connection error is raised"""
         mock_requests_get.side_effect = requests.exceptions.ConnectionError()
         url = 'http://google.com'
         with pytest.raises(requests.exceptions.ConnectionError):
