@@ -41,7 +41,6 @@ class TestAbrService():
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
     def test_ssl_error_exception_raised(self, mock_requests_get):
-        """ test that SSL error is raised"""
         mock_requests_get.side_effect = requests.exceptions.SSLError()
         url = 'http://google.com'
         with pytest.raises(requests.exceptions.SSLError):
