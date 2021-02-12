@@ -27,8 +27,7 @@ class TestAbrService():
         assert data == expected_parsed_data
 
     @mock.patch("app.api.services.abr_service.call_abr_api")
-    def test_payload_exceptions(self, mocked_payload_exception):
-        """ test payload exception"""
+    def test_abr_exception_can_be_parsed(self, mocked_payload_exception):
         expected_msg = 'WEBSERVICES: Search text is not a valid ABN or ACN'
         result = abr_service.get_abr_exception(self.mocked_payload_exception())
         assert result == expected_msg
