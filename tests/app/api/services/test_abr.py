@@ -19,18 +19,18 @@ class TestAbrService():
             'valid ABN or ACN</exceptionDescription><exceptionCode>WEBSERVICES</exceptionCode>'\
             '</exception></response></ABR>'
         return data
-    
+
     def mocked_payload_exception_with_no_description(self):
         data = '<ABR><response><exception><exceptionCode>WEBSERVICES</exceptionCode>'\
             '</exception></response></ABR>'
         return data
-    
+
     def mocked_payload_exception_with_no_code(self):
         data = '<ABR><response><exception><exceptionDescription>Search text is not a '\
             'valid ABN or ACN</exceptionDescription>'\
             '</exception></response></ABR>'
         return data
-    
+
     def mocked_payload_exception_with_no_code_and_no_description(self):
         data = '<ABR><response></response></ABR>'
         return data
@@ -46,7 +46,7 @@ class TestAbrService():
         expected_msg = 'WEBSERVICES: Search text is not a valid ABN or ACN'
         result = abr_service.get_abr_exception(self.mocked_payload_exception())
         assert result == expected_msg
-    
+
     # when exception code exists but no descriptions
     @mock.patch("app.api.services.abr_service.call_abr_api")
     def test_abr_exception_can_be_parsed_with_no_exception_description(self, mocked_payload_exception_with_no_description):
