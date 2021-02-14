@@ -49,7 +49,7 @@ class TestAbrService():
 
     # when exception code exists but no descriptions
     @mock.patch("app.api.services.abr_service.call_abr_api")
-    def test_abr_exception_can_be_parsed_with_no_exception_description(self, mocked_payload_exception_with_no_description):
+    def test_abr_exception_can_be_parsed_with_no_exception_desc(self, mocked_payload_exception_with_no_description):
         expected_msg = 'WEBSERVICES: No exception description found'
         result = abr_service.get_abr_exception(self.mocked_payload_exception_with_no_description())
         assert result == expected_msg
@@ -63,7 +63,7 @@ class TestAbrService():
 
     # when no exception code exists and no descriptions
     @mock.patch("app.api.services.abr_service.call_abr_api")
-    def test_abr_exception_can_be_parsed_with_no_exception_code(self, mocked_payload_exception_with_no_code_and_no_description):
+    def test_abr_exception_is_parsed_with_no_exception_code_desc(self, mocked_payload_exception_with_no_code_and_no_description):
         expected_msg = None
         result = abr_service.get_abr_exception(self.mocked_payload_exception_with_no_code_and_no_description())
         assert result == expected_msg
