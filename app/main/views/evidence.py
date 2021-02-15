@@ -131,11 +131,15 @@ def get_previous_evidence_and_feedback(evidence_id):
 def evidence_approve(evidence_id):
     json_payload = get_json_from_request()
 
+    print("JSON PAYLOAD")
+
+    print(json_payload)
+
     failed_criteria = json_payload.get('failed_criteria', None)
-    print("failed criteria in evidence approval!!")
+    print("failed criteria in evidence approval=)")
     print(failed_criteria)
     vfm = json_payload.get('vfm', None)
-    print("vfm!!!")
+    print("vfm=)")
     print(vfm)
 
     try:
