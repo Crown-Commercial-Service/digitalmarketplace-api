@@ -25,7 +25,7 @@ class DomainApproval(object):
             db.session.rollback()
             raise DomainApprovalException("Database Error: {0}".format(e))
 
-    def approve_domain(self, failed_criteria, vfm):
+    def approve_domain(self, failed_criteria):
 
         supplier = suppliers.get_supplier_by_code(self.evidence.supplier_code)
         if not supplier:
@@ -40,9 +40,6 @@ class DomainApproval(object):
         }
         if failed_criteria:
             data['failed_criteria'] = failed_criteria
-        if vfm is not None:
-            data['vfm'] = vfm
-        
 
         # insert the supplier_domain as assessed for this supplier and domain
         supplier_domain_service.set_supplier_domain_status(

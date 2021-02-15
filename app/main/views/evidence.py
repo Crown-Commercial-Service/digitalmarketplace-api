@@ -100,7 +100,7 @@ def get_previous_evidence_and_feedback(evidence_id):
     evidence = evidence_service.get_evidence_by_id(evidence_id)
     if not evidence:
         abort(404)
-    if evidence.status not in ['assessed']:
+    if evidence.status not in ['assessed', 'rejected']:
         abort(404)
     evidence_data = evidence.serialize()
     if evidence_data:
@@ -130,24 +130,13 @@ def get_previous_evidence_and_feedback(evidence_id):
 @main.route('/evidence/<int:evidence_id>/approve', methods=['POST'])
 def evidence_approve(evidence_id):
     json_payload = get_json_from_request()
-
-    print("JSON PAYLOAD")
-
-    print(json_payload)
-
     failed_criteria = json_payload.get('failed_criteria', None)
-    print("failed criteria in evidence approval=)")
-    print(failed_criteria)
-    vfm = json_payload.get('vfm', None)
-    print("vfm=)")
-    print(vfm)
-
     try:
         action = DomainApproval(
             actioned_by=json_payload.get('actioned_by', None),
             evidence_id=evidence_id
         )
-        evidence_assessment = action.approve_domain(failed_criteria, vfm)
+        evidence_assessment = action.approve_domain(failed_criteria)
     except DomainApprovalException as e:
         abort(400, str(e))
 
