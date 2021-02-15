@@ -125,7 +125,7 @@ def get_evidence(evidence_id):
         evidence.domain.id,
         current_user.supplier_code
     )
-    if previous_evidence and previous_evidence.status == 'rejected':
+    if previous_evidence and (previous_evidence.status == 'rejected' or previous_evidence.status == 'approved'):
         previous_assessment = evidence_assessment_service.get_assessment_for_rejected_evidence(previous_evidence.id)
         if previous_assessment:
             data['failed_criteria'] = previous_assessment.data.get('failed_criteria', {})
@@ -150,8 +150,8 @@ def get_evidence_feedback(evidence_id):
     evidence = evidence_service.get_evidence_by_id(evidence_id)
     if not evidence or current_user.supplier_code != evidence.supplier_code:
         not_found("No evidence for id '%s' found" % (evidence_id))
-    # if not evidence.status == 'rejected':
-    #     abort('Only rejected submissions can contain feedback')
+    if not evidence.status == 'rejected':
+        abort('Only rejected submissions can contain feedback')
     evidence_assessment = evidence_assessment_service.get_assessment_for_rejected_evidence(evidence_id)
     if not evidence_assessment:
         abort('Failed to get the evidence assessment')
