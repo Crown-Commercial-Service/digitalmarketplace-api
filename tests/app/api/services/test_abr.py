@@ -1,5 +1,4 @@
 import pytest
-
 from app.api.services import abr_service
 from app.api.business.errors import AbrError
 import requests
