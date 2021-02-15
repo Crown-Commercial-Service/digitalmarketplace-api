@@ -100,7 +100,7 @@ def get_previous_evidence_and_feedback(evidence_id):
     evidence = evidence_service.get_evidence_by_id(evidence_id)
     if not evidence:
         abort(404)
-    if evidence.status not in ['assessed', 'rejected']:
+    if evidence.status not in ['assessed']:
         abort(404)
     evidence_data = evidence.serialize()
     if evidence_data:
