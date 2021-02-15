@@ -27,7 +27,7 @@ class DomainApproval(object):
 
     def approve_domain(self, failed_criteria, vfm):
 
-        ssupplier = suppliers.get_supplier_by_code(self.evidence.supplier_code)
+        supplier = suppliers.get_supplier_by_code(self.evidence.supplier_code)
         if not supplier:
             raise DomainApprovalException('Invalid suppier code in evidence')
 
