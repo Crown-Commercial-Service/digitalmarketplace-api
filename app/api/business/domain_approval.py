@@ -34,7 +34,7 @@ class DomainApproval(object):
         domain = domain_service.find(id=self.evidence.domain_id).one_or_none()
         if not domain:
             raise DomainApprovalException('Invalid domain id in evidence')
-        
+
         data = None
         if failed_criteria:
             data = {"failed_criteria": {}}
