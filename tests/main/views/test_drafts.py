@@ -916,38 +916,6 @@ class TestDraftServices(DraftsHelpersMixin):
         assert res.status_code == 400
         assert "'g-cloud-5' is not open for submissions" in data['error']
 
-    def test_should_not_create_g12_draft_on_not_open_framework(self, live_g12_framework):
-        draft_json = self.create_draft_json.copy()
-        draft_json['services'] = {
-            'frameworkSlug': 'g-cloud-12',
-            'lot': 'cloud-hosting',
-            'supplierId': 1
-        }
-        res = self.client.post(
-            '/draft-services',
-            data=json.dumps(draft_json),
-            content_type='application/json')
-
-        data = json.loads(res.get_data())
-        assert res.status_code == 400
-        assert "'g-cloud-12' is not open for submissions" in data['error']
-
-    def test_should_create_draft_for_g12_recovery_supplier(self, live_g12_framework):
-        draft_json = self.create_draft_json.copy()
-        draft_json['services'] = {
-            'frameworkSlug': 'g-cloud-12',
-            'lot': 'cloud-hosting',
-            'supplierId': 1
-        }
-        self.app.config['DM_G12_RECOVERY_SUPPLIER_IDS'] = "1"
-
-        res = self.client.post(
-            '/draft-services',
-            data=json.dumps(draft_json),
-            content_type='application/json')
-
-        assert res.status_code == 201
-
     def test_should_not_create_draft_with_invalid_lot(self):
         draft_json = self.create_draft_json.copy()
         draft_json['services']['lot'] = 'newlot'
