@@ -125,7 +125,7 @@ def get_evidence(evidence_id):
         evidence.domain.id,
         current_user.supplier_code
     )
-    if previous_evidence and (previous_evidence.status == 'rejected' or previous_evidence.status == 'approved'):
+    if previous_evidence and previous_evidence.status == 'rejected':
         previous_assessment = evidence_assessment_service.get_assessment_for_rejected_evidence(previous_evidence.id)
         if previous_assessment:
             data['failed_criteria'] = previous_assessment.data.get('failed_criteria', {})
