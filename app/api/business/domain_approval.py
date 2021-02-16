@@ -49,6 +49,7 @@ class DomainApproval(object):
             'approved',
             do_commit=False
         )
+
         # set the evidence as approved
         self.evidence.approve()
         evidence_service.save_evidence(self.evidence, do_commit=False)
