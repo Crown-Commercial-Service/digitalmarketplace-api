@@ -1625,7 +1625,26 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
         db.session.add(brief_response)
         db.session.commit()
 
-    def test_cannot_remove_award_from_brief_response_if_brief_awarded(self):
+    def test_can_remove_award_details_from_brief_response_if_brief_awarded(self):
+        brief_response = BriefResponse(
+            data={}, brief=self.brief, supplier=self.supplier, submitted_at=datetime.utcnow()
+        )
+        db.session.add(brief_response)
+        db.session.commit()
+        # Award to this brief response
+        brief_response.award_details = {'confirmed': 'details'}
+        brief_response.awarded_at = datetime.utcnow()
+        db.session.add(brief_response)
+        db.session.commit()
+        # There's still time to change our minds...
+        brief_response.awarded_at = None
+        brief_response.award_details = {}
+        db.session.add(brief_response)
+        db.session.commit()
+
+        assert brief_response.awarded_at is None
+
+    def test_cannot_change_award_date_in_brief_response_if_brief_awarded(self):
         with pytest.raises(ValidationError) as e:
             brief_response = BriefResponse(
                 data={}, brief=self.brief, supplier=self.supplier, submitted_at=datetime.utcnow()
@@ -1638,9 +1657,9 @@ class TestBriefResponses(BaseApplicationTest, FixtureMixin):
             db.session.add(brief_response)
             db.session.commit()
             # We've changed our minds again but it's too late...
-            brief_response.awarded_at = None
+            brief_response.awarded_at = datetime.utcnow()
 
-        assert 'Cannot remove or change award datestamp on previously awarded Brief Response' in e.value.message
+        assert 'Cannot change award datestamp on previously awarded Brief Response' in e.value.message
 
     def test_brief_response_serialize_keys_match_api_stub_keys(self):
         # Ensures our dmtestutils.api_model_stubs are kept up to date

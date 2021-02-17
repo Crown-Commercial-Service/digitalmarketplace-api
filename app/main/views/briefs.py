@@ -360,6 +360,43 @@ def award_brief_details(brief_id, brief_response_id):
     return single_result_response(RESOURCE_NAME, brief), 200
 
 
+@main.route('/briefs/<int:brief_id>/award/<int:brief_response_id>/contract-details', methods=['DELETE'])
+def un_award_brief_details(brief_id, brief_response_id):
+    updater_json = validate_and_return_updater_request()
+
+    brief_response = BriefResponse.query.filter(
+        BriefResponse.brief_id == brief_id,
+        BriefResponse.id == brief_response_id
+    ).first_or_404()
+
+    if brief_response.status != 'awarded':
+        abort(400, "Can only un-award an awarded brief response")
+
+    # Set status back to pending-awarded
+    brief_response.awarded_at = None
+    brief_response.award_details = {'pending': True}
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.update_brief_response,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief_id,
+            'briefResponseId': brief_response_id,
+            'briefResponseAwardedValue': True,
+            'unAwardBriefDetails': True
+        },
+        db_object=brief_response
+    )
+
+    db.session.add_all([brief_response, audit_event])
+    db.session.commit()
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+    return single_result_response(RESOURCE_NAME, brief), 200
+
+
 @main.route('/briefs/<int:brief_id>/copy', methods=['POST'])
 def copy_brief(brief_id):
     updater_json = validate_and_return_updater_request()

@@ -1630,3 +1630,31 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
 
         assert res.status_code == 404
         assert index_brief.called is False
+
+    def test_reverts_brief_to_pending(self, _index_brief):
+        brief_response_id = self._setup_brief_response()
+
+        self._post_to_award_details_endpoint(
+            {
+                "awardDetails": {
+                    "awardedContractStartDate": "2020-12-31",
+                    "awardedContractValue": "9900000.95",
+                },
+                "updated_by": "user@email.com"
+            },
+            brief_response_id
+        )
+        assert BriefResponse.query.get(brief_response_id).status == 'awarded'
+
+        assert self.client.delete(
+            self.award_url.format(brief_response_id),
+            data=json.dumps({"updated_by": "user@email.com"}),
+            content_type="application/json",
+        ).status_code == 200
+        assert BriefResponse.query.get(brief_response_id).status == 'pending-awarded'
+
+        brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
+        assert brief_response_audits[-1]['data'] == {'briefId': 1,
+                                                     'briefResponseAwardedValue': True,
+                                                     'briefResponseId': brief_response_id,
+                                                     'unAwardBriefDetails': True}
