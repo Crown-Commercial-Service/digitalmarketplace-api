@@ -508,8 +508,7 @@ def create_new_draft_service():
 
     framework, lot, supplier = validate_and_return_related_objects(draft_json)
 
-    if not (framework.status == 'open' or
-            (framework.slug == 'g-cloud-12' and updater_json['updated_by'].endswith('@digital.cabinet-office.gov.uk'))):
+    if framework.status != 'open':
         abort(400, "'{}' is not open for submissions".format(framework.slug))
 
     if lot.one_service_limit:
