@@ -364,6 +364,10 @@ def award_brief_details(brief_id, brief_response_id):
 def un_award_brief_details(brief_id, brief_response_id):
     updater_json = validate_and_return_updater_request()
 
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
     brief_response = BriefResponse.query.filter(
         BriefResponse.brief_id == brief_id,
         BriefResponse.id == brief_response_id
@@ -391,9 +395,6 @@ def un_award_brief_details(brief_id, brief_response_id):
     db.session.add_all([brief_response, audit_event])
     db.session.commit()
 
-    brief = Brief.query.filter(
-        Brief.id == brief_id
-    ).first_or_404()
     return single_result_response(RESOURCE_NAME, brief), 200
 
 
