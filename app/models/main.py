@@ -1833,8 +1833,8 @@ class BriefResponse(db.Model):
 
     @validates('awarded_at')
     def validates_awarded_at(self, key, awarded_at):
-        if self.awarded_at is not None:
-            raise ValidationError('Cannot remove or change award datestamp on previously awarded Brief Response')
+        if (self.awarded_at is not None) and (awarded_at is not None):
+            raise ValidationError('Cannot change award datestamp on previously awarded Brief Response')
         if not awarded_at:
             return None
         if self.brief.status != "closed":
