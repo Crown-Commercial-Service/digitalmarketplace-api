@@ -42,13 +42,16 @@ def test_can_get_errors_for_past_date_and_no_licence_number():
             'labourHire': {
                 'vic': {
                     'expiry': '01/01/2019'
+                },
+                'act': {
+                    'expiry': '01/01/2019'
                 }
             }
         }
     )
     errors = ApplicationValidator(application).validate_recruiter()
 
-    assert len(errors) == 2
+    assert len(errors) == 4
 
 
 def test_get_no_errors_for_sa_past_date_and_no_licence_number():
@@ -76,13 +79,16 @@ def test_can_get_error_for_no_licence_number():
             'labourHire': {
                 'vic': {
                     'expiry': expiry
+                },
+                'act': {
+                    'expiry': expiry
                 }
             }
         }
     )
     errors = ApplicationValidator(application).validate_recruiter()
 
-    assert len(errors) == 1
+    assert len(errors) == 2
 
 
 def test_get_no_errors_from_sa_empty_licence_number():
@@ -110,13 +116,16 @@ def test_can_get_error_for_no_expiry():
             'labourHire': {
                 'vic': {
                     'licenceNumber': 'foobar-licence'
+                },
+                'act': {
+                    'licenceNumber': 'foobar-licence'
                 }
             }
         }
     )
     errors = ApplicationValidator(application).validate_recruiter()
 
-    assert len(errors) == 1
+    assert len(errors) == 2
 
 
 def test_can_get_no_errors_for_sa_no_expiry():
@@ -143,6 +152,10 @@ def test_valid_for_recruiter_and_labour_hire():
             'recruiter': 'yes',
             'labourHire': {
                 'vic': {
+                    'expiry': expiry,
+                    'licenceNumber': 'foobar-licence'
+                },
+                'act': {
                     'expiry': expiry,
                     'licenceNumber': 'foobar-licence'
                 }
