@@ -1,3 +1,4 @@
+from .abr import AbrService
 from .agency import AgencyService
 from .api_key import ApiKeyService
 from .application import ApplicationService
@@ -31,6 +32,7 @@ from .user_claims import UserClaimService
 from .users import UsersService
 from .work_order import WorkOrderService
 
+abr_service = AbrService()
 agency_service = AgencyService()
 signed_agreement_service = SignedAgreementService()
 application_service = ApplicationService()
