@@ -5,7 +5,6 @@ from app.api.helpers import role_required
 from app.tasks.brief_response_tasks import update_brief_response_metrics
 from app.tasks.brief_tasks import (create_responses_zip_for_closed_briefs,
                                    process_closed_briefs, update_brief_metrics)
-from app.tasks.jira import sync_application_approvals_with_jira
 from app.tasks.mailchimp import (send_document_expiry_reminder,
                                  send_labour_hire_expiry_reminder,
                                  send_new_briefs_email,
@@ -174,22 +173,6 @@ def send_labour_hire_expiry_reminder_email():
         description: string
     """
     res = send_labour_hire_expiry_reminder.delay()
-    return jsonify(res.id)
-
-
-@api.route('/tasks/sync-jira-application-approvals', methods=['POST'])
-@role_required('admin')
-def sync_jira_application_approvals():
-    """Synchronise application approvals with Jira
-    ---
-    tags:
-      - tasks
-    responses:
-      200:
-        type: string
-        description: string
-    """
-    res = sync_application_approvals_with_jira.delay()
     return jsonify(res.id)
 
 

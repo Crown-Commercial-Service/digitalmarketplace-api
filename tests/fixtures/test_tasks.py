@@ -10,7 +10,6 @@ from app import db
 from app.api.services import AuditTypes as audit_types
 from app.models import (Application, Assessment, AuditEvent, Supplier,
                         SupplierDomain)
-from app.tasks.jira import sync_application_approvals_with_jira
 from app.tasks.mailchimp import (MailChimpConfigException,
                                  send_document_expiry_campaign,
                                  send_document_expiry_reminder,
@@ -266,71 +265,12 @@ def test_create_responses_zip_fails_when_no_responses(app, briefs, mocker):
 
 
 @pytest.fixture
-def mock_jira_application_response(mocker):
-    marketplace_jira = MagicMock()
-
-    marketplace_jira.find_approved_application_issues.return_value = {
-        'issues': [{
-            'fields': {
-                current_app.config['JIRA_FIELD_CODES'].get('APPLICATION_FIELD_CODE'): '1'
-            },
-            'key': 'MARADMIN-123'
-        }]
-    }
-    get_marketplace_jira = mocker.patch('app.tasks.jira.get_marketplace_jira', autospec=True)
-    get_marketplace_jira.return_value = marketplace_jira
-    yield get_marketplace_jira
-
-
-@pytest.fixture
 def application(app, applications):
     with app.app_context():
         application = db.session.query(Application).filter(Application.id == 1).first()
         application.data = INCOMING_APPLICATION_DATA
         application.status = 'submitted'
         yield application
-
-
-def test_sync_jira_application_approvals_task_updates_applications(app, application, mocker,
-                                                                   mock_jira_application_response):
-    with app.app_context():
-        approval_notification = mocker.patch('app.tasks.jira.send_approval_notification', autospec=True)
-
-        sync_application_approvals_with_jira()
-
-        updated_application = db.session.query(Application).filter(Application.id == 1).first()
-        assert updated_application.status == 'approved'
-        assert approval_notification.called
-
-
-def test_sync_jira_application_approvals_task_creates_audit_event_on_approval(app, application,
-                                                                              mock_jira_application_response):
-    with app.app_context():
-        sync_application_approvals_with_jira()
-
-        audit_event = (db.session.query(AuditEvent).filter(
-            AuditEvent.type == AuditTypes.approve_application.value,
-            AuditEvent.object_id == application.id).first())
-
-        assert audit_event.data['jira_issue_key'] == 'MARADMIN-123'
-
-
-@pytest.fixture
-def mock_jira_assessment_response(mocker):
-    marketplace_jira = MagicMock()
-    marketplace_jira.find_approved_assessment_issues.return_value = {
-        'issues': [{
-            'fields': {
-                current_app.config['JIRA_FIELD_CODES'].get('SUPPLIER_FIELD_CODE'): '123',
-                'labels': ['Strategy_And_Policy']
-            },
-            'key': 'MARADMIN-123'
-        }]
-    }
-    get_marketplace_jira = mocker.patch('app.tasks.jira.get_marketplace_jira', autospec=True)
-    get_marketplace_jira.return_value = marketplace_jira
-
-    yield get_marketplace_jira
 
 
 @pytest.fixture
