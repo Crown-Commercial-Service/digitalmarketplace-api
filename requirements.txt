@@ -20,6 +20,8 @@ botocore==1.15.3
     # via
     #   boto3
     #   s3transfer
+cachelib==0.1.1
+    # via flask-session
 certifi==2019.11.28
     # via requests
 cffi==1.14.0
@@ -38,7 +40,7 @@ defusedxml==0.6.0
     # via odfpy
 git+https://github.com/alphagov/digitalmarketplace-apiclient.git@21.5.0#egg=digitalmarketplace-apiclient==21.5.0
     # via -r requirements.in
-git+https://github.com/alphagov/digitalmarketplace-utils.git@54.1.1#egg=digitalmarketplace-utils==54.1.1
+git+https://github.com/alphagov/digitalmarketplace-utils.git@56.1.2#egg=digitalmarketplace-utils==56.1.2
     # via -r requirements.in
 docopt==0.6.2
     # via notifications-python-client
@@ -52,6 +54,8 @@ flask-login==0.5.0
     # via digitalmarketplace-utils
 flask-migrate==2.7.0
     # via -r requirements.in
+flask-session==0.3.2
+    # via digitalmarketplace-utils
 flask-sqlalchemy==2.4.4
     # via
     #   -r requirements.in
@@ -66,6 +70,7 @@ flask==1.0.4
     #   flask-gzip
     #   flask-login
     #   flask-migrate
+    #   flask-session
     #   flask-sqlalchemy
     #   flask-wtf
     #   gds-metrics
@@ -127,6 +132,8 @@ python-editor==1.0.4
 python-json-logger==0.1.11
     # via digitalmarketplace-utils
 pytz==2019.3
+    # via digitalmarketplace-utils
+redis==3.5.3
     # via digitalmarketplace-utils
 requests==2.23.0
     # via
