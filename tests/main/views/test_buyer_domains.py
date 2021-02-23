@@ -153,6 +153,53 @@ class TestCreateBuyerEmailDomain(BaseApplicationTest):
         assert data['error'] == "Domain name {} has already been approved".format(new_domain)
 
 
+class TestDeleteBuyerEmailDomains(BaseApplicationTest):
+    def setup(self):
+        super(TestDeleteBuyerEmailDomains, self).setup()
+        # Remove any default fixtures
+        BuyerEmailDomain.query.delete()
+        db.session.commit()
+
+    def test_delete_buyer_email_domain_with_no_data(self):
+        res = self.client.delete(
+            '/buyer-email-domains',
+            content_type='application/json'
+        )
+
+        assert res.status_code == 400
+
+    def test_delete_buyer_email_domain_with_missing_domain(self):
+        res = self.client.delete(
+            '/buyer-email-domains',
+            data=json.dumps({
+                'buyerEmailDomains': {'domainName': 'gov.uk'},
+                'updated_by': 'example'
+            }),
+            content_type='application/json'
+        )
+
+        assert res.status_code == 404
+
+    def test_delete_buyer_email_domain_removes_domain(self):
+        domain_name = "ac.uk"
+        db.session.add(BuyerEmailDomain(domain_name=domain_name))
+        db.session.commit()
+
+        res = self.client.delete(
+            '/buyer-email-domains',
+            data=json.dumps({
+                'buyerEmailDomains': {'domainName': domain_name},
+                'updated_by': 'example'
+            }),
+            content_type='application/json'
+        )
+
+        assert res.status_code == 200
+        assert BuyerEmailDomain.query.filter(
+            BuyerEmailDomain.domain_name == domain_name
+        ).first() is None
+
+
 class TestListBuyerEmailDomains(BaseApplicationTest):
     def setup(self):
         super(TestListBuyerEmailDomains, self).setup()
