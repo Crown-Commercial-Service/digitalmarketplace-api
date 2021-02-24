@@ -261,7 +261,7 @@ def create_user(
                 # If ABR API is down, it will publish a slack message
 
             except AbrError as error:
-                publish.task.abr.delay(
+                publish_tasks.abr.delay(
                     'abr_failed',
                     error=error.message
                 )
