@@ -25,7 +25,7 @@ class DomainApproval(object):
             db.session.rollback()
             raise DomainApprovalException("Database Error: {0}".format(e))
 
-    def approve_domain(self):
+    def approve_domain(self, failed_criteria):
 
         supplier = suppliers.get_supplier_by_code(self.evidence.supplier_code)
         if not supplier:
@@ -34,6 +34,11 @@ class DomainApproval(object):
         domain = domain_service.find(id=self.evidence.domain_id).one_or_none()
         if not domain:
             raise DomainApprovalException('Invalid domain id in evidence')
+
+        data = None
+        if failed_criteria:
+            data = {"failed_criteria": {}}
+            data['failed_criteria'] = failed_criteria
 
         # insert the supplier_domain as assessed for this supplier and domain
         supplier_domain_service.set_supplier_domain_status(
@@ -61,6 +66,7 @@ class DomainApproval(object):
             evidence_id=self.evidence.id,
             user_id=self.actioned_by,
             status='approved',
+            data=data,
             do_commit=False
         )
 

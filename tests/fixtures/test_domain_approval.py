@@ -42,7 +42,7 @@ def test_domain_approval_approve_success(publish_task, domains, evidence, suppli
         assert e.domain.name not in supplier.assessed_domains
         assert e.status == 'submitted'
 
-        domain_approval.approve_domain()
+        domain_approval.approve_domain({})
 
         assert e.domain.name in supplier.assessed_domains
         assert e.status == 'assessed'
