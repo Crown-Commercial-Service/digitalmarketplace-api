@@ -27,6 +27,10 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v2
 
+      - name: Read Ubuntu version
+        run: echo ::set-output name=UBUNTU_VERSION::$(lsb_release -r -s)
+        id: ubuntu-version
+        
       - name: Setup python (${{ matrix.python-version }})
         uses: actions/setup-python@v2
         with:
@@ -36,7 +40,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: venv
-          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+          key: venv-${{ runner.os }}-${{ steps.ubuntu-version.outputs.UBUNTU_VERSION }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: venv-${{ runner.os }}-${{ steps.ubuntu-version.outputs.UBUNTU_VERSION }}-${{ matrix.python-version }}-
 
       - name: Install developer tools
         run: make bootstrap
