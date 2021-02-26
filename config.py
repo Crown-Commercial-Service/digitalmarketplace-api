@@ -18,7 +18,7 @@ CELERYBEAT_SCHEDULE = {
     },
     'send_labour_hire_expiry_reminder': {
         'task': 'app.tasks.mailchimp.send_labour_hire_expiry_reminder',
-        'schedule': crontab(hour=0, minute=1)
+        'schedule': crontab(hour=6, minute=30)
     },
     'process_closed_briefs': {
         'task': 'app.tasks.brief_tasks.process_closed_briefs',
