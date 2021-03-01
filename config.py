@@ -140,7 +140,7 @@ class Config:
     SEARCH_MINIMUM_MATCH_SCORE_SUMMARY = 0.02
 
     # EMAIL CONFIG
-    DM_SEND_EMAIL_TO_STDERR = False
+    DM_SEND_EMAIL_TO_STDERR = True
 
     DM_CLARIFICATION_QUESTION_EMAIL = 'no-reply@marketplace.digital.gov.au'
     DM_FRAMEWORK_AGREEMENTS_EMAIL = 'enquiries@example.com'
