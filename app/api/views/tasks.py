@@ -156,8 +156,8 @@ def send_document_expiry_reminder_email():
         type: string
         description: string
     """
-    res = send_document_expiry_reminder.delay()
-    return jsonify(res.id)
+    res = send_document_expiry_reminder.id
+    return jsonify(res)
 
 
 @api.route('/tasks/send-licence-expiry-reminder', methods=['POST'])
