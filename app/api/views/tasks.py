@@ -172,7 +172,7 @@ def send_labour_hire_expiry_reminder_email():
         type: string
         description: string
     """
-    res = send_labour_hire_expiry_reminder
+    res = send_labour_hire_expiry_reminder()
     return jsonify(res.id)
 
 
