@@ -172,8 +172,8 @@ def send_labour_hire_expiry_reminder_email():
         type: string
         description: string
     """
-    res = send_labour_hire_expiry_reminder.id
-    return jsonify(res)
+    res = send_labour_hire_expiry_reminder.delay()
+    return jsonify(res.id)
 
 
 @api.route('/tasks/send_dreamail', methods=['POST'])
