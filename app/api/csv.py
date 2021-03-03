@@ -167,7 +167,8 @@ def generate_brief_responses_csv(brief, responses):
 
             states = {
                 'qld': 'Queensland',
-                'vic': 'Victoria'
+                'vic': 'Victoria',
+                'act': 'Australian Capital Territory'
             }
 
             labourHire = r.supplier.data.get('labourHire', {})
@@ -257,6 +258,8 @@ def generate_seller_catalogue_csv(seller_catalogue):
         licence_vic_expiry = empty_cell_value
         licence_qld_number = empty_cell_value
         licence_qld_expiry = empty_cell_value
+        licence_act_number = empty_cell_value
+        licence_act_expiry = empty_cell_value
 
         if 'labour_hire' in r and r['labour_hire']:
             if 'vic' in r['labour_hire']:
@@ -269,11 +272,18 @@ def generate_seller_catalogue_csv(seller_catalogue):
                     licence_qld_number = r['labour_hire']['qld']['licenceNumber']
                 if 'expiry' in r['labour_hire']['qld']:
                     licence_qld_expiry = r['labour_hire']['qld']['expiry']
+            if 'act' in r['labour_hire']:
+                if 'licenceNumber' in r['labour_hire']['act']:
+                    licence_act_number = r['labour_hire']['act']['licenceNumber']
+                if 'expiry' in r['labour_hire']['act']:
+                    licence_act_expiry = r['labour_hire']['act']['expiry']
 
         answers.update({'VIC labour hire licence': licence_vic_number})
         answers.update({'VIC licence expiry': licence_vic_expiry})
         answers.update({'QLD labour hire licence': licence_qld_number})
         answers.update({'QLD licence expiry': licence_qld_expiry})
+        answers.update({'ACT labour hire licence': licence_act_number})
+        answers.update({'ACT licence expiry': licence_act_expiry})
 
         for k, v in answers.items():
             answers[k] = csv_cell_sanitize(v)
