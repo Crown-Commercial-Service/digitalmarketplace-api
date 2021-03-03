@@ -166,7 +166,7 @@ def add_members_to_list(client, list_id, email_addresses):
         rollbar.report_exc_info()
         raise e
     except Exception as error:
-        publish.task.mailchimp.delay(
+        publish_tasks.mailchimp.delay(
             'error',
             message='Mailchimp API error occurred while adding a member to list',
             error=error.message
