@@ -248,6 +248,11 @@ def update_brief_status(brief_id, action):
 
 @main.route('/briefs/<int:brief_id>/award', methods=['POST'])
 def award_pending_brief_response(brief_id):
+    """
+    Status changes:
+        Chosen brief response: {submitted, pending-awarded} -> pending-awarded
+        Other brief responses: {submitted, pending-awarded} -> submitted
+    """
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['briefResponseId'])
     updater_json = validate_and_return_updater_request()
@@ -310,6 +315,11 @@ def award_pending_brief_response(brief_id):
 
 @main.route('/briefs/<int:brief_id>/award/<int:brief_response_id>/contract-details', methods=['POST'])
 def award_brief_details(brief_id, brief_response_id):
+    """
+    Status changes:
+        Brief: closed -> awarded
+        Brief response: pending-awarded -> awarded
+    """
     json_payload = get_json_from_request()
     json_has_required_keys(json_payload, ['awardDetails'])
     updater_json = validate_and_return_updater_request()
@@ -362,6 +372,11 @@ def award_brief_details(brief_id, brief_response_id):
 
 @main.route('/briefs/<int:brief_id>/award/<int:brief_response_id>/contract-details', methods=['DELETE'])
 def un_award_brief_details(brief_id, brief_response_id):
+    """
+    Status changes:
+        Brief: awarded -> closed
+        Brief response: awarded -> pending-awarded
+    """
     updater_json = validate_and_return_updater_request()
 
     brief = Brief.query.filter(
