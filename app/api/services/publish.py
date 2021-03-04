@@ -4,6 +4,9 @@ import boto3
 
 class Publish(object):
 
+    def abr(self, event_type, **kwargs):
+        return self.__generic('abr', event_type, **kwargs)
+
     def agency(self, agency, event_type, **kwargs):
         return self.__generic('agency', event_type, agency=agency, **kwargs)
 
