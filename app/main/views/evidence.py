@@ -130,13 +130,13 @@ def get_previous_evidence_and_feedback(evidence_id):
 @main.route('/evidence/<int:evidence_id>/approve', methods=['POST'])
 def evidence_approve(evidence_id):
     json_payload = get_json_from_request()
-
+    failed_criteria = json_payload.get('failed_criteria', None)
     try:
         action = DomainApproval(
             actioned_by=json_payload.get('actioned_by', None),
             evidence_id=evidence_id
         )
-        evidence_assessment = action.approve_domain()
+        evidence_assessment = action.approve_domain(failed_criteria)
     except DomainApprovalException as e:
         abort(400, str(e))
 
