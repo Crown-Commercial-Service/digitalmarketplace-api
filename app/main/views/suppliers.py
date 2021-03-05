@@ -525,7 +525,6 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
     search_query = get_json_from_request()
-    print("my search query",search_query)
     new_domains = False
 
     offset = get_nonnegative_int_or_400(request.args, 'from', 0)

@@ -108,6 +108,7 @@ def get(code):
     """
     return get_supplier(code)
 
+
 @api.route('/suppliers/search', methods=['GET'])
 def get_suppliers():
     """Suppliers search names by keyword
