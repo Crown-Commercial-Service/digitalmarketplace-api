@@ -522,6 +522,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
 
     return sliced_results, len(results)
 
+
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
     search_query = get_json_from_request()
