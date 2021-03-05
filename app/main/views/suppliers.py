@@ -437,7 +437,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         else:
             sr_agg = postgres.array_agg(cast(func.substring(ServiceRole.name, 8), TEXT))
             q = q.having(sr_agg.contains(array(roles_list)))
-# hybrid and consultant check
+
     if seller_types_list is not None and 'recruiter' in seller_types_list:
         q = q.filter(Supplier.is_recruiter == 'true')
         seller_types_list.remove('recruiter')
