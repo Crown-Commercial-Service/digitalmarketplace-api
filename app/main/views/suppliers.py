@@ -437,10 +437,16 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         else:
             sr_agg = postgres.array_agg(cast(func.substring(ServiceRole.name, 8), TEXT))
             q = q.having(sr_agg.contains(array(roles_list)))
-
+# hybrid and consultant check
     if seller_types_list is not None and 'recruiter' in seller_types_list:
         q = q.filter(Supplier.is_recruiter == 'true')
         seller_types_list.remove('recruiter')
+        if len(seller_types_list) == 0:
+            seller_types_list = None
+
+    if seller_types_list is not None and 'consultant' in seller_types_list:
+        q = q.filter(Supplier.is_recruiter == 'false')
+        seller_types_list.remove('consultant')
         if len(seller_types_list) == 0:
             seller_types_list = None
 
@@ -516,10 +522,11 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
 
     return sliced_results, len(results)
 
-
+# to look at
 @main.route('/suppliers/search', methods=['GET'])
 def supplier_search():
     search_query = get_json_from_request()
+    print("my search query",search_query)
     new_domains = False
 
     offset = get_nonnegative_int_or_400(request.args, 'from', 0)
