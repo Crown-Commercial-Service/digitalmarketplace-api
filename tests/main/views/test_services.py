@@ -983,7 +983,7 @@ class TestUpdateServiceStatus(BaseApplicationTest, FixtureMixin):
                 **payload
             )
 
-        assert db.session.query(Service).count() == 3
+        assert db.session.query(Service).count() == 4
 
     def _get_service_from_database_by_service_id(self, service_id):
         return Service.query.filter(
@@ -1131,6 +1131,16 @@ class TestUpdateServiceStatus(BaseApplicationTest, FixtureMixin):
 
         assert response.status_code == 200
 
+    def test_should_allow_deleted_status(self):
+
+        self._post_update_status(
+            old_status='published',
+            new_status='deleted',
+            service_is_indexed=False,
+            service_is_deleted=True,
+            expected_status_code=200,
+        )
+
 
 class TestPutService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     method = "put"
@@ -1171,7 +1181,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
             assert status == data['services']['status']
             if status in ('disabled', 'enabled'):
                 assert index_object.called is False
-            else:
+            elif status == 'published':
                 assert index_object.mock_calls == [
                     mock.call(
                         doc_type='services',

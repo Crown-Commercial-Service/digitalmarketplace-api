@@ -325,7 +325,8 @@ def update_service_status(service_id, status):
     valid_statuses = [
         "published",
         "enabled",
-        "disabled"
+        "disabled",
+        "deleted",
     ]
 
     is_valid_service_id_or_400(service_id)

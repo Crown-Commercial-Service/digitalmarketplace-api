@@ -1010,7 +1010,7 @@ listen(
 
 class ServiceTableMixin(object):
 
-    STATUSES = ('disabled', 'enabled', 'published')
+    STATUSES = ('disabled', 'enabled', 'published', 'deleted',)
 
     # not used as the externally-visible "pk" by actual Services in favour of service_id
     id = db.Column(db.Integer, primary_key=True)
