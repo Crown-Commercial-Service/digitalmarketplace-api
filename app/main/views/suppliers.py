@@ -439,25 +439,27 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
             q = q.having(sr_agg.contains(array(roles_list)))
 # recruiter
     if seller_types_list is not None and 'recruiter' in seller_types_list:
-        print("hybrid or recruiter crap")
-        x = Supplier.data['recruiter'].astext
-        print("X IS ")
-        print(x)
-        if x == 'both':
-            print("NOOOOOOO")
-        if x == 'yes':
-            print("WHATEVRR")
-        else:
-            print("YAYYY")
+        print("in the api recruiter field")
         q = q.filter(Supplier.data['recruiter'].astext == 'yes')
-
         # q = q.filter(Supplier.is_recruiter == 'true')
         seller_types_list.remove('recruiter')
         if len(seller_types_list) == 0:
             seller_types_list = None
+    
+# hybrid
+    if seller_types_list is not None and 'consultant_and_recruiter' in seller_types_list:
+        q = q.filter(Supplier.data['recruiter'].astext == 'both')
+        print("in the api hybrid field")
+        # q = q.filter(Supplier.is_recruiter == 'true')
+        seller_types_list.remove('consultant_and_recruiter')
+        if len(seller_types_list) == 0:
+            seller_types_list = None
+        
 # consultant
     if seller_types_list is not None and 'consultant' in seller_types_list:
-        q = q.filter(Supplier.is_recruiter == 'false')
+        print("in the api consultant field")
+        # q = q.filter(Supplier.is_recruiter == 'false')
+        q = q.filter(Supplier.data['recruiter'].astext == 'no')
         seller_types_list.remove('consultant')
         if len(seller_types_list) == 0:
             seller_types_list = None
@@ -502,8 +504,10 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         results.append(result)
 
     sliced_results = results[offset:(offset + result_count)]
+    # where is this
 
     q = db.session.query(Supplier.code, Supplier.name, Supplier.summary, Supplier.is_recruiter,
+                        Supplier.data['recruiter'].label('recruiter'),
                          Supplier.data, Domain.name.label('domain_name'),
                          SupplierDomain.status.label('domain_status'))\
         .outerjoin(SupplierDomain, Domain)\
