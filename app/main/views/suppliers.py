@@ -443,14 +443,14 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         seller_types_list.remove('recruiter')
         if len(seller_types_list) == 0:
             seller_types_list = None
-    
+
 # hybrid
     if seller_types_list is not None and 'consultant_and_recruiter' in seller_types_list:
         q = q.filter(Supplier.data['recruiter'].astext == 'both')
         seller_types_list.remove('consultant_and_recruiter')
         if len(seller_types_list) == 0:
             seller_types_list = None
-        
+
 # consultant
     if seller_types_list is not None and 'consultant' in seller_types_list:
         q = q.filter(Supplier.data['recruiter'].astext == 'no')
