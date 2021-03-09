@@ -437,13 +437,25 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         else:
             sr_agg = postgres.array_agg(cast(func.substring(ServiceRole.name, 8), TEXT))
             q = q.having(sr_agg.contains(array(roles_list)))
-
+# recruiter
     if seller_types_list is not None and 'recruiter' in seller_types_list:
-        q = q.filter(Supplier.is_recruiter == 'true')
+        print("hybrid or recruiter crap")
+        x = Supplier.data['recruiter'].astext
+        print("X IS ")
+        print(x)
+        if x == 'both':
+            print("NOOOOOOO")
+        if x == 'yes':
+            print("WHATEVRR")
+        else:
+            print("YAYYY")
+        q = q.filter(Supplier.data['recruiter'].astext == 'yes')
+
+        # q = q.filter(Supplier.is_recruiter == 'true')
         seller_types_list.remove('recruiter')
         if len(seller_types_list) == 0:
             seller_types_list = None
-
+# consultant
     if seller_types_list is not None and 'consultant' in seller_types_list:
         q = q.filter(Supplier.is_recruiter == 'false')
         seller_types_list.remove('consultant')
