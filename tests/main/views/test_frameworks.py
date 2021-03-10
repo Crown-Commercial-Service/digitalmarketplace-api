@@ -252,6 +252,20 @@ class TestGetFramework(BaseApplicationTest):
 
         assert response.status_code == 404
 
+    def test_framework_live_after_date_is_e_signature_supported_true(self):
+        self.client.post(
+            "/frameworks/g-cloud-7",
+            data=json.dumps({
+                "updated_by": "🤖",
+                "frameworks": {
+                    "frameworkLiveAtUTC": "2020-09-28T12:00:00.000000Z"
+                }
+            }),
+            content_type="application/json"
+        )
+        get_framework = self.client.get('/frameworks/g-cloud-7')
+        assert get_framework.json['frameworks']['isESignatureSupported'] is True
+
 
 class TestUpdateFramework(BaseApplicationTest, JSONUpdateTestMixin, FixtureMixin):
     endpoint = '/frameworks/example'

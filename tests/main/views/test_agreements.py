@@ -589,12 +589,6 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
         assert res2.status_code == 200
         assert json.loads(res2.get_data(as_text=True))['agreement'] == expected_agreement_json
 
-    @fixture_params(
-        'live_example_framework', {
-            'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'},
-            'slug': 'g-cloud-11',
-        }
-    )
     def test_cannot_update_countersigned_agreement_path_if_agreement_has_not_been_approved(self, supplier_framework):
         agreement_id = self.create_agreement(
             supplier_framework,
@@ -614,6 +608,7 @@ class TestUpdateFrameworkAgreement(BaseFrameworkAgreementTest):
         'live_example_framework', {
             'framework_agreement_details': {'frameworkAgreementVersion': 'v1.0'},
             'slug': 'g-cloud-12',
+            'framework_live_at_utc': '2020-09-28T09:00:00.000000Z',  # Past the G12 go-live date
         }
     )
     def test_can_update_countersigned_agreement_path_without_approval_for_esignature_framework(
