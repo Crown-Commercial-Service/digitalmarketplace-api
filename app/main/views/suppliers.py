@@ -439,7 +439,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
             q = q.having(sr_agg.contains(array(roles_list)))
 
     if seller_types_list is not None and 'recruiter' in seller_types_list:
-        q = q.filter(Supplier.data['recruiter'].astext == 'yes')
+        q = q.filter(Supplier.data['recruiter'].astext == 'yes' or Supplier.is_recruiter == 'true')
         seller_types_list.remove('recruiter')
 
     if seller_types_list is not None and 'consultant_and_recruiter' in seller_types_list:
@@ -447,7 +447,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         seller_types_list.remove('consultant_and_recruiter')
 
     if seller_types_list is not None and 'consultant' in seller_types_list:
-        q = q.filter(Supplier.data['recruiter'].astext == 'no')
+        q = q.filter(Supplier.data['recruiter'].astext == 'no' or Supplier.is_recruiter == 'false')
         seller_types_list.remove('consultant')
 
     if seller_types_list is not None and len(seller_types_list) == 0:
