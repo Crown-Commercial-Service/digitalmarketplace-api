@@ -19,7 +19,7 @@ def send_brief_response_received_email(supplier, brief, brief_response, supplier
     else:
         brief_url = current_app.config['FRONTEND_ADDRESS'] + '/' + brief.framework.slug + '/opportunities/' \
             + str(brief.id)
-    ask_question_url = '{}/login?next=%2Fsellers%2Fopportunities%2F{}%2Fask-a-question'.format(
+    ask_question_url = '{}/2/login?next=%2Fsellers%2Fopportunities%2F{}%2Fask-a-question'.format(
         current_app.config['FRONTEND_ADDRESS'], brief.id
     )
 
