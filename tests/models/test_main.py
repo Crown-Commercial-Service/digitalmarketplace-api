@@ -462,7 +462,7 @@ class TestFrameworks(BaseApplicationTest):
             'variations': {},
             'hasDirectAward': True,
             'hasFurtherCompetition': False,
-            'isESignatureSupported': True
+            'isESignatureSupported': False
         }
 
     def test_framework_serialization_with_default_datetimes(self):
@@ -500,7 +500,7 @@ class TestFrameworks(BaseApplicationTest):
             'variations': {},
             'hasDirectAward': True,
             'hasFurtherCompetition': False,
-            'isESignatureSupported': True
+            'isESignatureSupported': False
         }
 
     def test_framework_serialize_keys_match_api_stub_keys(self):
@@ -518,24 +518,6 @@ class TestFrameworks(BaseApplicationTest):
 
         framework_stub = FrameworkStub()
         assert sorted(framework.serialize().keys()) == sorted(framework_stub.response().keys())
-
-    @pytest.mark.parametrize("slug,is_esignature_supported", [
-        ('g-cloud-11', False),
-        ('g-cloud-12', True),
-        ('digital-outcomes-and-specialists', False),
-        ('digital-outcomes-and-specialists-100', True),
-    ])
-    def test_framework_esignature_supported(self, slug, is_esignature_supported):
-        framework = Framework(
-            id=109,
-            name='foo',
-            slug=slug,
-            framework='g-cloud',
-            has_direct_award=True,
-            has_further_competition=False
-        )
-
-        assert framework.is_esignature_supported == is_esignature_supported
 
 
 class TestBriefs(BaseApplicationTest, FixtureMixin):
