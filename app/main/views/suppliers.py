@@ -495,7 +495,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
     sliced_results = results[offset:(offset + result_count)]
 
     q = db.session.query(Supplier.code, Supplier.name, Supplier.summary, Supplier.data['recruiter'].label('recruiter'),
-                         Supplier.data, Domain.name.label('domain_name'),
+                         Supplier.is_recruiter, Supplier.data, Domain.name.label('domain_name'),
                          SupplierDomain.status.label('domain_status'))\
         .outerjoin(SupplierDomain, Domain)\
         .filter(Supplier.id.in_([sr.id for sr in sliced_results]))\
