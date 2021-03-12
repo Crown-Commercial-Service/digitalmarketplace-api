@@ -140,6 +140,9 @@ class Framework(db.Model):
         'digital-outcomes-and-specialists',
     )
     MANUAL_SIGNATURE_FRAMEWORK_SLUGS = [
+        "g-cloud-4",
+        "g-cloud-5",
+        "g-cloud-6",
         "g-cloud-7",
         "g-cloud-8",
         "g-cloud-9",
