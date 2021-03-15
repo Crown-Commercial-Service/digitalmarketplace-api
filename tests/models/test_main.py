@@ -521,8 +521,20 @@ class TestFrameworks(BaseApplicationTest):
 
     @pytest.mark.parametrize("slug,is_esignature_supported", [
         ('g-cloud-11', False),
+        ('g-cloud-10', False),
+        ('g-cloud-9', False),
+        ('g-cloud-8', False),
+        ('g-cloud-7', False),
+        ('g-cloud-6', False),
+        ('g-cloud-5', False),
+        ('g-cloud-4', False),
         ('g-cloud-12', True),
+        ('g-cloud-100', True),
         ('digital-outcomes-and-specialists', False),
+        ('digital-outcomes-and-specialists-2', False),
+        ('digital-outcomes-and-specialists-3', False),
+        ('digital-outcomes-and-specialists-4', False),
+        ('digital-outcomes-and-specialists-5', True),
         ('digital-outcomes-and-specialists-100', True),
     ])
     def test_framework_esignature_supported(self, slug, is_esignature_supported):
