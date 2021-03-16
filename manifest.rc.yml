@@ -1,7 +1,7 @@
 applications:
 - name: dm-rc-api
   command: ./scripts/cf_run_app.sh
-  buildpack: 
+  buildpacks: 
   - python2_buildpack
   - Staticfile
   health-check-type: port
