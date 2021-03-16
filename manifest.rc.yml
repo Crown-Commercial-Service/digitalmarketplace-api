@@ -1,7 +1,9 @@
 applications:
 - name: dm-rc-api
   command: ./scripts/cf_run_app.sh
-  buildpack: python2_buildpack
+  buildpack: 
+  - python2_buildpack
+  - Staticfile
   health-check-type: port
   health-check-timeout: 180
   instances: 1
