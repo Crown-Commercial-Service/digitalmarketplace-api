@@ -6,7 +6,7 @@ You've been added as a team lead of {{ team_name }}. This means you can:
 * add and remove other team leads
 * set permissions for each member
   
-[Sign in]({{ frontend_url }}/login) to the Digital Marketplace to view your team's opportunities on your dashboard.  
+[Sign in]({{ frontend_url }}/2/login) to the Digital Marketplace to view your team's opportunities on your dashboard.  
   
 Start managing your team by going to [Teams and people]({{ frontend_url }}/2/teams).  
   
