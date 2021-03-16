@@ -19,8 +19,6 @@ from ...supplier_utils import validate_agreement_details_data
 
 RESOURCE_NAME = "agreement"
 
-E_SIGNATURE_LIVE_DATE = datetime(2020, 9, 28)
-
 
 @main.route('/agreements', methods=['POST'])
 def create_framework_agreement():
@@ -102,9 +100,7 @@ def update_framework_agreement(agreement_id):
         abort(400, "Can not update signedAgreementDetails or signedAgreementPath if agreement has been signed")
 
     # For G-Cloud 12 onwards (e-signature frameworks), CCS Admins do not have to approve for countersigning
-    is_esignature_framework = (
-        framework_agreement.supplier_framework.framework.framework_live_at_utc > E_SIGNATURE_LIVE_DATE
-    )
+    is_esignature_framework = framework_agreement.supplier_framework.framework.is_esignature_supported
     if (
         'countersignedAgreementPath' in update_json and not
         (framework_agreement.countersigned_agreement_returned_at or is_esignature_framework)

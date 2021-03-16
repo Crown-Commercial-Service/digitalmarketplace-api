@@ -139,6 +139,20 @@ class Framework(db.Model):
         'g-cloud',
         'digital-outcomes-and-specialists',
     )
+    MANUAL_SIGNATURE_FRAMEWORK_SLUGS = [
+        "g-cloud-4",
+        "g-cloud-5",
+        "g-cloud-6",
+        "g-cloud-7",
+        "g-cloud-8",
+        "g-cloud-9",
+        "g-cloud-10",
+        "g-cloud-11",
+        "digital-outcomes-and-specialists",
+        "digital-outcomes-and-specialists-2",
+        "digital-outcomes-and-specialists-3",
+        "digital-outcomes-and-specialists-4",
+    ]
     UNIX_EPOCH = datetime.strptime('1970-01-01T00:00:00.000000Z', DATETIME_FORMAT)
 
     id = db.Column(db.Integer, primary_key=True)
@@ -230,8 +244,12 @@ class Framework(db.Model):
             'variations': (self.framework_agreement_details or {}).get("variations", {}),
             'hasDirectAward': self.has_direct_award,
             'hasFurtherCompetition': self.has_further_competition,
-            'isESignatureSupported': self.framework_live_at_utc > datetime(2020, 9, 28),
+            'isESignatureSupported': self.is_esignature_supported,
         }
+
+    @property
+    def is_esignature_supported(self):
+        return self.slug not in Framework.MANUAL_SIGNATURE_FRAMEWORK_SLUGS
 
     def get_supplier_ids_for_completed_service(self):
         """Only suppliers whose service has a status of submitted or failed."""
