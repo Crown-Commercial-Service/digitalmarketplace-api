@@ -56,7 +56,7 @@ class TestNotifyCallback(BaseApplicationTest):
         assert audit_events[0].data['user'] == {'active': False}
         assert audit_events[0].data['notify_callback_data'] == notify_data
 
-        assert logs.records[0].msg == "User account disabled for -htpNCrT2nn2dCuqWsXwBZDgkP-WQQCYAfPgSw7Rb4A= after " \
+        assert logs.records[1].msg == "User account disabled for -htpNCrT2nn2dCuqWsXwBZDgkP-WQQCYAfPgSw7Rb4A= after " \
                                       "Notify reported permanent delivery failure."
 
     def test_no_audit_event_if_already_inactive_on_permanent_delivery_failure(self):
