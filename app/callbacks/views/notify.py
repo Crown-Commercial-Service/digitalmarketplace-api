@@ -19,9 +19,25 @@ def callbacks_root():
 def notify_callback():
     notify_data = get_json_from_request()
 
-    if notify_data['status'] == 'permanent-failure':
+    email_address = notify_data["to"]
+    hashed_email = hash_string(email_address)
+    reference = notify_data["reference"]
+    status = notify_data["status"]
+
+    # remove PII from response for logging
+    # according to docs only "to" has PII
+    # https://docs.notifications.service.gov.uk/rest-api.html#delivery-receipts
+    clean_notify_data = notify_data.copy()
+    del clean_notify_data["to"]
+
+    current_app.logger.info(
+        f"Notify callback: {status}: {reference} to {hashed_email}",
+        extra=clean_notify_data,
+    )
+
+    if status == "permanent-failure":
         user = User.query.filter(
-            User.email_address == notify_data['to']
+            User.email_address == email_address
         ).first()
 
         if user and user.active:
@@ -39,14 +55,13 @@ def notify_callback():
             db.session.commit()
 
             current_app.logger.info(
-                "User account disabled for {hashed_email} after Notify reported permanent delivery "
-                "failure.".format(hashed_email=hash_string(notify_data['to']))
+                f"User account disabled for {hashed_email} after Notify reported permanent delivery "
+                "failure."
             )
 
-    elif notify_data['status'] == 'technical-failure':
-        current_app.logger.warning("Notify failed to deliver {reference} to {hashed_email}".format(
-            reference=notify_data['reference'],
-            hashed_email=hash_string(notify_data['to']),
-        ))
+    elif status.endswith("failure"):
+        current_app.logger.warning(
+            f"Notify failed to deliver {reference} to {hashed_email}"
+        )
 
     return jsonify(status='ok'), 200
