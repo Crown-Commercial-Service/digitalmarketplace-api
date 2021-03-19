@@ -32,7 +32,7 @@ def notify_callback():
 
     current_app.logger.info(
         f"Notify callback: {status}: {reference} to {hashed_email}",
-        extra=clean_notify_data,
+        extra={"notify_delivery_receipt": clean_notify_data},
     )
 
     if status == "permanent-failure":
