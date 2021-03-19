@@ -18,7 +18,7 @@ CELERYBEAT_SCHEDULE = {
     },
     'send_labour_hire_expiry_reminder': {
         'task': 'app.tasks.mailchimp.send_labour_hire_expiry_reminder',
-        'schedule': crontab(hour=6, minute=30)
+        'schedule': crontab(hour=0, minute='*/15')
     },
     'process_closed_briefs': {
         'task': 'app.tasks.brief_tasks.process_closed_briefs',
@@ -140,7 +140,7 @@ class Config:
     SEARCH_MINIMUM_MATCH_SCORE_SUMMARY = 0.02
 
     # EMAIL CONFIG
-    DM_SEND_EMAIL_TO_STDERR = False
+    DM_SEND_EMAIL_TO_STDERR = True
 
     DM_CLARIFICATION_QUESTION_EMAIL = 'no-reply@marketplace.digital.gov.au'
     DM_FRAMEWORK_AGREEMENTS_EMAIL = 'enquiries@example.com'

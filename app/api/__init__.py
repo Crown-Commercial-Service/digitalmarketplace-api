@@ -74,7 +74,6 @@ def add_cache_control(response):
     response.headers['Cache-control'] = 'no-cache, no-store'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = 0
-    response.headers['Strict-Transport-Security'] = 'max-age=300'
     return response
 
 
