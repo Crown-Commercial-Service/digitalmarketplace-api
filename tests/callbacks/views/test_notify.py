@@ -4,6 +4,7 @@ import logging
 
 from freezegun import freeze_time
 from testfixtures import logcapture
+import pytest
 
 from dmutils.formats import DATETIME_FORMAT
 
@@ -34,6 +35,20 @@ class TestNotifyCallback(BaseApplicationTest):
     def test_200_on_notify_callback_root(self):
         response = self.client.get('/callbacks')
         assert response.status_code == 200
+
+    @pytest.mark.parametrize("status",
+        ("delivered", "permanent-failure", "temporary-failure", "technical-failure")
+    )
+    def test_callbacks_are_logged(self, status):
+        notify_data = self.notify_data(status=status)
+
+        with logcapture.LogCapture(names=('flask.app',), level=logging.INFO) as logs:
+            response = self.client.post('/callbacks/notify',
+                                        data=json.dumps(notify_data),
+                                        content_type='application/json')
+
+            assert logs.records[0].msg == f"Notify callback: {status}: my-notification-reference to urpXHRZxYlyjcR9cAeiJkNpfSjZYuw-IOGMbo5x2HTM="
+
 
     def test_user_account_deactivated_with_log_on_permanent_delivery_failure(self, user_role_supplier):
         notify_data = self.notify_data(to='test+1@digital.gov.uk')
