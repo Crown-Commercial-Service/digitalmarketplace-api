@@ -36,19 +36,25 @@ class TestNotifyCallback(BaseApplicationTest):
         response = self.client.get('/callbacks')
         assert response.status_code == 200
 
-    @pytest.mark.parametrize("status",
-        ("delivered", "permanent-failure", "temporary-failure", "technical-failure")
-    )
+    @pytest.mark.parametrize("status", (
+        "delivered", "permanent-failure", "temporary-failure", "technical-failure"
+    ))
     def test_callbacks_are_logged(self, status):
         notify_data = self.notify_data(status=status)
 
         with logcapture.LogCapture(names=('flask.app',), level=logging.INFO) as logs:
-            response = self.client.post('/callbacks/notify',
-                                        data=json.dumps(notify_data),
-                                        content_type='application/json')
+            self.client.post(
+                '/callbacks/notify',
+                data=json.dumps(notify_data),
+                content_type='application/json'
+            )
 
-            assert logs.records[0].msg == f"Notify callback: {status}: my-notification-reference to urpXHRZxYlyjcR9cAeiJkNpfSjZYuw-IOGMbo5x2HTM="
+            assert logs.records[0].msg \
+                == f"Notify callback: {status}: " \
+                "my-notification-reference to urpXHRZxYlyjcR9cAeiJkNpfSjZYuw-IOGMbo5x2HTM="
 
+            del notify_data["to"]
+            assert logs.records[0].notify_delivery_receipt == notify_data
 
     def test_user_account_deactivated_with_log_on_permanent_delivery_failure(self, user_role_supplier):
         notify_data = self.notify_data(to='test+1@digital.gov.uk')
