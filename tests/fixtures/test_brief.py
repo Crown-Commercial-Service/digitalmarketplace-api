@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import pytest
+import unittest
 import mock
 
 from app import encryption
@@ -367,8 +368,8 @@ def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, s
 )
 def test_create_brief_response_success_with_audit_exception(brief_response,
                                                             client, supplier_user, supplier_domains,
-                                                            specialist_brief, suppliers, mocker):
-    audit_event = mocker.patch('app.api.views.briefs.audit_service')
+                                                            specialist_brief, suppliers):
+    audit_event = mock.patch('app.api.views.briefs.audit_service')
     audit_event.side_effect = Exception('Test')
 
     res = client.post('/2/login', data=json.dumps({
@@ -417,8 +418,8 @@ def test_create_brief_response_success_with_audit_exception(brief_response,
     }], indirect=True
 )
 def test_create_brief_response_fail_with_incorrect_attachment(client, supplier_user, supplier_domains,
-                                                              specialist_brief, suppliers, mocker):
-    audit_event = mocker.patch('app.api.views.briefs.audit_service')
+                                                              specialist_brief, suppliers):
+    audit_event = mock.patch('app.api.views.briefs.audit_service')
     audit_event.side_effect = Exception('Test')
 
     res = client.post('/2/login', data=json.dumps({

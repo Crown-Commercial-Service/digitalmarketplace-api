@@ -87,8 +87,8 @@ def agencies(app, request):
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_send_seller_type_signup_invite_email(user_claim, client, mocker):
-    send_email = mocker.patch('app.api.views.users.send_account_activation_email')
+def test_send_seller_type_signup_invite_email(user_claim, client):
+    send_email = mock.patch('app.api.views.users.send_account_activation_email')
     response = client.post(
         '/2/signup',
         data=json.dumps(test_seller),
@@ -110,8 +110,8 @@ def test_seller_signup_fail_missing_abn(user_claim, client):
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_send_buyer_type_signup_invite_email(user_claim, client, mocker):
-    send_email = mocker.patch('app.api.views.users.send_account_activation_email')
+def test_send_buyer_type_signup_invite_email(user_claim, client):
+    send_email = mock.patch('app.api.views.users.send_account_activation_email')
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -130,8 +130,8 @@ def test_send_buyer_type_signup_invite_email(user_claim, client, mocker):
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_send_contractor_buyer_type_signup_invite_email(user_claim, client, mocker):
-    send_email = mocker.patch('app.api.views.users.send_account_activation_manager_email')
+def test_send_contractor_buyer_type_signup_invite_email(user_claim, client):
+    send_email = mock.patch('app.api.views.users.send_account_activation_manager_email')
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -151,7 +151,7 @@ def test_send_contractor_buyer_type_signup_invite_email(user_claim, client, mock
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_invalid_employment_status(user_claim, client, mocker):
+def test_invalid_employment_status(user_claim, client):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -167,7 +167,7 @@ def test_invalid_employment_status(user_claim, client, mocker):
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_missing_name(user_claim, client, mocker):
+def test_missing_name(user_claim, client):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -258,8 +258,8 @@ def test_generic_domain(user_claim, client):
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
 @pytest.mark.parametrize('user', [gov_au_buyer, whitelisted_non_gov_au_buyer])
-def test_buyer_can_signup_with_whitelisted_email(user_claim, client, mocker, agencies, user):
-    send_email = mocker.patch('app.api.views.users.send_account_activation_email')
+def test_buyer_can_signup_with_whitelisted_email(user_claim, client, agencies, user):
+    send_email = mock.patch('app.api.views.users.send_account_activation_email')
 
     response = client.post(
         '/2/signup',
@@ -280,7 +280,7 @@ def test_buyer_can_signup_with_whitelisted_email(user_claim, client, mocker, age
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
 @pytest.mark.parametrize('user', [non_whitelisted_buyer_in_agency, non_whitelisted_buyer])
-def test_buyer_can_not_signup_with_non_whitelisted_email(user_claim, client, mocker, agencies, user):
+def test_buyer_can_not_signup_with_non_whitelisted_email(user_claim, client, agencies, user):
     response = client.post(
         '/2/signup',
         data=json.dumps({
