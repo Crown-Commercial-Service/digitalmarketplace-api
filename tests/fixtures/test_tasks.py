@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from os import environ
 
 import pytest
+import mock
 from flask import current_app
 from mock.mock import MagicMock
 from requests.exceptions import RequestException
@@ -26,14 +27,14 @@ briefs_data_all_sellers = COMPLETE_DIGITAL_SPECIALISTS_BRIEF.copy()
 briefs_data_all_sellers.update({'sellerSelector': 'allSellers'})
 
 
+@mock.patch('app.tasks.mailchimp.MailChimp')
 @pytest.mark.parametrize('suppliers', [{'framework_slug': 'digital-marketplace'}], indirect=True)
 @pytest.mark.parametrize(
     'users',
     [{'framework_slug': 'digital-marketplace', 'user_role': 'supplier', 'email_domain': 'supplier.com'}],
     indirect=True
 )
-def test_sync_mailchimp_seller_list_success(app, mocker, suppliers, supplier_domains, users):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+def test_sync_mailchimp_seller_list_success(mock_mailchimp, app, suppliers, supplier_domains, users):
     client = MagicMock()
 
     list_response = {
@@ -46,7 +47,7 @@ def test_sync_mailchimp_seller_list_success(app, mocker, suppliers, supplier_dom
     user_emails = [x.email_address.lower() for x in users]
     emails_to_subscribe = supplier_emails + user_emails
 
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
 
     with app.app_context():
         environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
@@ -64,12 +65,12 @@ def test_sync_mailchimp_seller_list_success(app, mocker, suppliers, supplier_dom
         })
 
 
-def test_sync_mailchimp_seller_list_fails_mailchimp_api_call_with_requests_error(app, mocker):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
-    requestEx = mocker.patch('app.tasks.mailchimp.RequestException')
+@mock.patch('app.tasks.mailchimp.RequestException')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_sync_mailchimp_seller_list_fails_mailchimp_api_call_with_requests_error(mock_mailchimp, mock_request_exception,
+                                                                                 app):
     client = MagicMock()
-
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
 
     with app.app_context():
         environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
@@ -82,11 +83,10 @@ def test_sync_mailchimp_seller_list_fails_mailchimp_api_call_with_requests_error
             assert True
 
 
-def test_sync_mailchimp_seller_list_fails_with_empty_list_id(app, mocker):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_sync_mailchimp_seller_list_fails_with_empty_list_id(mock_mailchimp, app):
     client = MagicMock()
-
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
 
     with app.app_context():
         environ['MAILCHIMP_SELLER_LIST_ID'] = ''
@@ -98,17 +98,16 @@ def test_sync_mailchimp_seller_list_fails_with_empty_list_id(app, mocker):
             assert str(e) == 'Failed to get MAILCHIMP_SELLER_LIST_ID from the environment variables.'
 
 
+@mock.patch('app.tasks.mailchimp.MailChimp')
 @pytest.mark.parametrize('briefs', [
     {
         'data': briefs_data_all_sellers,
         'framework_slug': 'digital-marketplace'
     }
 ], indirect=True)
-def test_send_new_briefs_email_success(app, briefs, mocker):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+def test_send_new_briefs_email_success(mock_mailchimp, app, briefs):
     client = MagicMock()
-
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
     environ['MAILCHIMP_SELLER_EMAIL_LIST_ID'] = '123456'
 
     with app.app_context():
@@ -126,16 +125,15 @@ def test_send_new_briefs_email_success(app, briefs, mocker):
         assert audit_event.data['briefs_sent'] == len(briefs)
 
 
+@mock.patch('app.tasks.mailchimp.MailChimp')
 @pytest.mark.parametrize(
     'briefs',
     [{'published_at': '%s-01-01' % (date.today().year - 1), 'data': briefs_data_all_sellers}],
     indirect=True
 )
-def test_send_new_briefs_email_fails_no_new_briefs_in_past_24hrs(app, briefs, mocker):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+def test_send_new_briefs_email_fails_no_new_briefs_in_past_24hrs(mock_mailchimp, app, briefs):
     client = MagicMock()
-
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
     environ['MAILCHIMP_SELLER_EMAIL_LIST_ID'] = '123456'
 
     with app.app_context():
@@ -146,11 +144,10 @@ def test_send_new_briefs_email_fails_no_new_briefs_in_past_24hrs(app, briefs, mo
         assert not client.campaigns.actions.schedule.called
 
 
-def test_send_new_briefs_email_fails_no_new_briefs_since_last_run(app, briefs, mocker):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_send_new_briefs_email_fails_no_new_briefs_since_last_run(mock_mailchimp, app, briefs):
     client = MagicMock()
-
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
     environ['MAILCHIMP_SELLER_EMAIL_LIST_ID'] = '123456'
 
     with app.app_context():
@@ -171,11 +168,10 @@ def test_send_new_briefs_email_fails_no_new_briefs_since_last_run(app, briefs, m
         assert not client.campaigns.actions.schedule.called
 
 
-def test_send_new_briefs_email_fails_with_empty_list_id(app, mocker):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_send_new_briefs_email_fails_with_empty_list_id(mock_mailchimp, app):
     client = MagicMock()
-
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
     environ['MAILCHIMP_SELLER_EMAIL_LIST_ID'] = ''
 
     with app.app_context():
@@ -186,20 +182,19 @@ def test_send_new_briefs_email_fails_with_empty_list_id(app, mocker):
             assert str(e) == 'Failed to get MAILCHIMP_SELLER_EMAIL_LIST_ID from the environment variables.'
 
 
+@mock.patch('app.tasks.mailchimp.Exception')
+@mock.patch('app.tasks.mailchimp.RequestException')
+@mock.patch('app.tasks.mailchimp.MailChimp')
 @pytest.mark.parametrize('briefs', [
     {
         'data': briefs_data_all_sellers,
         'framework_slug': 'digital-marketplace'
     }
 ], indirect=True)
-def test_send_new_briefs_email_fails_mailchimp_api_call_with_requests_error(app, briefs, mocker):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
-    requestEx = mocker.patch('app.tasks.mailchimp.RequestException')
-    Ex = mocker.patch('app.tasks.mailchimp.Exception')
-
+def test_send_new_briefs_email_fails_mailchimp_api_call_with_requests_error(mock_mailchimp, mock_request_exception,
+                                                                            mock_exception, app, briefs):
     client = MagicMock()
-
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
     environ['MAILCHIMP_SELLER_EMAIL_LIST_ID'] = '123456'
 
     client.campaigns.create.side_effect = RequestException
@@ -210,7 +205,7 @@ def test_send_new_briefs_email_fails_mailchimp_api_call_with_requests_error(app,
             assert False
         except RequestException as e:
             assert True
-        except Ex as error:
+        except mock_exception as error:
             assert False
 
 
@@ -222,18 +217,18 @@ brief_response_data = {
 }
 
 
+@mock.patch('app.tasks.s3.boto3')
 @pytest.mark.parametrize('brief_responses', [{'data': brief_response_data}], indirect=True)
-def test_create_responses_zip_success(app, briefs, brief_responses, mocker):
-    boto3 = mocker.patch('app.tasks.s3.boto3')
+def test_create_responses_zip_success(mock_boto3, app, briefs, brief_responses):
     s3 = MagicMock()
     bucket = MagicMock()
 
-    boto3.resource.return_value = s3
+    mock_boto3.resource.return_value = s3
     s3.Bucket.return_value = bucket
 
     with app.app_context():
         create_responses_zip(1)
-        assert boto3.resource.called
+        assert mock_boto3.resource.called
         assert s3.Bucket.called
         assert bucket.download_fileobj.called
         assert bucket.upload_fileobj.called
@@ -244,12 +239,12 @@ brief_response_data = {
 }
 
 
-def test_create_responses_zip_fails_when_no_responses(app, briefs, mocker):
-    boto3 = mocker.patch('app.tasks.s3.boto3')
+@mock.patch('app.tasks.s3.boto3')
+def test_create_responses_zip_fails_when_no_responses(mock_boto3, app, briefs):
     s3 = MagicMock()
     bucket = MagicMock()
 
-    boto3.resource.return_value = s3
+    mock_boto3.resource.return_value = s3
     s3.Bucket.return_value = bucket
 
     with app.app_context():
@@ -257,7 +252,7 @@ def test_create_responses_zip_fails_when_no_responses(app, briefs, mocker):
             create_responses_zip(1)
             assert False
         except CreateResponsesZipException as e:
-            assert not boto3.resource.called
+            assert not mock_boto3.resource.called
             assert not s3.Bucket.called
             assert not bucket.download_fileobj.called
             assert not bucket.upload_fileobj.called
@@ -309,14 +304,14 @@ def assessment(app, supplier_domain):
 
 
 @pytest.fixture
-def audit_events(app, suppliers_service):
+def audit_events(app, suppliers_with_expiring_documents, suppliers_with_expiring_labour_hire_licences):
     with app.app_context():
         db.session.add(AuditEvent(
             audit_type=audit_types.sent_expiring_documents_email,
             data={
                 'campaign_title': ('Expiring documents - {}'
                                    .format(date.today().isoformat())),
-                'sellers': suppliers_service.get_suppliers_with_expiring_documents()
+                'sellers': suppliers_with_expiring_documents
             },
             db_object=None,
             user=None
@@ -326,7 +321,7 @@ def audit_events(app, suppliers_service):
             data={
                 'campaign_title': ('Expiring labour hire licence - {}'
                                    .format(date.today().isoformat())),
-                'sellers': suppliers_service.get_suppliers_with_expiring_labour_hire_licences()
+                'sellers': suppliers_with_expiring_labour_hire_licences
             },
             db_object=None,
             user=None
@@ -335,9 +330,8 @@ def audit_events(app, suppliers_service):
 
 
 @pytest.fixture
-def suppliers_service(expiry_date, mocker, supplier):
-    suppliers = mocker.patch('app.tasks.mailchimp.suppliers')
-    suppliers.get_suppliers_with_expiring_documents.return_value = [
+def suppliers_with_expiring_documents(expiry_date):
+    suppliers = [
         {
             'code': 123,
             'documents': [
@@ -354,7 +348,13 @@ def suppliers_service(expiry_date, mocker, supplier):
             'name': 'ABC'
         }
     ]
-    suppliers.get_suppliers_with_expiring_labour_hire_licences.return_value = [
+
+    yield suppliers
+
+
+@pytest.fixture
+def suppliers_with_expiring_labour_hire_licences(expiry_date):
+    suppliers = [
         {
             'code': 123,
             'labourHire': [
@@ -373,33 +373,22 @@ def suppliers_service(expiry_date, mocker, supplier):
         }
     ]
 
-    suppliers.get_supplier_by_code.return_value = supplier
     yield suppliers
 
 
-def test_document_expiry_campaign_is_not_created_when_no_sellers_with_expiring_documents(mocker,
-                                                                                         suppliers_service):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.suppliers.get_supplier_by_code')
+@mock.patch('app.tasks.mailchimp.suppliers.get_suppliers_with_expiring_documents')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_document_expiry_campaign_is_not_created_when_no_sellers_with_expiring_documents(
+    mock_mailchimp,
+    mock_get_suppliers_with_expiring_documents,
+    mock_get_supplier_by_code,
+    supplier
+):
     client = MagicMock()
-    mailchimp.return_value = client
-
-    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
-    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
-
-    suppliers_service.get_suppliers_with_expiring_documents.return_value = []
-
-    send_document_expiry_reminder()
-
-    assert not client.campaigns.create.called
-    assert not client.campaigns.content.update.called
-    assert not client.campaigns.actions.schedule.called
-
-
-def test_document_expiry_campaign_is_not_created_if_audit_event_exists(audit_events, mocker,
-                                                                       supplier, suppliers_service):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
-    client = MagicMock()
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
+    mock_get_suppliers_with_expiring_documents.return_value = []
+    mock_get_supplier_by_code.return_value = supplier
 
     environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
     environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
@@ -411,10 +400,46 @@ def test_document_expiry_campaign_is_not_created_if_audit_event_exists(audit_eve
     assert not client.campaigns.actions.schedule.called
 
 
-def test_document_expiry_campaign_success(mocker, supplier, suppliers_service):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.suppliers.get_supplier_by_code')
+@mock.patch('app.tasks.mailchimp.suppliers.get_suppliers_with_expiring_documents')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_document_expiry_campaign_is_not_created_if_audit_event_exists(
+    mock_mailchimp,
+    mock_get_suppliers_with_expiring_documents,
+    mock_get_supplier_by_code,
+    audit_events,
+    supplier,
+    suppliers_with_expiring_documents
+):
     client = MagicMock()
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
+    mock_get_suppliers_with_expiring_documents.return_value = suppliers_with_expiring_documents
+    mock_get_supplier_by_code.return_value = supplier
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    send_document_expiry_reminder()
+
+    assert not client.campaigns.create.called
+    assert not client.campaigns.content.update.called
+    assert not client.campaigns.actions.schedule.called
+
+
+@mock.patch('app.tasks.mailchimp.suppliers.get_supplier_by_code')
+@mock.patch('app.tasks.mailchimp.suppliers.get_suppliers_with_expiring_documents')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_document_expiry_campaign_success(
+    mock_mailchimp,
+    mock_get_suppliers_with_expiring_documents,
+    mock_get_supplier_by_code,
+    supplier,
+    suppliers_with_expiring_documents
+):
+    client = MagicMock()
+    mock_mailchimp.return_value = client
+    mock_get_suppliers_with_expiring_documents.return_value = suppliers_with_expiring_documents
+    mock_get_supplier_by_code.return_value = supplier
 
     environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
     environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
@@ -430,10 +455,20 @@ def test_document_expiry_campaign_success(mocker, supplier, suppliers_service):
     assert client.campaigns.actions.schedule.called
 
 
-def test_document_expiry_campaign_is_created_with_segment_options(mocker, supplier, suppliers_service):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.suppliers.get_supplier_by_code')
+@mock.patch('app.tasks.mailchimp.suppliers.get_suppliers_with_expiring_documents')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_document_expiry_campaign_is_created_with_segment_options(
+    mock_mailchimp,
+    mock_get_suppliers_with_expiring_documents,
+    mock_get_supplier_by_code,
+    supplier,
+    suppliers_with_expiring_documents
+):
     client = MagicMock()
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
+    mock_get_suppliers_with_expiring_documents.return_value = suppliers_with_expiring_documents
+    mock_get_supplier_by_code.return_value = supplier
 
     environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
     environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
@@ -442,8 +477,8 @@ def test_document_expiry_campaign_is_created_with_segment_options(mocker, suppli
         'id': 123
     }
 
-    email_addresses = suppliers_service.get_suppliers_with_expiring_documents()[0]['email_addresses']
-    sellers = suppliers_service.get_suppliers_with_expiring_documents()
+    sellers = mock_get_suppliers_with_expiring_documents()
+    email_addresses = sellers[0]['email_addresses']
 
     send_document_expiry_campaign(client, sellers)
 
@@ -458,10 +493,20 @@ def test_document_expiry_campaign_is_created_with_segment_options(mocker, suppli
         assert condition['value'] in email_addresses
 
 
-def test_document_expiry_campaign_adds_audit_event_on_success(expiry_date, mocker, supplier, suppliers_service):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.suppliers.get_supplier_by_code')
+@mock.patch('app.tasks.mailchimp.suppliers.get_suppliers_with_expiring_documents')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_document_expiry_campaign_adds_audit_event_on_success(
+    mock_mailchimp,
+    mock_get_suppliers_with_expiring_documents,
+    mock_get_supplier_by_code,
+    supplier,
+    suppliers_with_expiring_documents
+):
     client = MagicMock()
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
+    mock_get_suppliers_with_expiring_documents.return_value = suppliers_with_expiring_documents
+    mock_get_supplier_by_code.return_value = supplier
 
     environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
     environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
@@ -472,39 +517,29 @@ def test_document_expiry_campaign_adds_audit_event_on_success(expiry_date, mocke
 
     assert db.session.query(AuditEvent).count() == 0
 
-    sellers = suppliers_service.get_suppliers_with_expiring_documents()
+    sellers = mock_get_suppliers_with_expiring_documents()
     send_document_expiry_campaign(client, sellers)
 
     audit_event = db.session.query(AuditEvent).first()
     assert audit_event.type == audit_types.sent_expiring_documents_email.value
     assert audit_event.data['campaign_title'] == ('Expiring documents - {}'
                                                   .format(date.today().isoformat()))
-    assert audit_event.data['sellers'] == suppliers_service.get_suppliers_with_expiring_documents()
+    assert audit_event.data['sellers'] == sellers
 
 
-def test_licence_expiry_campaign_is_not_created_when_no_sellers_with_expiring_licences(mocker,
-                                                                                       suppliers_service):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.suppliers.get_supplier_by_code')
+@mock.patch('app.tasks.mailchimp.suppliers.get_suppliers_with_expiring_labour_hire_licences')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_licence_expiry_campaign_is_not_created_when_no_sellers_with_expiring_licences(
+    mock_mailchimp,
+    mock_get_suppliers_with_expiring_labour_hire_licences,
+    mock_get_supplier_by_code,
+    supplier
+):
     client = MagicMock()
-    mailchimp.return_value = client
-
-    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
-    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
-
-    suppliers_service.get_suppliers_with_expiring_labour_hire_licences.return_value = []
-
-    send_labour_hire_expiry_reminder()
-
-    assert not client.campaigns.create.called
-    assert not client.campaigns.content.update.called
-    assert not client.campaigns.actions.schedule.called
-
-
-def test_licence_expiry_campaign_is_not_created_if_audit_event_exists(audit_events, mocker,
-                                                                      supplier, suppliers_service):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
-    client = MagicMock()
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
+    mock_get_suppliers_with_expiring_labour_hire_licences.return_value = []
+    mock_get_supplier_by_code.return_value = supplier
 
     environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
     environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
@@ -516,10 +551,46 @@ def test_licence_expiry_campaign_is_not_created_if_audit_event_exists(audit_even
     assert not client.campaigns.actions.schedule.called
 
 
-def test_licence_expiry_campaign_success(mocker, supplier, suppliers_service):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.suppliers.get_supplier_by_code')
+@mock.patch('app.tasks.mailchimp.suppliers.get_suppliers_with_expiring_labour_hire_licences')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_licence_expiry_campaign_is_not_created_if_audit_event_exists(
+    mock_mailchimp,
+    mock_get_suppliers_with_expiring_labour_hire_licences,
+    mock_get_supplier_by_code,
+    supplier,
+    suppliers_with_expiring_labour_hire_licences,
+    audit_events
+):
     client = MagicMock()
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
+    mock_get_suppliers_with_expiring_labour_hire_licences.return_value = suppliers_with_expiring_labour_hire_licences
+    mock_get_supplier_by_code.return_value = supplier
+
+    environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+
+    send_labour_hire_expiry_reminder()
+
+    assert not client.campaigns.create.called
+    assert not client.campaigns.content.update.called
+    assert not client.campaigns.actions.schedule.called
+
+
+@mock.patch('app.tasks.mailchimp.suppliers.get_supplier_by_code')
+@mock.patch('app.tasks.mailchimp.suppliers.get_suppliers_with_expiring_labour_hire_licences')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_licence_expiry_campaign_success(
+    mock_mailchimp,
+    mock_get_suppliers_with_expiring_labour_hire_licences,
+    mock_get_supplier_by_code,
+    supplier,
+    suppliers_with_expiring_labour_hire_licences
+):
+    client = MagicMock()
+    mock_mailchimp.return_value = client
+    mock_get_suppliers_with_expiring_labour_hire_licences.return_value = suppliers_with_expiring_labour_hire_licences
+    mock_get_supplier_by_code.return_value = supplier
 
     environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
     environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
@@ -535,10 +606,20 @@ def test_licence_expiry_campaign_success(mocker, supplier, suppliers_service):
     assert client.campaigns.actions.schedule.called
 
 
-def test_licence_expiry_campaign_is_created_with_segment_options(mocker, supplier, suppliers_service):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.suppliers.get_supplier_by_code')
+@mock.patch('app.tasks.mailchimp.suppliers.get_suppliers_with_expiring_labour_hire_licences')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_licence_expiry_campaign_is_created_with_segment_options(
+    mock_mailchimp,
+    mock_get_suppliers_with_expiring_labour_hire_licences,
+    mock_get_supplier_by_code,
+    supplier,
+    suppliers_with_expiring_labour_hire_licences
+):
     client = MagicMock()
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
+    mock_get_suppliers_with_expiring_labour_hire_licences.return_value = suppliers_with_expiring_labour_hire_licences
+    mock_get_supplier_by_code.return_value = supplier
 
     environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
     environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
@@ -547,8 +628,8 @@ def test_licence_expiry_campaign_is_created_with_segment_options(mocker, supplie
         'id': 123
     }
 
-    email_addresses = suppliers_service.get_suppliers_with_expiring_labour_hire_licences()[0]['email_addresses']
-    sellers = suppliers_service.get_suppliers_with_expiring_labour_hire_licences()
+    sellers = mock_get_suppliers_with_expiring_labour_hire_licences()
+    email_addresses = sellers[0]['email_addresses']
 
     send_labour_hire_licence_expiry_campaign(client, sellers)
 
@@ -563,10 +644,20 @@ def test_licence_expiry_campaign_is_created_with_segment_options(mocker, supplie
         assert condition['value'] in email_addresses
 
 
-def test_licence_expiry_campaign_adds_audit_event_on_success(expiry_date, mocker, supplier, suppliers_service):
-    mailchimp = mocker.patch('app.tasks.mailchimp.MailChimp')
+@mock.patch('app.tasks.mailchimp.suppliers.get_supplier_by_code')
+@mock.patch('app.tasks.mailchimp.suppliers.get_suppliers_with_expiring_labour_hire_licences')
+@mock.patch('app.tasks.mailchimp.MailChimp')
+def test_licence_expiry_campaign_adds_audit_event_on_success(
+    mock_mailchimp,
+    mock_get_suppliers_with_expiring_labour_hire_licences,
+    mock_get_supplier_by_code,
+    supplier,
+    suppliers_with_expiring_labour_hire_licences
+):
     client = MagicMock()
-    mailchimp.return_value = client
+    mock_mailchimp.return_value = client
+    mock_get_suppliers_with_expiring_labour_hire_licences.return_value = suppliers_with_expiring_labour_hire_licences
+    mock_get_supplier_by_code.return_value = supplier
 
     environ['MAILCHIMP_MARKETPLACE_FOLDER_ID'] = '123456'
     environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
@@ -577,11 +668,11 @@ def test_licence_expiry_campaign_adds_audit_event_on_success(expiry_date, mocker
 
     assert db.session.query(AuditEvent).count() == 0
 
-    sellers = suppliers_service.get_suppliers_with_expiring_labour_hire_licences()
+    sellers = mock_get_suppliers_with_expiring_labour_hire_licences()
     send_labour_hire_licence_expiry_campaign(client, sellers)
 
     audit_event = db.session.query(AuditEvent).first()
     assert audit_event.type == audit_types.sent_expiring_licence_email.value
     assert audit_event.data['campaign_title'] == ('Expiring labour hire licence - {}'
                                                   .format(date.today().isoformat()))
-    assert audit_event.data['sellers'] == suppliers_service.get_suppliers_with_expiring_labour_hire_licences()
+    assert audit_event.data['sellers'] == sellers

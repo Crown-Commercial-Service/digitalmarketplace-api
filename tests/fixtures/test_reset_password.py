@@ -24,7 +24,7 @@ def _get_token(email_address):
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
 @mock.patch('app.api.views.users.key_values_service')
-def test_reset_password(key_values_service, user_claim, client, app, users, mocker):
+def test_reset_password(key_values_service, user_claim, client, app, users):
     with app.app_context():
         user = users[1]
         token_response = _create_token(client, user.email_address)
@@ -117,17 +117,17 @@ def test_reset_password_requires_all_of_the_args(user_claim, client, app, users)
         assert data['message'] == 'One or more required args were missing from the request'
 
 
+@mock.patch('app.api.views.users.send_reset_password_confirm_email')
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_send_marketplace_reset_password_email(user_claim, client, app, mocker, users):
+def test_send_marketplace_reset_password_email(user_claim, mock_send_email, client, app, users):
     with app.app_context():
         user = users[3]
         framework = 'digital-marketplace'
-        send_email = mocker.patch('app.api.views.users.send_reset_password_confirm_email')
         response = _create_token(client, user.email_address)
         claim = _get_token(user.email_address)
         assert response.status_code == 200
 
-        send_email.assert_called_once_with(
+        mock_send_email.assert_called_once_with(
             token=claim.token,
             email_address=user.email_address,
             locked=user.locked,

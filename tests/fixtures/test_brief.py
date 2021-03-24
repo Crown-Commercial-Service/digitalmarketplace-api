@@ -357,6 +357,7 @@ def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, s
     assert 'Essential requirements must be completed' in res.get_data(as_text=True)
 
 
+@mock.patch('app.api.views.briefs.audit_service')
 @mock.patch('app.tasks.publish_tasks.brief_response')
 @pytest.mark.parametrize(
     'specialist_brief',
@@ -365,11 +366,10 @@ def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, s
         'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
     }], indirect=True
 )
-def test_create_brief_response_success_with_audit_exception(brief_response,
+def test_create_brief_response_success_with_audit_exception(brief_response, mock_audit_service,
                                                             client, supplier_user, supplier_domains,
-                                                            specialist_brief, suppliers, mocker):
-    audit_event = mocker.patch('app.api.views.briefs.audit_service')
-    audit_event.side_effect = Exception('Test')
+                                                            specialist_brief, suppliers):
+    mock_audit_service.side_effect = Exception('Test')
 
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'
@@ -409,6 +409,7 @@ def test_create_brief_response_success_with_audit_exception(brief_response,
     assert brief_response.delay.called is True
 
 
+@mock.patch('app.api.views.briefs.audit_service')
 @pytest.mark.parametrize(
     'specialist_brief',
     [{
@@ -416,10 +417,9 @@ def test_create_brief_response_success_with_audit_exception(brief_response,
         'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
     }], indirect=True
 )
-def test_create_brief_response_fail_with_incorrect_attachment(client, supplier_user, supplier_domains,
-                                                              specialist_brief, suppliers, mocker):
-    audit_event = mocker.patch('app.api.views.briefs.audit_service')
-    audit_event.side_effect = Exception('Test')
+def test_create_brief_response_fail_with_incorrect_attachment(mock_audit_service, client, supplier_user,
+                                                              supplier_domains, specialist_brief, suppliers):
+    mock_audit_service.side_effect = Exception('Test')
 
     res = client.post('/2/login', data=json.dumps({
         'emailAddress': 'j@examplecompany.biz', 'password': 'testpassword'

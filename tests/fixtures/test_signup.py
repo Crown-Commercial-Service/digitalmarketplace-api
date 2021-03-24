@@ -86,16 +86,16 @@ def agencies(app, request):
         yield Agency.query.all()
 
 
+@mock.patch('app.api.views.users.send_account_activation_email')
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_send_seller_type_signup_invite_email(user_claim, client, mocker):
-    send_email = mocker.patch('app.api.views.users.send_account_activation_email')
+def test_send_seller_type_signup_invite_email(user_claim, mock_send_email, client):
     response = client.post(
         '/2/signup',
         data=json.dumps(test_seller),
         content_type='application/json')
     assert response.status_code == 200
 
-    send_email.assert_called()
+    mock_send_email.assert_called()
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
@@ -109,9 +109,9 @@ def test_seller_signup_fail_missing_abn(user_claim, client):
     assert response.status_code == 400
 
 
+@mock.patch('app.api.views.users.send_account_activation_email')
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_send_buyer_type_signup_invite_email(user_claim, client, mocker):
-    send_email = mocker.patch('app.api.views.users.send_account_activation_email')
+def test_send_buyer_type_signup_invite_email(user_claim, mock_send_email, client):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -126,12 +126,12 @@ def test_send_buyer_type_signup_invite_email(user_claim, client, mocker):
     data = json.loads(response.data)
     assert data['message'] == 'Email invite sent successfully'
 
-    send_email.assert_called()
+    mock_send_email.assert_called()
 
 
+@mock.patch('app.api.views.users.send_account_activation_manager_email')
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_send_contractor_buyer_type_signup_invite_email(user_claim, client, mocker):
-    send_email = mocker.patch('app.api.views.users.send_account_activation_manager_email')
+def test_send_contractor_buyer_type_signup_invite_email(user_claim, mock_send_email, client):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -147,11 +147,11 @@ def test_send_contractor_buyer_type_signup_invite_email(user_claim, client, mock
     data = json.loads(response.data)
     assert data['message'] == 'Email invite sent successfully'
 
-    send_email.assert_called()
+    mock_send_email.assert_called()
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_invalid_employment_status(user_claim, client, mocker):
+def test_invalid_employment_status(user_claim, client):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -167,7 +167,7 @@ def test_invalid_employment_status(user_claim, client, mocker):
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
-def test_missing_name(user_claim, client, mocker):
+def test_missing_name(user_claim, client):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -256,11 +256,10 @@ def test_generic_domain(user_claim, client):
     assert_equal(data['message'], 'Email invite sent successfully')
 
 
+@mock.patch('app.api.views.users.send_account_activation_email')
 @mock.patch('app.tasks.publish_tasks.user_claim')
 @pytest.mark.parametrize('user', [gov_au_buyer, whitelisted_non_gov_au_buyer])
-def test_buyer_can_signup_with_whitelisted_email(user_claim, client, mocker, agencies, user):
-    send_email = mocker.patch('app.api.views.users.send_account_activation_email')
-
+def test_buyer_can_signup_with_whitelisted_email(user_claim, mock_send_email, client, agencies, user):
     response = client.post(
         '/2/signup',
         data=json.dumps({
@@ -275,12 +274,12 @@ def test_buyer_can_signup_with_whitelisted_email(user_claim, client, mocker, age
     data = json.loads(response.data)
     assert data['message'] == 'Email invite sent successfully'
 
-    send_email.assert_called()
+    mock_send_email.assert_called()
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
 @pytest.mark.parametrize('user', [non_whitelisted_buyer_in_agency, non_whitelisted_buyer])
-def test_buyer_can_not_signup_with_non_whitelisted_email(user_claim, client, mocker, agencies, user):
+def test_buyer_can_not_signup_with_non_whitelisted_email(user_claim, client, agencies, user):
     response = client.post(
         '/2/signup',
         data=json.dumps({
