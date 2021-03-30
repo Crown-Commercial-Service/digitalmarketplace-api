@@ -56,7 +56,7 @@ flask-migrate==2.7.0
     # via -r requirements.in
 flask-session==0.3.2
     # via digitalmarketplace-utils
-flask-sqlalchemy==2.4.4
+flask-sqlalchemy==2.5.1
     # via
     #   -r requirements.in
     #   flask-migrate
