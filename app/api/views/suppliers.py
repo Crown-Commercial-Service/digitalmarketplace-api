@@ -163,7 +163,7 @@ def get_suppliers():
         brief = briefs.get(brief_id)
 
     if not brief:
-        raise NotFoundError("Invalid brief id '{}'".format(brief_id))
+        raise NotFoundError("Invalid opportunity id '{}'".format(brief_id))
 
     exclude = json.loads(request.args.get('exclude')) if request.args.get('exclude') else []
     exclude_recruiters = True if brief and brief.lot.slug != 'specialist' else False

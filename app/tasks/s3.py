@@ -36,17 +36,17 @@ def create_responses_zip(brief_id):
     brief = briefs.find(id=brief_id).one_or_none()
 
     if not brief:
-        raise CreateResponsesZipException('Failed to load brief for id {}'.format(brief_id))
+        raise CreateResponsesZipException('Failed to load opportunity with id {}'.format(brief_id))
 
     responses = brief_responses_service.get_responses_to_zip(brief_id, brief.lot.slug)
 
     if not responses:
-        raise CreateResponsesZipException('There were no respones for brief id {}'.format(brief_id))
+        raise CreateResponsesZipException('There were no responses for opportunity id {}'.format(brief_id))
 
     if brief.lot.slug not in ['digital-professionals', 'training', 'rfx', 'training2', 'atm', 'specialist']:
-        raise CreateResponsesZipException('Brief id {} is not a compatible lot'.format(brief_id))
+        raise CreateResponsesZipException('Opportunity id {} is not a compatible lot'.format(brief_id))
 
-    print 'Generating zip for brief id: {}'.format(brief_id)
+    print 'Generating zip for opportunity id: {}'.format(brief_id)
 
     BUCKET_NAME = getenv('S3_BUCKET_NAME')
     s3 = boto3.resource(
@@ -175,5 +175,5 @@ def create_responses_zip(brief_id):
                 'digital-marketplace/archives/brief-{}/brief-{}-resumes.zip'.format(brief_id, brief_id)
             )
         except botocore.exceptions.ClientError as e:
-            raise CreateResponsesZipException('The responses archive for brief id "{}" failed to upload'
+            raise CreateResponsesZipException('The responses archive for opportunity id "{}" failed to upload'
                                               .format(brief_id))

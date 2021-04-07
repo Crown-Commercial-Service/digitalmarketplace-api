@@ -256,7 +256,7 @@ def test_create_responses_zip_fails_when_no_responses(mock_boto3, app, briefs):
             assert not s3.Bucket.called
             assert not bucket.download_fileobj.called
             assert not bucket.upload_fileobj.called
-            assert str(e) == 'There were no respones for brief id 1'
+            assert str(e) == 'There were no responses for opportunity id 1'
 
 
 @pytest.fixture

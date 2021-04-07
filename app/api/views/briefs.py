@@ -256,7 +256,7 @@ def create_specialist_brief():
 def get_brief(brief_id):
     brief = briefs.find(id=brief_id).one_or_none()
     if not brief:
-        not_found("No brief for id '%s' found" % (brief_id))
+        not_found("No opportunity for id '%s' found" % (brief_id))
 
     user_role = current_user.role if hasattr(current_user, 'role') else None
     invited_sellers = brief.data['sellers'] if 'sellers' in brief.data else {}
@@ -269,7 +269,7 @@ def get_brief(brief_id):
             is_brief_owner = True
 
     if brief.status == 'draft' and not is_brief_owner:
-        return forbidden("Unauthorised to view brief")
+        return forbidden("Unauthorised to view opportunity")
 
     brief_response_count = len(brief_responses_service.get_brief_responses(brief_id, None, submitted_only=True))
     supplier_brief_response_count = 0
@@ -491,17 +491,17 @@ def update_brief(brief_id):
     brief = briefs.get(brief_id)
 
     if not brief:
-        not_found("Invalid brief id '{}'".format(brief_id))
+        not_found("Invalid opportunity id '{}'".format(brief_id))
 
     if brief.status != 'draft':
-        abort('Cannot edit a {} brief'.format(brief.status))
+        abort('Cannot edit a {} opportunity'.format(brief.status))
 
     if brief.lot.slug not in ['rfx', 'atm', 'specialist', 'training2']:
-        abort('Brief lot not supported for editing')
+        abort('Opportunity lot not supported for editing')
 
     if current_user.role == 'buyer':
         if not briefs.has_permission_to_brief(current_user.id, brief.id):
-            return forbidden('Unauthorised to update brief')
+            return forbidden('Unauthorised to update opportunity')
 
     data = get_json_from_request()
 
@@ -696,7 +696,7 @@ def edit_opportunity(brief_id):
 def get_opportunity_history(brief_id):
     brief = briefs.get(brief_id)
     if not brief:
-        not_found("Invalid brief id '{}'".format(brief_id))
+        not_found("Invalid opportunity id '{}'".format(brief_id))
 
     user_role = current_user.role if hasattr(current_user, 'role') else None
     show_documents = False
@@ -782,7 +782,7 @@ def delete_brief(brief_id):
     brief = briefs.get(brief_id)
 
     if not brief:
-        not_found("Invalid brief id '{}'".format(brief_id))
+        not_found("Invalid opportunity id '{}'".format(brief_id))
 
     if not (
         current_user.has_permission('create_drafts') or
@@ -792,10 +792,10 @@ def delete_brief(brief_id):
 
     if current_user.role == 'buyer':
         if not briefs.has_permission_to_brief(current_user.id, brief.id):
-            return forbidden('Unauthorised to delete brief')
+            return forbidden('Unauthorised to delete opportunity')
 
     if brief.status != 'draft':
-        abort('Cannot delete a {} brief'.format(brief.status))
+        abort('Cannot delete a {} opportunity'.format(brief.status))
 
     audit = AuditEvent(
         audit_type=AuditTypes.delete_brief,
@@ -819,7 +819,7 @@ def delete_brief(brief_id):
         extra_data = {'audit_type': AuditTypes.delete_brief, 'briefId': brief.id, 'exception': e.message}
         rollbar.report_exc_info(extra_data=extra_data)
 
-    return jsonify(message='Brief {} deleted'.format(brief_id)), 200
+    return jsonify(message='Opportunity {} deleted'.format(brief_id)), 200
 
 
 @api.route('/brief/<int:brief_id>/overview', methods=["GET"])
@@ -882,11 +882,11 @@ def get_brief_overview(brief_id):
     brief = briefs.get(brief_id)
 
     if not brief:
-        not_found("Invalid brief id '{}'".format(brief_id))
+        not_found("Invalid opportunity id '{}'".format(brief_id))
 
     if current_user.role == 'buyer':
         if not briefs.has_permission_to_brief(current_user.id, brief.id):
-            return forbidden('Unauthorised to view brief')
+            return forbidden('Unauthorised to view opportunity')
 
     if not (brief.lot.slug == 'digital-professionals' or
             brief.lot.slug == 'training'):
@@ -907,11 +907,11 @@ def get_brief_overview(brief_id):
 def get_brief_responses(brief_id):
     brief = briefs.get(brief_id)
     if not brief:
-        not_found("Invalid brief id '{}'".format(brief_id))
+        not_found("Invalid opportunity id '{}'".format(brief_id))
 
     if current_user.role == 'buyer':
         if not briefs.has_permission_to_brief(current_user.id, brief.id):
-            return forbidden("Unauthorised to view brief or brief does not exist")
+            return forbidden("Unauthorised to view opportunity or opportunity does not exist")
 
     supplier_code = getattr(current_user, 'supplier_code', None)
     supplier_contact = None
@@ -992,7 +992,7 @@ def get_brief_responses(brief_id):
 def upload_brief_response_file(brief_id, supplier_code, slug):
     brief = briefs.get(brief_id)
     if not brief or brief.status != 'live':
-        not_found("Invalid brief id '{}'".format(brief_id))
+        not_found("Invalid opportunity id '{}'".format(brief_id))
     if str(current_user.supplier_code) != str(supplier_code):
         forbidden('User supplier does not match the supplier code in the request')
     user_status = BriefUserStatus(brief, current_user)
@@ -1045,10 +1045,10 @@ def upload_brief_rfx_attachment_file(brief_id, slug):
     brief = briefs.get(brief_id)
 
     if not brief:
-        not_found("Invalid brief id '{}'".format(brief_id))
+        not_found("Invalid opportunity id '{}'".format(brief_id))
 
     if not briefs.has_permission_to_brief(current_user.id, brief.id):
-        return forbidden('Unauthorised to update brief')
+        return forbidden('Unauthorised to update opportunity')
 
     try:
         filename = s3_upload_file_from_request(
@@ -1070,9 +1070,9 @@ def download_brief_responses(brief_id):
         Brief.id == brief_id
     ).first_or_404()
     if not briefs.has_permission_to_brief(current_user.id, brief.id):
-        return forbidden("Unauthorised to view brief or brief does not exist")
+        return forbidden("Unauthorised to view opportunity or opportunity does not exist")
     if brief.status != 'closed':
-        return forbidden("You can only download documents for closed briefs")
+        return forbidden("You can only download documents for closed opportunities")
 
     response = ('', 404)
     brief_response_download_service.save(BriefResponseDownload(
@@ -1188,7 +1188,7 @@ def download_brief_response_file(brief_id, supplier_code, slug):
             mimetype=mimetype
         )
     else:
-        return forbidden("Unauthorised to view brief or brief does not exist")
+        return forbidden("Unauthorised to view opportunity or opportunity does not exist")
 
 
 @api.route('/brief/<int:brief_id>/respond', methods=['POST'])
@@ -1198,7 +1198,7 @@ def download_brief_response_file(brief_id, supplier_code, slug):
 def create_brief_response(brief_id):
     brief = briefs.get(brief_id)
     if not brief or brief.status != 'live':
-        not_found("Invalid brief id '{}'".format(brief_id))
+        not_found("Invalid opportunity id '{}'".format(brief_id))
     supplier = suppliers.get_supplier_by_code(current_user.supplier_code, include_deleted=False)
     if not supplier:
         abort('User supplier is invalid')
@@ -1244,7 +1244,7 @@ def create_brief_response(brief_id):
 def update_brief_response(brief_id, brief_response_id):
     brief = briefs.get(brief_id)
     if not brief or brief.status != 'live':
-        not_found("Invalid brief id '{}'".format(brief_id))
+        not_found("Invalid opportunity id '{}'".format(brief_id))
     supplier = suppliers.get_supplier_by_code(current_user.supplier_code, include_deleted=False)
     if not supplier:
         abort('User supplier is invalid')
@@ -1264,7 +1264,7 @@ def update_brief_response(brief_id, brief_response_id):
     if not brief_response or brief_response.status not in ['submitted', 'draft']:
         not_found('This response does not exist or has been withdrawn')
     if brief.status != 'live':
-        abort('Brief responses can only be edited when the brief is still live')
+        abort('Opportunity responses can only be edited when the opportunity is still live')
 
     submit = False
     brief_response_json = get_json_from_request()
@@ -1474,7 +1474,7 @@ def get_notification_template(brief_id, template):
             brief_url='{}/digital-marketplace/opportunities/{}'.format(frontend_url, brief_id)
         )
 
-    return not_found('brief not found')
+    return not_found('Opportunity not found')
 
 
 @api.route('/brief/<int:brief_id>/award-seller', methods=['POST'])
@@ -1507,10 +1507,10 @@ def award_brief_to_seller(brief_id):
     """
     brief = briefs.get(brief_id)
     if not brief:
-        return not_found('brief {} not found'.format(brief_id))
+        return not_found('Opportunity {} not found'.format(brief_id))
 
     if not briefs.has_permission_to_brief(current_user.id, brief.id):
-        return forbidden('Unauthorised to award brief to seller')
+        return forbidden('Unauthorised to award opportunity to seller')
 
     data = get_json_from_request()
     supplier_code = data.get('awardedSupplierCode')

@@ -77,7 +77,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error'] == "Lot 'User research studios' does not require a brief"
+        assert data['error'] == "Lot 'User research studios' does not require an opportunity"
 
     def test_create_fails_if_required_field_is_not_provided(self):
         res = self.client.post(
@@ -265,7 +265,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error'] == 'Cannot update a live brief'
+        assert data['error'] == 'Cannot update a live opportunity'
 
     def test_update_fails_if_status_is_closed(self):
         self.setup_dummy_briefs(1, status='closed')
@@ -280,7 +280,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error'] == 'Cannot update a closed brief'
+        assert data['error'] == 'Cannot update a closed opportunity'
 
     def test_update_brief_creates_audit_event(self):
         self.setup_dummy_briefs(1)
@@ -789,7 +789,7 @@ class TestBriefs(BaseApplicationTest):
         data = json.loads(res.get_data(as_text=True))
 
         assert res.status_code == 400
-        assert data['error'] == "Cannot change brief status from 'draft' to 'invalid'"
+        assert data['error'] == "Cannot change opportunity status from 'draft' to 'invalid'"
 
     def test_change_status_makes_audit_event(self):
         self.setup_dummy_briefs(1, title='The Title')
@@ -1032,7 +1032,7 @@ class TestBriefs(BaseApplicationTest):
         assert delete.status_code == 400
 
         error = json.loads(delete.get_data(as_text=True))['error']
-        assert error == u"Cannot delete a live brief"
+        assert error == u"Cannot delete a live opportunity"
 
         fetch_again = self.client.get('/briefs/1')
         assert fetch_again.status_code == 200
@@ -1047,7 +1047,7 @@ class TestBriefs(BaseApplicationTest):
         assert delete.status_code == 400
 
         error = json.loads(delete.get_data(as_text=True))['error']
-        assert error == u"Cannot delete a closed brief"
+        assert error == u"Cannot delete a closed opportunity"
 
         fetch_again = self.client.get('/briefs/1')
         assert fetch_again.status_code == 200

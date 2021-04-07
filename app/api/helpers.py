@@ -129,18 +129,18 @@ def is_current_user_in_brief(func):
             brief_id = kwargs.get('brief_id', None)
 
             if not brief_id:
-                not_found('Invalid brief {}'.format(brief_id))
+                not_found('Invalid opportunity {}'.format(brief_id))
 
             users = db.session.query(BriefUser.user_id)\
                 .filter(BriefUser.brief_id == brief_id).all()
 
             if not users:
-                not_found('No users for brief {}'.format(brief_id))
+                not_found('No users for opportunity {}'.format(brief_id))
 
             valid_users = [user for user in users if current_user.id in user]
 
             if not valid_users:
-                forbidden(message='User is not associated to brief {}'.format(brief_id))
+                forbidden(message='User is not associated with opportunity {}'.format(brief_id))
         return func(*args, **kwargs)
     return decorated_view
 

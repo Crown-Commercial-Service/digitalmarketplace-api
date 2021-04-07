@@ -716,7 +716,7 @@ class TestBriefClarificationQuestion(BaseApplicationTest):
             with pytest.raises(ValidationError) as e:
                 BriefClarificationQuestion(brief=brief, question="Why?", answer="Because")
 
-            assert str(e.value.message) == "Brief status must be 'live', not 'draft'"
+            assert str(e.value.message) == "Opportunity status must be 'live', not 'draft'"
 
     def test_cannot_update_brief_by_id(self):
         with self.app.app_context(), pytest.raises(ValidationError) as e:

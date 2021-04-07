@@ -73,7 +73,7 @@ def create_evidence(domain_id, brief_id=None):
     if brief_id:
         brief = briefs.find(id=brief_id).one_or_none()
         if not brief or brief.status != 'live':
-            abort('Brief id does not exist or is not open for responses')
+            abort('Opportunity id does not exist or is not open for responses')
 
     try:
         data = {}

@@ -121,7 +121,7 @@ def update_brief(brief_id):
     ).first_or_404()
 
     if brief.status != 'draft':
-        abort(400, "Cannot update a {} brief".format(brief.status))
+        abort(400, "Cannot update a {} opportunity".format(brief.status))
 
     brief.update_from_json(brief_json)
 
@@ -298,7 +298,7 @@ def update_brief_json_admin(brief_id):
             brief=brief.serialize(),
             errors=[{
                 'serverity': 'error',
-                'message': 'Unable to update briefs that are either closed or withdrawn'
+                'message': 'Unable to update opportunities that are either closed or withdrawn'
             }]
         ), 200
 
@@ -646,7 +646,7 @@ def delete_draft_brief(brief_id):
     ).first_or_404()
 
     if brief.status != 'draft':
-        abort(400, "Cannot delete a {} brief".format(brief.status))
+        abort(400, "Cannot delete a {} opportunity".format(brief.status))
 
     audit = AuditEvent(
         audit_type=AuditTypes.delete_brief,

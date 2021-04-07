@@ -27,7 +27,7 @@ def get_counts(brief_id, questions=None, answers=None):
 def get_question(current_user, brief_id, question_id):
     brief = briefs.find(id=brief_id).one_or_none()
     if not brief:
-        raise NotFoundError("Invalid brief id '{}'".format(brief_id))
+        raise NotFoundError("Invalid opportunity id '{}'".format(brief_id))
 
     if not briefs.has_permission_to_brief(current_user.id, brief.id):
         raise UnauthorisedError('Unauthorised to publish answer')
@@ -58,7 +58,7 @@ def get_question(current_user, brief_id, question_id):
 def get_questions(current_user, brief_id):
     brief = briefs.find(id=brief_id).one_or_none()
     if not brief:
-        raise NotFoundError("Invalid brief id '{}'".format(brief_id))
+        raise NotFoundError("Invalid opportunity id '{}'".format(brief_id))
 
     if not briefs.has_permission_to_brief(current_user.id, brief.id):
         raise UnauthorisedError('Unauthorised to publish answer')
@@ -83,7 +83,7 @@ def get_questions(current_user, brief_id):
 def get_answers(brief_id):
     brief = briefs.find(id=brief_id).one_or_none()
     if not brief:
-        raise NotFoundError("Invalid brief id '{}'".format(brief_id))
+        raise NotFoundError("Invalid opportunity id '{}'".format(brief_id))
 
     answers = brief_clarification_question_service.get_answers(brief_id)
 
@@ -103,7 +103,7 @@ def get_answers(brief_id):
 def publish_answer(current_user, brief_id, data):
     brief = briefs.get(brief_id)
     if not brief:
-        raise NotFoundError("Invalid brief id '{}'".format(brief_id))
+        raise NotFoundError("Invalid opportunity id '{}'".format(brief_id))
 
     if not briefs.has_permission_to_brief(current_user.id, brief.id):
         raise UnauthorisedError('Unauthorised to publish answer')

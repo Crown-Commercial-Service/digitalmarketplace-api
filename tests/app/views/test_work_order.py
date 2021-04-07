@@ -135,7 +135,7 @@ class TestCreateWorkOrder(BaseWorkOrderTest):
         })
 
         assert res.status_code == 400
-        assert 'Invalid brief ID' in res.get_data(as_text=True)
+        assert 'Invalid opportunity ID' in res.get_data(as_text=True)
 
     def test_cannot_create_work_order_when_brief_doesnt_exist(self):
         res = self.create_work_order({
@@ -144,7 +144,7 @@ class TestCreateWorkOrder(BaseWorkOrderTest):
         })
 
         assert res.status_code == 400
-        assert 'Invalid brief ID' in res.get_data(as_text=True)
+        assert 'Invalid opportunity ID' in res.get_data(as_text=True)
 
     def test_cannot_create_work_order_when_supplier_doesnt_exist(self):
         res = self.create_work_order({
@@ -171,7 +171,7 @@ class TestCreateWorkOrder(BaseWorkOrderTest):
         })
 
         assert res.status_code == 400
-        assert "Brief must be closed" in res.get_data(as_text=True)
+        assert "Opportunity must be closed" in res.get_data(as_text=True)
 
     def test_cannot_create_work_order_for_a_brief_more_than_once(self):
         self.create_work_order(

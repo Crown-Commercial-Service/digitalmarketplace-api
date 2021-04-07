@@ -369,7 +369,7 @@ def send_new_briefs_email():
     briefs_training = [x for x in open_briefs if x.lot.slug == 'training']
 
     if len(open_briefs) < 1:
-        current_app.logger.info('No briefs found for daily seller email - the campaign was not sent')
+        current_app.logger.info('No opportunities found for daily seller email - the campaign was not sent')
         return
 
     # create a campaign

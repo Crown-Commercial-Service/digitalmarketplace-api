@@ -22,10 +22,10 @@ def get_brief_for_new_work_order(work_order_json):
         brief = None
 
     if brief is None:
-        abort(400, "Invalid brief ID '{}'".format(brief_id))
+        abort(400, "Invalid opportunity ID '{}'".format(brief_id))
 
     if brief.status != 'closed':
-        abort(400, "Brief must be closed")
+        abort(400, "Opportunity must be closed")
 
     return brief
 
@@ -55,7 +55,7 @@ def create_work_order():
     brief = get_brief_for_new_work_order(work_order_json)
 
     if WorkOrder.query.filter_by(brief_id=brief.id).first() is not None:
-        abort(400, "Work order already exists for brief '{}'".format(brief.id))
+        abort(400, "Work order already exists for opportunity '{}'".format(brief.id))
 
     work_order = WorkOrder(
         data=work_order_json,

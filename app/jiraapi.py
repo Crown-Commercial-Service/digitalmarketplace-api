@@ -126,7 +126,7 @@ class MarketplaceJIRA(object):
                        'under the "*{domain}*" domain'
                        ).format(**description_values)
         if brief:
-            description += (' in order to apply for the "*{brief_name}*" brief '
+            description += (' in order to apply for the "*{brief_name}*" opportunity '
                             'which closes for applications on *{brief_close_date}* at 6PM.'
                             ).format(**description_values)
         else:
@@ -251,7 +251,7 @@ class MarketplaceJIRA(object):
         }
 
         description = ('[{supplier_name}|{supplier_url}] has applied for assessment '
-                       'under the "*{domain}*" domain in order to apply for the "*{brief_name}*" brief '
+                       'under the "*{domain}*" domain in order to apply for the "*{brief_name}*" opportunity '
                        'which closes for applications on *{brief_close_date}* at 6PM.'
                        '\n\n'
                        'Please assess their suitability to be approved for '

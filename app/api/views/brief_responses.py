@@ -86,9 +86,9 @@ def withdraw_brief_response(brief_response_id):
                 user=current_user.email_address
             )
         else:
-            abort('Brief response with brief_response_id "{}" is already withdrawn'.format(brief_response_id))
+            abort('Opportunity response with id "{}" is already withdrawn'.format(brief_response_id))
     else:
-        not_found('Cannot find brief response with brief_response_id :{} and supplier_code: {}'
+        not_found('Cannot find opportunity response with id :{} and supplier_code: {}'
                   .format(brief_response_id, current_user.supplier_code))
 
     return jsonify(briefResponses=brief_response.serialize()), 200
@@ -137,7 +137,7 @@ def get_brief_response(brief_response_id):
         if brief_response.withdrawn_at is not None:
             abort('This response has been withdrawn')
     else:
-        not_found('Cannot find brief response with brief_response_id :{} and supplier_code: {}'
+        not_found('Cannot find opportunity response with id :{} and supplier_code: {}'
                   .format(brief_response_id, current_user.supplier_code))
 
     return jsonify(brief_response.serialize())
@@ -180,7 +180,7 @@ def get_suppliers_responded(brief_id):
     """
     brief = briefs.get(brief_id)
     if not brief:
-        return not_found('brief {} not found'.format(brief_id))
+        return not_found('Opportunity {} not found'.format(brief_id))
 
     if not briefs.has_permission_to_brief(current_user.id, brief.id):
         return forbidden('Unauthorised to get suppliers responded')

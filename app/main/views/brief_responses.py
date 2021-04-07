@@ -31,13 +31,13 @@ def create_brief_response():
         brief = None
 
     if brief is None:
-        abort(400, "Invalid brief ID '{}'".format(brief_response_json['briefId']))
+        abort(400, "Invalid opportunity ID '{}'".format(brief_response_json['briefId']))
 
     if brief.status != 'live':
-        abort(400, "Brief must be live")
+        abort(400, "Opportunity must be live")
 
     if brief.framework.status != 'live':
-        abort(400, "Brief framework must be live")
+        abort(400, "Opportunity framework must be live")
 
     supplier = validate_and_return_supplier(brief_response_json)
 
@@ -46,7 +46,7 @@ def create_brief_response():
 
     # Check if brief response already exists from this supplier
     if BriefResponse.query.filter(BriefResponse.supplier == supplier, BriefResponse.brief == brief).first():
-        abort(400, "Brief response already exists for supplier '{}'".format(supplier.code))
+        abort(400, "Opportunity response already exists for supplier '{}'".format(supplier.code))
 
     brief_response = BriefResponse(
         data=brief_response_json,

@@ -2102,7 +2102,7 @@ class Brief(db.Model):
     @validates('users')
     def validates_users(self, key, user):
         if user.role != 'buyer':
-            raise ValidationError("The brief user must be a buyer")
+            raise ValidationError("The opportunity user must be a buyer")
         return user
 
     @property
@@ -2116,7 +2116,7 @@ class Brief(db.Model):
     @validates('lot')
     def validates_lot(self, key, lot):
         if not lot.allows_brief:
-            raise ValidationError("Lot '{}' does not require a brief".format(lot.name))
+            raise ValidationError("Lot '{}' does not require an opportunity".format(lot.name))
         return lot
 
     @validates('data')
@@ -2204,7 +2204,7 @@ class Brief(db.Model):
     def validates_closed_at(self, key, value):
         if value:
             if not self.published_at:
-                raise ValidationError("Dates cannot be set if the brief is not yet published")
+                raise ValidationError("Dates cannot be set if the opportunity is not yet published")
             if value < self.published_at:
                 raise ValidationError("Closing date cannot be set before the publishing date")
             if value > self.published_at + parse_interval('365 days'):
@@ -2217,7 +2217,7 @@ class Brief(db.Model):
     def validates_questions_closed_at(self, key, value):
         if value:
             if not self.published_at:
-                raise ValidationError("Dates cannot be set if the brief is not yet published")
+                raise ValidationError("Dates cannot be set if the opportunity is not yet published")
             if value < self.published_at:
                 raise ValidationError("Questions closing date cannot be before the publishing date")
             if self.closed_at and value > self.closed_at:
@@ -2289,7 +2289,7 @@ class Brief(db.Model):
         elif value == 'withdrawn' and self.status == 'live':
             self.withdrawn_at = utcnow()
         else:
-            raise ValidationError("Cannot change brief status from '{}' to '{}'".format(self.status, value))
+            raise ValidationError("Cannot change opportunity status from '{}' to '{}'".format(self.status, value))
 
     @status.expression
     def status(cls):
@@ -2761,7 +2761,7 @@ class BriefClarificationQuestion(db.Model):
     @validates('brief')
     def validates_brief(self, key, brief):
         if brief.status != "live":
-            raise ValidationError("Brief status must be 'live', not '{}'".format(brief.status))
+            raise ValidationError("Opportunity status must be 'live', not '{}'".format(brief.status))
         return brief
 
     def validate(self):

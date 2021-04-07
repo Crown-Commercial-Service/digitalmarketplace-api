@@ -208,7 +208,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         })
 
         assert res.status_code == 400
-        assert 'Invalid brief ID' in res.get_data(as_text=True)
+        assert 'Invalid opportunity ID' in res.get_data(as_text=True)
 
     def test_cannot_create_brief_response_when_brief_doesnt_exist(self, live_framework):
         res = self.create_brief_response({
@@ -217,7 +217,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         })
 
         assert res.status_code == 400
-        assert 'Invalid brief ID' in res.get_data(as_text=True)
+        assert 'Invalid opportunity ID' in res.get_data(as_text=True)
 
     def test_cannot_create_brief_response_when_supplier_doesnt_exist(self, live_framework):
         res = self.create_brief_response({
@@ -244,7 +244,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         })
 
         assert res.status_code == 400
-        assert "Brief must be live" in res.get_data(as_text=True)
+        assert "Opportunity must be live" in res.get_data(as_text=True)
 
     def test_cannot_respond_to_an_expired_framework_brief(self, expired_framework):
         res = self.create_brief_response({
@@ -253,7 +253,7 @@ class TestCreateBriefResponse(BaseBriefResponseTest, JSONUpdateTestMixin):
         })
 
         assert res.status_code == 400
-        assert "Brief framework must be live" in res.get_data(as_text=True)
+        assert "Opportunity framework must be live" in res.get_data(as_text=True)
 
     @pytest.mark.skip()
     @given(example_listings.brief_response_data())
