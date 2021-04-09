@@ -158,7 +158,23 @@ def strip_whitespace_from_data(data):
 
 
 def purge_nulls_from_data(data):
-    return dict((k, v) for k, v in iteritems(data) if v is not None)
+    a_dict = dict((k, v) for k, v in iteritems(data) if v is not None)
+    return removeNoneFromAttachedDocumentURL(a_dict)
+
+
+def removeNoneFromAttachedDocumentURL(a_dict):
+    new_dict = {}
+    for key, value in a_dict.items():
+        if key == 'attachedDocumentURL':
+            new_list = []
+            for item in value:
+                if item is not None:
+                    new_list.append(item)
+            new_dict[key] = new_list
+        else: 
+            new_dict[key] = value
+    return new_dict
+
 
 
 def get_request_page_questions():
