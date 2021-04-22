@@ -80,22 +80,18 @@ class Outcome(db.Model):
 
     __table_args__ = (
         db.CheckConstraint(sql_case(
-            (
-                # if awarded, the "null-ness" of direct_award_project_id, direct_award_search_id &
-                # direct_award_archived_service_id must be the same
-                (result == "awarded", sql_and(
-                    (direct_award_project_id.is_(None) == direct_award_search_id.is_(None)),
-                    (direct_award_project_id.is_(None) == direct_award_archived_service_id.is_(None)),
-                )),
-            ),
+            # if awarded, the "null-ness" of direct_award_project_id, direct_award_search_id &
+            # direct_award_archived_service_id must be the same
+            (result == "awarded", sql_and(
+                (direct_award_project_id.is_(None) == direct_award_search_id.is_(None)),
+                (direct_award_project_id.is_(None) == direct_award_archived_service_id.is_(None)),
+            )),
             # if not awarded, we shouldn't have direct_award_search_id or direct_award_archived_service_id set
             else_=sql_and(direct_award_search_id.is_(None), direct_award_archived_service_id.is_(None)),
         ), name="ck_outcomes_direct_award_keys_nullable"),
         db.CheckConstraint(sql_case(
-            (
-                # if awarded, the "null-ness" of brief_response_id and brief_id must be the same
-                (result == "awarded", brief_response_id.is_(None) == brief_id.is_(None),),
-            ),
+            # if awarded, the "null-ness" of brief_response_id and brief_id must be the same
+            (result == "awarded", brief_response_id.is_(None) == brief_id.is_(None),),
             # if not awarded, brief_response_id should not be set
             else_=brief_response_id.is_(None),
         ), name="ck_outcomes_brief_keys_nullable"),
