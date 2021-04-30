@@ -38,7 +38,8 @@ def create_app(config_name):
 
     if application.config['VCAP_SERVICES']:
         cf_services = json.loads(application.config['VCAP_SERVICES'])
-        application.config['SQLALCHEMY_DATABASE_URI'] = cf_services['postgres'][0]['credentials']['uri']
+        application.config['SQLALCHEMY_DATABASE_URI'] = (cf_services['postgres'][0]['credentials']['uri']
+                                                         .replace('postgres://', "postgresql://", 1))
 
     from .metrics import metrics as metrics_blueprint, gds_metrics
     from .main import main as main_blueprint
