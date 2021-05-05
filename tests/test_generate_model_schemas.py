@@ -1,8 +1,5 @@
+import builtins
 import mock
-try:
-    import __builtin__ as builtins
-except ImportError:
-    import builtins
 
 from app.generate_model_schemas import generate_schemas, DMModelSchema, get_models_for_all_db_tables
 from app.models import Brief, BriefClarificationQuestion
