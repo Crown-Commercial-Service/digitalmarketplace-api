@@ -62,7 +62,6 @@ def test_generate_schema():
         "required": [
             "id",
             "framework_id",
-            "is_a_copy",
             "lot_id"
         ]
     }
