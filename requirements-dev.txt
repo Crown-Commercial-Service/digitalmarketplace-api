@@ -6,7 +6,7 @@
 #
 --no-binary psycopg2
 
-alchemyjsonschema==0.5.0
+alchemyjsonschema==0.7.1
     # via -r requirements-dev.in
 attrs==19.3.0
     # via
