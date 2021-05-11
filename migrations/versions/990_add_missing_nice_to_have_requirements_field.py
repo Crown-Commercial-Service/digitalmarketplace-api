@@ -29,10 +29,8 @@ def upgrade():
     query = briefs_table.select(
         briefs_table.c.published_at != sa.null()
     ).with_only_columns(
-        (
-            briefs_table.c.id,
-            briefs_table.c.data
-        )
+        briefs_table.c.id,
+        briefs_table.c.data
     )
     results = conn.execute(query).fetchall()
     for brief_id, brief_data in results:

@@ -78,8 +78,8 @@ class BaseTestAuditEvents(BaseApplicationTest, FixtureMixin):
     def add_audit_events_by_param_tuples(self, service_audit_event_params, supplier_audit_event_params):
         # some migrations create audit events, but we want to start with a clean slate
         AuditEvent.query.delete()
-        service_ids = db.session.query(Service.id).order_by(Service.id).all()
-        supplier_ids = db.session.query(Supplier.id).order_by(Supplier.id).all()
+        service_ids = [service.id for service in db.session.query(Service.id).order_by(Service.id).all()]
+        supplier_ids = [supplier.id for supplier in db.session.query(Supplier.id).order_by(Supplier.id).all()]
 
         audit_events = []
 

@@ -35,7 +35,7 @@ def upgrade():
     query = contact_information.select().where(
         contact_information.c.email == '<removed>'
     ).with_only_columns(
-        (contact_information.c.id,)
+        contact_information.c.id
     )
 
     ci_ids = (ci_id for ci_id, in conn.execute(query).fetchall())

@@ -813,12 +813,13 @@ class FrameworkAgreement(db.Model):
 
     @status.expression
     def status(cls):
-        return sql_case([
+        return sql_case(
             (cls.countersigned_agreement_path.isnot(None), 'countersigned'),
             (cls.countersigned_agreement_returned_at.isnot(None), 'approved'),
             (cls.signed_agreement_put_on_hold_at.isnot(None), 'on-hold'),
-            (cls.signed_agreement_returned_at.isnot(None), 'signed')
-        ], else_='draft')
+            (cls.signed_agreement_returned_at.isnot(None), 'signed'),
+            else_='draft'
+        )
 
     def serialize(self):
         return purge_nulls_from_data({
@@ -1542,7 +1543,7 @@ class Brief(db.Model):
         one_week_addition_function = func.date_trunc('day', cls.published_at) + sql_cast('1 week 23:59:59', Interval)
         two_week_addition_function = func.date_trunc('day', cls.published_at) + sql_cast('2 weeks 23:59:59', Interval)
         return sql_case(
-            [(is_one_week, one_week_addition_function)],
+            (is_one_week, one_week_addition_function),
             else_=two_week_addition_function
         )
 
@@ -1603,7 +1604,7 @@ class Brief(db.Model):
     def status(cls):
         # To filter by 'awarded' status, we need an explicit EXISTS query on BriefResponse.
         # This mirrors the awarded_brief_response relationship query above.
-        return sql_case([
+        return sql_case(
             (cls.withdrawn_at.isnot(None), 'withdrawn'),
             (cls.published_at.is_(None), 'draft'),
             (cls.applications_closed_at > datetime.utcnow(), 'live'),
@@ -1614,7 +1615,7 @@ class Brief(db.Model):
                     sql_and(cls.id == BriefResponse.brief_id, BriefResponse.awarded_at != None)  # noqa
                 ).label('awarded_brief_response_id'), 'awarded'
             ),
-        ], else_='closed')
+        else_='closed')
 
     search_result_status_ordering = {
         "live": 0,
@@ -1632,7 +1633,7 @@ class Brief(db.Model):
 
     @status_order.expression
     def status_order(cls):
-        return sql_case([
+        return sql_case(
             (cls.withdrawn_at.isnot(None), cls.search_result_status_ordering['withdrawn']),
             (cls.published_at.is_(None), cls.search_result_status_ordering['draft']),
             (cls.cancelled_at.isnot(None), cls.search_result_status_ordering['cancelled']),
@@ -1643,7 +1644,8 @@ class Brief(db.Model):
                 ).label('awarded_brief_response_id'), cls.search_result_status_ordering['awarded']
             ),
             (cls.applications_closed_at > datetime.utcnow(), cls.search_result_status_ordering['live']),
-        ], else_=cls.search_result_status_ordering['closed'])
+            else_=cls.search_result_status_ordering['closed']
+        )
 
     class query_class(BaseQuery):
         def has_statuses(self, *statuses):
@@ -1880,11 +1882,12 @@ class BriefResponse(db.Model):
 
     @status.expression
     def status(cls):
-        return sql_case([
+        return sql_case(
             (cls.awarded_at.isnot(None), 'awarded'),
             (cls.award_details.cast(String) != '{}', 'pending-awarded'),
             (cls.submitted_at.isnot(None), 'submitted'),
-        ], else_='draft')
+            else_='draft'
+        )
 
     def validate(self, enforce_required=True, required_fields=None, max_day_rate=None):
         errs = get_validation_errors(
