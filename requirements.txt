@@ -162,7 +162,7 @@ sqlalchemy-json==0.4.0
     # via -r requirements.in
 sqlalchemy-utils==0.37.2
     # via -r requirements.in
-sqlalchemy==1.4.13
+sqlalchemy==1.4.15
     # via
     #   -r requirements.in
     #   alembic
