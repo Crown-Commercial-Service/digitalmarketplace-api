@@ -4,11 +4,11 @@
 digitalmarketplace-apiclient
 digitalmarketplace-utils
 
-Flask==1.0.4
+Flask>=1.1,<2
 Flask-Bcrypt==0.7.1
 Flask-Migrate==3.0.1
 Flask-SQLAlchemy>=2.4.1,<2.6.0
-itsdangerous==1.1.0
+itsdangerous
 
 --no-binary=psycopg2
 psycopg2==2.8.6
