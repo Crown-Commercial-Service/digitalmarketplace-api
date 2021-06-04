@@ -4,15 +4,15 @@
 digitalmarketplace-apiclient
 digitalmarketplace-utils
 
-Flask==1.0.4                     # pyup: >=1.0.0,<1.1.0
-Flask-Bcrypt==0.7.1              # pyup: >=0.7.1,<0.8.0
-Flask-Migrate==3.0.1             # pyup: ignore
-Flask-SQLAlchemy>=2.4.1,<2.6.0  # pyup: ignore
-itsdangerous==1.1.0               # pyup: ignore
+Flask>=1.1,<2
+Flask-Bcrypt==0.7.1
+Flask-Migrate==3.0.1
+Flask-SQLAlchemy>=2.4.1,<2.6.0
+itsdangerous
 
 --no-binary=psycopg2
 psycopg2==2.8.6
-SQLAlchemy>=1.3.0,<1.5.0  # pyup: ignore
+SQLAlchemy>=1.3.0,<1.5.0
 SQLAlchemy-Utils==0.37.4
 sqlalchemy-json==0.4.0
 
