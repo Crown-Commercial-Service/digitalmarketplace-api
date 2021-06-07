@@ -160,7 +160,7 @@ six==1.14.0
     #   sqlalchemy-utils
 sqlalchemy-json==0.4.0
     # via -r requirements.in
-sqlalchemy-utils==0.37.4
+sqlalchemy-utils==0.37.6
     # via -r requirements.in
 sqlalchemy==1.4.17
     # via
