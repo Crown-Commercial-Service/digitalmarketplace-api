@@ -3,7 +3,8 @@
   "additionalProperties": false,
   "properties": {
     "availability": {
-      "format": "date",
+      "maxLength": 100,
+      "minLength": 1,
       "type": "string"
     },
     "essentialRequirements": {

@@ -8,17 +8,17 @@
     "locations": {
       "items": {
         "enum": [
+          "Scotland",
           "North East England",
           "North West England",
           "Yorkshire and the Humber",
           "East Midlands",
           "West Midlands",
           "East of England",
+          "Wales",
           "London",
           "South East England",
           "South West England",
-          "Scotland",
-          "Wales",
           "Northern Ireland",
           "International (outside the UK)"
         ]
