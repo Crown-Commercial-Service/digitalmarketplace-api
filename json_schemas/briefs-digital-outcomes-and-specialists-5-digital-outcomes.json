@@ -42,12 +42,6 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,199}\\S+$)",
       "type": "string"
     },
-    "employmentStatus": {
-      "enum": [
-        "Contracted out service: the off-payroll rules do not apply",
-        "Supply of resource: the off-payroll rules will apply to any workers engaged through a qualifying intermediary, such as their own limited company"
-      ]
-    },
     "endUsers": {
       "minLength": 1,
       "pattern": "^(?:\\S+\\s+){0,199}\\S+$",
@@ -84,6 +78,7 @@
     },
     "location": {
       "enum": [
+        "Scotland",
         "North East England",
         "North West England",
         "Yorkshire and the Humber",
@@ -93,7 +88,6 @@
         "London",
         "South East England",
         "South West England",
-        "Scotland",
         "Wales",
         "Northern Ireland",
         "Offsite"
@@ -205,7 +199,6 @@
     "backgroundInformation",
     "culturalFitCriteria",
     "culturalWeighting",
-    "employmentStatus",
     "endUsers",
     "essentialRequirements",
     "existingTeam",
