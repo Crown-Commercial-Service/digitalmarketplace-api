@@ -689,6 +689,15 @@ class TestAuditEvents(BaseTestAuditEvents):
         assert data['auditEvents'][0]['user'] == '4'
         assert data['auditEvents'][4]['user'] == '0'
 
+    def test_should_get_audit_events_sorted_by_custom_field(self):
+        for user in [2, 1, 3]:
+            self.add_audit_event(user=user, type=AuditTypes.update_service)
+        response = self.client.get('/audit-events?sort_by=user&audit-type=update_service')
+        data = json.loads(response.get_data())
+
+        assert response.status_code == 200
+        assert [audit['user'] for audit in data['auditEvents']] == ['1', '2', '3']
+
     def test_should_get_audit_event_using_audit_date(self):
         today = datetime.utcnow().strftime("%Y-%m-%d")
 

@@ -181,7 +181,8 @@ def list_audits():
         audits = AuditEvent.query.join(audits_subquery, audits_subquery.c.id == AuditEvent.id)
 
     sort_order = db.desc if convert_to_boolean(request.args.get('latest_first')) else db.asc
-    audits = audits.order_by(sort_order(AuditEvent.created_at), sort_order(AuditEvent.id))
+    sort_by = getattr(AuditEvent, request.args.get('sort_by', 'created_at'))
+    audits = audits.order_by(sort_order(sort_by), sort_order(AuditEvent.id))
 
     return paginated_result_response(
         result_name=RESOURCE_NAME,
