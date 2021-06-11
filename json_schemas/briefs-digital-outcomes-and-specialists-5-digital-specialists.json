@@ -192,6 +192,7 @@
   "required": [
     "culturalFitCriteria",
     "culturalWeighting",
+    "employmentStatus",
     "essentialRequirements",
     "existingTeam",
     "location",
