@@ -156,6 +156,20 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
       "type": "string"
     },
+    "socialWeighting": {
+      "oneOf": [
+        {
+          "maximum": 20,
+          "minimum": 10,
+          "type": "integer"
+        },
+        {
+          "maximum": 0,
+          "minimum": 0,
+          "type": "integer"
+        }
+      ]
+    },
     "startDate": {
       "format": "date",
       "type": "string"
