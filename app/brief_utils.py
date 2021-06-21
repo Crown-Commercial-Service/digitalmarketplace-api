@@ -15,6 +15,9 @@ def validate_brief_data(brief, enforce_required=True, required_fields=None):
     )
 
     criteria_weighting_keys = ['technicalWeighting', 'culturalWeighting', 'priceWeighting']
+    # Social weighting is optional
+    if 'socialWeighting' in brief.data:
+        criteria_weighting_keys.append('socialWeighting')
     # Only check total if all weightings are set
     if not errs and all(key in brief.data for key in criteria_weighting_keys):
         criteria_weightings = sum(brief.data[key] for key in criteria_weighting_keys)
