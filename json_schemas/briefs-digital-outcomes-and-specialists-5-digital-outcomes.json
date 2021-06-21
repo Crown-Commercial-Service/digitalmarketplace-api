@@ -1,33 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
-  "oneOf": [
-    {
-      "properties": {
-        "socialWeightingOutcomesYesNo": {
-          "enum": [
-            false
-          ]
-        },
-        "socialWeighting": {
-          "type": "null"
-        }
-      }
-    },
-    {
-      "properties": {
-        "socialWeightingOutcomesYesNo": {
-          "enum": [
-            true
-          ]
-        }
-      },
-      "required": [
-        "socialWeightingOutcomesYesNo",
-        "socialWeighting"
-      ]
-    }
-  ],
   "properties": {
     "additionalTerms": {
       "minLength": 0,
@@ -184,14 +157,17 @@
       "type": "string"
     },
     "socialWeighting": {
-      "maximum": 20,
-      "minimum": 10,
-      "type": "integer"
-    },
-    "socialWeightingOutcomesYesNo": {
-      "enum": [
-        true,
-        false
+      "oneOf": [
+        {
+          "maximum": 20,
+          "minimum": 10,
+          "type": "integer"
+        },
+        {
+          "maximum": 0,
+          "minimum": 0,
+          "type": "integer"
+        }
       ]
     },
     "startDate": {
@@ -254,7 +230,6 @@
     "phase",
     "priceCriteria",
     "priceWeighting",
-    "socialWeightingOutcomesYesNo",
     "startDate",
     "successCriteria",
     "summary",
