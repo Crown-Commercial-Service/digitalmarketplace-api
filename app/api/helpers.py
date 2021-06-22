@@ -65,9 +65,9 @@ def exception_logger(func):
             return e.get_response()
         except Exception as e:
             rollbar.report_exc_info()
-            print '\033[38;5;196m ERROR: {}'.format(e)
+            print('\033[38;5;196m ERROR: {}'.format(e))
             traceback.print_exc()
-            print '\033[0m'
+            print('\033[0m')
             return flask_abort(500)
     return decorated_view
 
@@ -147,7 +147,7 @@ def is_current_user_in_brief(func):
 
 # returns an ascii hex encoded random value
 def generate_random_token(length=32):
-    return hexlify(urandom(length))
+    return hexlify(urandom(length)).decode()
 
 
 def user_info(user):
@@ -263,13 +263,13 @@ def get_root_url(framework_slug):
 
 
 def abort(message):
-    if isinstance(message, basestring):
+    if isinstance(message, str):
         current_app.logger.error(message)
     return flask_abort(make_response(jsonify(message=message), 400))
 
 
 def server_error(message):
-    if isinstance(message, basestring):
+    if isinstance(message, str):
         current_app.logger.error(message)
     return flask_abort(make_response(jsonify(message=message), 500))
 
@@ -285,7 +285,7 @@ def not_found(message):
 def parse_date(dt):
     try:
         return pendulum.parse(dt).date()
-    except ValueError, e:
+    except ValueError as e:
         abort(message=str(e))
 
 
@@ -301,15 +301,15 @@ def prepare_specialist_responses(brief, responses):
     candidates = []
 
     for response in responses:
-        essential_responses = zip(
+        essential_responses = list(zip(
             brief.data.get('essentialRequirements', []),
             response.data.get('essentialRequirements', [])
-        )
+        ))
 
-        nice_to_have_responses = zip(
+        nice_to_have_responses = list(zip(
             brief.data.get('niceToHaveRequirements', []),
             response.data.get('niceToHaveRequirements', [])
-        )
+        ))
 
         candidates.append({
             'essential_responses': essential_responses,

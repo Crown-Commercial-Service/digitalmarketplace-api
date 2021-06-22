@@ -104,7 +104,7 @@ def create_rfx_brief():
         brief = briefs.create_brief(user, current_user.get_team(), framework, lot)
     except Exception as e:
         rollbar.report_exc_info()
-        return jsonify(message=e.message), 400
+        return jsonify(message=str(e)), 400
 
     try:
         audit_service.log_audit_event(
@@ -172,7 +172,7 @@ def create_atm_brief():
         brief = briefs.create_brief(user, current_user.get_team(), framework, lot)
     except Exception as e:
         rollbar.report_exc_info()
-        return jsonify(message=e.message), 400
+        return jsonify(message=str(e)), 400
 
     try:
         audit_service.log_audit_event(
@@ -236,7 +236,7 @@ def create_specialist_brief():
         })
     except Exception as e:
         rollbar.report_exc_info()
-        return jsonify(message=e.message), 400
+        return jsonify(message=str(e)), 400
 
     try:
         audit_service.log_audit_event(
@@ -576,7 +576,7 @@ def update_brief(brief_id):
 
     if publish:
         if 'sellers' in brief.data and data['sellerSelector'] != 'allSellers':
-            for seller_code, seller in brief.data['sellers'].iteritems():
+            for seller_code, seller in brief.data['sellers'].items():
                 supplier = suppliers.get_supplier_by_code(seller_code)
                 if brief.lot.slug == 'rfx':
                     send_seller_invited_to_rfx_email(brief, supplier)
@@ -640,11 +640,11 @@ def close_opportunity_early(brief_id):
     try:
         brief = brief_overview_business.close_opportunity_early(current_user.id, brief_id)
     except NotFoundError as e:
-        not_found(e.message)
+        not_found(str(e))
     except UnauthorisedError as e:
-        forbidden(e.message)
+        forbidden(str(e))
     except BriefError as e:
-        abort(e.message)
+        abort(str(e))
 
     return jsonify(brief.serialize(with_users=False))
 
@@ -659,11 +659,11 @@ def get_opportunity_to_edit(brief_id):
     try:
         data = brief_edit_business.get_opportunity_to_edit(current_user.id, brief_id)
     except NotFoundError as e:
-        not_found(e.message)
+        not_found(str(e))
     except UnauthorisedError as e:
-        forbidden(e.message)
+        forbidden(str(e))
     except BriefError as e:
-        abort(e.message)
+        abort(str(e))
 
     return jsonify(data)
 
@@ -680,13 +680,13 @@ def edit_opportunity(brief_id):
     try:
         brief = brief_edit_business.edit_opportunity(current_user.id, brief_id, edits)
     except NotFoundError as e:
-        not_found(e.message)
+        not_found(str(e))
     except UnauthorisedError as e:
-        forbidden(e.message)
+        forbidden(str(e))
     except ValidationError as e:
-        abort(e.message)
+        abort(str(e))
     except BriefError as e:
-        abort(e.message)
+        abort(str(e))
 
     return jsonify(brief.serialize(with_users=False))
 
@@ -711,7 +711,7 @@ def get_opportunity_history(brief_id):
     try:
         edits = brief_edit_business.get_opportunity_history(brief_id, show_documents, include_sellers=False)
     except NotFoundError as e:
-        not_found(e.message)
+        not_found(str(e))
 
     edits['can_respond'] = can_respond
     if (user_role == 'supplier' and not can_respond) or user_role not in ['admin', 'buyer', 'supplier']:
@@ -736,11 +736,11 @@ def withdraw_opportunity(brief_id):
             data.get('reasonToWithdraw', '')
         )
     except NotFoundError as e:
-        not_found(e.message)
+        not_found(str(e))
     except UnauthorisedError as e:
-        forbidden(e.message)
+        forbidden(str(e))
     except (BriefError, ValidationError) as e:
-        abort(e.message)
+        abort(str(e))
 
     return jsonify(brief.serialize(with_users=False))
 
@@ -816,7 +816,7 @@ def delete_brief(brief_id):
             user=current_user.email_address
         )
     except Exception as e:
-        extra_data = {'audit_type': AuditTypes.delete_brief, 'briefId': brief.id, 'exception': e.message}
+        extra_data = {'audit_type': AuditTypes.delete_brief, 'briefId': brief.id, 'exception': str(e)}
         rollbar.report_exc_info(extra_data=extra_data)
 
     return jsonify(message='Opportunity {} deleted'.format(brief_id)), 200
@@ -1215,7 +1215,7 @@ def create_brief_response(brief_id):
         )
     except Exception as e:
         rollbar.report_exc_info()
-        return jsonify(message=e.message), 400
+        return jsonify(message=str(e)), 400
 
     try:
         audit_service.log_audit_event(
@@ -1290,37 +1290,42 @@ def update_brief_response(brief_id, brief_response_id):
         try:
             brief_response.validate(do_required_file_check=do_required_file_check)
         except ValidationError as e:
+            try:
+                errors = e.message
+            except AttributeError:
+                (errors,) = e.args
+
             brief_response_json['brief_id'] = brief_id
             rollbar.report_exc_info(extra_data=brief_response_json)
             message = ""
-            if 'essentialRequirements' in e.message and e.message['essentialRequirements'] == 'answer_required':
+            if 'essentialRequirements' in errors and errors['essentialRequirements'] == 'answer_required':
                 message = "Essential requirements must be completed"
-                del e.message['essentialRequirements']
-            if 'attachedDocumentURL' in e.message:
-                if not do_required_file_check and e.message['attachedDocumentURL'] == 'answer_required':
+                del errors['essentialRequirements']
+            if 'attachedDocumentURL' in errors:
+                if not do_required_file_check and errors['attachedDocumentURL'] == 'answer_required':
                     message = "Documents must be uploaded"
-                if e.message['attachedDocumentURL'] == 'file_incorrect_format':
+                if errors['attachedDocumentURL'] == 'file_incorrect_format':
                     message = "Uploaded documents are in the wrong format"
-                del e.message['attachedDocumentURL']
-            if 'resume' in e.message:
-                if do_required_file_check and e.message['resume'] == 'answer_required':
+                del errors['attachedDocumentURL']
+            if 'resume' in errors:
+                if do_required_file_check and errors['resume'] == 'answer_required':
                     message = "Resume must be uploaded"
-                if e.message['resume'] == 'file_incorrect_format':
+                if errors['resume'] == 'file_incorrect_format':
                     message = "Uploaded documents are in the wrong format"
-                del e.message['resume']
-            if 'responseTemplate' in e.message:
-                if do_required_file_check and e.message['responseTemplate'] == 'answer_required':
+                del errors['resume']
+            if 'responseTemplate' in errors:
+                if do_required_file_check and errors['responseTemplate'] == 'answer_required':
                     message = "Response template must be uploaded"
-                if e.message['responseTemplate'] == 'file_incorrect_format':
+                if errors['responseTemplate'] == 'file_incorrect_format':
                     message = "Uploaded documents are in the wrong format"
-                del e.message['responseTemplate']
-            if 'writtenProposal' in e.message:
-                if do_required_file_check and e.message['writtenProposal'] == 'answer_required':
+                del errors['responseTemplate']
+            if 'writtenProposal' in errors:
+                if do_required_file_check and errors['writtenProposal'] == 'answer_required':
                     message = "Written proposal must be uploaded"
-                if e.message['writtenProposal'] == 'file_incorrect_format':
+                if errors['writtenProposal'] == 'file_incorrect_format':
                     message = "Uploaded documents are in the wrong format"
-                del e.message['writtenProposal']
-            if 'criteria' in e.message and e.message['criteria'] == 'answer_required':
+                del errors['writtenProposal']
+            if 'criteria' in errors and errors['criteria'] == 'answer_required':
                 message = "Criteria must be completed"
 
             for field in [{
@@ -1351,17 +1356,17 @@ def update_brief_response(brief_id, brief_response_id):
                 'name': 'previouslyWorked',
                 'label': 'Previously worked'
             }]:
-                if field['name'] in e.message and e.message[field['name']] == 'answer_required':
+                if field['name'] in errors and errors[field['name']] == 'answer_required':
                     message += '{} is required\n'.format(field['label'])
-                    del e.message[field['name']]
+                    del errors[field['name']]
 
-            if len(e.message) > 0:
-                message += json.dumps(e.message)
+            if len(errors) > 0:
+                message += json.dumps(errors)
             return jsonify(message=message), 400
         except Exception as e:
             brief_response_json['brief_id'] = brief_id
             rollbar.report_exc_info(extra_data=brief_response_json)
-            return jsonify(message=e.message), 400
+            return jsonify(message=str(e)), 400
 
         brief_response.submit()
         try:

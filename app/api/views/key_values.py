@@ -84,4 +84,9 @@ def upsert(key):
         return jsonify(saved), 200
 
     except Exception as error:
-        return abort(error.message)
+        try:
+            msg = error.message
+        except AttributeError:
+            msg = str(error)
+
+        return abort(msg)

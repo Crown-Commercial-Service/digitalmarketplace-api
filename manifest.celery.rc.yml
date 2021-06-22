@@ -1,5 +1,5 @@
 command: ./scripts/cf_run_celery_app.sh
-buildpack: python2_buildpack
+buildpack: python_buildpack
 health-check-type: process
 instances: 1
 memory: 1G

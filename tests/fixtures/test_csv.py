@@ -83,26 +83,26 @@ brief_response_data_5 = {
 def test_csv_handles_tricky_characters_1(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
-        u'Seller name,Test Supplier1',
-        u'ABN,1',
-        u'Email,test1@email.com',
-        u'Specialist given name(s),"Bu,tties"',
-        u'Specialist surname,"K,ev\u2019s """',
-        u'Availability date,\u275dNext \u2014 Tuesday\u275e',
-        u'Day rate (including GST),1.49',
-        u'Day rate (excluding GST),',
-        u'Previous agency experience,',
-        u'Security clearance,N/A',
-        u'Contact number,123',
-        u'TEST,x',
-        u'TEST 2,y',
-        u'LISP,',
-        u'Victoria Labour hire licence,',
-        u'Victoria Labour hire licence expiry,',
-        u'Queensland Labour hire licence,',
-        u'Queensland Labour hire licence expiry,',
-        u'Australian Capital Territory Labour hire licence,',
-        u'Australian Capital Territory Labour hire licence expiry,'
+        'Seller name,Test Supplier1',
+        'ABN,1',
+        'Email,test1@email.com',
+        'Specialist given name(s),"Bu,tties"',
+        'Specialist surname,"K,ev\u2019s """',
+        'Availability date,\u275dNext \u2014 Tuesday\u275e',
+        'Day rate (including GST),1.49',
+        'Day rate (excluding GST),',
+        'Previous agency experience,',
+        'Security clearance,N/A',
+        'Contact number,123',
+        'TEST,x',
+        'TEST 2,y',
+        'LISP,',
+        'Australian Capital Territory Labour hire licence,',
+        'Australian Capital Territory Labour hire licence expiry,',
+        'Queensland Labour hire licence,',
+        'Queensland Labour hire licence expiry,',
+        'Victoria Labour hire licence,',
+        'Victoria Labour hire licence expiry,'
     ]
     assert csvdata.splitlines() == lines
 
@@ -111,26 +111,26 @@ def test_csv_handles_tricky_characters_1(app, briefs, brief_responses):
 def test_csv_handles_tricky_characters_2(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
-        u'Seller name,Test Supplier1',
-        u'ABN,1',
-        u'Email,"te,st2@email.com"',
-        u"Specialist given name(s),Kev's",
-        u"Specialist surname,'Pies",
-        u'Availability date,&quot;A week Friday&rdquot;',
-        u'Day rate (including GST),3.50',
-        u'Day rate (excluding GST),',
-        u'Previous agency experience,',
-        u'Security clearance,N/A',
-        u'Contact number,123',
-        u'TEST,x',
-        u'TEST 2,y',
-        u'LISP,',
-        u'Victoria Labour hire licence,',
-        u'Victoria Labour hire licence expiry,',
-        u'Queensland Labour hire licence,',
-        u'Queensland Labour hire licence expiry,',
-        u'Australian Capital Territory Labour hire licence,',
-        u'Australian Capital Territory Labour hire licence expiry,'
+        'Seller name,Test Supplier1',
+        'ABN,1',
+        'Email,"te,st2@email.com"',
+        "Specialist given name(s),Kev's",
+        "Specialist surname,'Pies",
+        'Availability date,&quot;A week Friday&rdquot;',
+        'Day rate (including GST),3.50',
+        'Day rate (excluding GST),',
+        'Previous agency experience,',
+        'Security clearance,N/A',
+        'Contact number,123',
+        'TEST,x',
+        'TEST 2,y',
+        'LISP,',
+        'Australian Capital Territory Labour hire licence,',
+        'Australian Capital Territory Labour hire licence expiry,',
+        'Queensland Labour hire licence,',
+        'Queensland Labour hire licence expiry,',
+        'Victoria Labour hire licence,',
+        'Victoria Labour hire licence expiry,'
     ]
     assert csvdata.splitlines() == lines
 
@@ -139,26 +139,26 @@ def test_csv_handles_tricky_characters_2(app, briefs, brief_responses):
 def test_csv_handles_tricky_characters_3(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
-        u'Seller name,Test Supplier1',
-        u'ABN,1',
-        u"Email,SUM(1+1)*cmd|' /C calc'!A0",
-        u"Specialist given name(s),SUM(1+1)*cmd|'",
-        u"Specialist surname,/C calc'!A0",
-        u"Availability date,cmd| '/c calc'!A0",
-        u'Day rate (including GST),"2+2,"',
-        u'Day rate (excluding GST),',
-        u'Previous agency experience,',
-        u'Security clearance,N/A',
-        u'Contact number,123',
-        u'TEST,x',
-        u'TEST 2,y',
-        u'LISP,',
-        u'Victoria Labour hire licence,',
-        u'Victoria Labour hire licence expiry,',
-        u'Queensland Labour hire licence,',
-        u'Queensland Labour hire licence expiry,',
-        u'Australian Capital Territory Labour hire licence,',
-        u'Australian Capital Territory Labour hire licence expiry,'
+        'Seller name,Test Supplier1',
+        'ABN,1',
+        "Email,SUM(1+1)*cmd|' /C calc'!A0",
+        "Specialist given name(s),SUM(1+1)*cmd|'",
+        "Specialist surname,/C calc'!A0",
+        "Availability date,cmd| '/c calc'!A0",
+        'Day rate (including GST),"2+2,"',
+        'Day rate (excluding GST),',
+        'Previous agency experience,',
+        'Security clearance,N/A',
+        'Contact number,123',
+        'TEST,x',
+        'TEST 2,y',
+        'LISP,',
+        'Australian Capital Territory Labour hire licence,',
+        'Australian Capital Territory Labour hire licence expiry,',
+        'Queensland Labour hire licence,',
+        'Queensland Labour hire licence expiry,',
+        'Victoria Labour hire licence,',
+        'Victoria Labour hire licence expiry,'
     ]
     assert csvdata.splitlines() == lines
 
@@ -168,10 +168,10 @@ def test_csv_handles_tricky_characters_3(app, briefs, brief_responses):
 def test_csv_rfx(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
-        u'Seller name,Test Supplier1',
-        u'ABN,1',
-        u'Email,test1@email.com',
-        u'Phone number,1234'
+        'Seller name,Test Supplier1',
+        'ABN,1',
+        'Email,test1@email.com',
+        'Phone number,1234'
     ]
     assert csvdata.splitlines() == lines
 
@@ -181,10 +181,10 @@ def test_csv_rfx(app, briefs, brief_responses):
 def test_csv_training2(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
-        u'Seller name,Test Supplier1',
-        u'ABN,1',
-        u'Email,test1@email.com',
-        u'Phone number,1234'
+        'Seller name,Test Supplier1',
+        'ABN,1',
+        'Email,test1@email.com',
+        'Phone number,1234'
     ]
     assert csvdata.splitlines() == lines
 
@@ -223,25 +223,25 @@ def test_csv_training2(app, briefs, brief_responses):
 def test_csv_specialist_daily_rate(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
-        u'Seller name,Test Supplier1',
-        u'ABN,1', u'Email,test1@email.com',
-        u'Specialist given name(s),foo',
-        u'Specialist surname,bar',
-        u'Availability date,in the future',
-        u'Day rate (including GST),11',
-        u'Day rate (excluding GST),10',
-        u'Eligibility to work,Australian citizen',
-        u'Previous agency experience,Yes',
-        u'Holds a negative vetting level 1 security clearance,Yes',
-        u'Contact number,123',
-        u'ess critiera 1,ess criteria 1 answer',
-        u'ess critiera 2,ess criteria 2 answer',
-        u'Victoria Labour hire licence,',
-        u'Victoria Labour hire licence expiry,',
-        u'Queensland Labour hire licence,',
-        u'Queensland Labour hire licence expiry,',
-        u'Australian Capital Territory Labour hire licence,',
-        u'Australian Capital Territory Labour hire licence expiry,'
+        'Seller name,Test Supplier1',
+        'ABN,1', 'Email,test1@email.com',
+        'Specialist given name(s),foo',
+        'Specialist surname,bar',
+        'Availability date,in the future',
+        'Day rate (including GST),11',
+        'Day rate (excluding GST),10',
+        'Eligibility to work,Australian citizen',
+        'Previous agency experience,Yes',
+        'Holds a negative vetting level 1 security clearance,Yes',
+        'Contact number,123',
+        'ess critiera 1,ess criteria 1 answer',
+        'ess critiera 2,ess criteria 2 answer',
+        'Australian Capital Territory Labour hire licence,',
+        'Australian Capital Territory Labour hire licence expiry,',
+        'Queensland Labour hire licence,',
+        'Queensland Labour hire licence expiry,',
+        'Victoria Labour hire licence,',
+        'Victoria Labour hire licence expiry,'
     ]
     assert csvdata.splitlines() == lines
 
@@ -282,25 +282,25 @@ def test_csv_specialist_daily_rate(app, briefs, brief_responses):
 def test_csv_specialist_hourly_rate(app, briefs, brief_responses):
     csvdata = generate_brief_responses_csv(briefs[0], brief_responses)
     lines = [
-        u'Seller name,Test Supplier1',
-        u'ABN,1', u'Email,test1@email.com',
-        u'Specialist given name(s),foo',
-        u'Specialist surname,bar',
-        u'Availability date,in the future',
-        u'Hourly rate (including GST),11',
-        u'Hourly rate (excluding GST),10',
-        u'Eligibility to work,Australian citizen',
-        u'Previous agency experience,Yes',
-        u'Security clearance,N/A',
-        u'Contact number,123',
-        u'ess critiera 1,ess criteria 1 answer',
-        u'ess critiera 2,ess criteria 2 answer',
-        u'nth critiera 1,',
-        u'Victoria Labour hire licence,',
-        u'Victoria Labour hire licence expiry,',
-        u'Queensland Labour hire licence,',
-        u'Queensland Labour hire licence expiry,',
-        u'Australian Capital Territory Labour hire licence,',
-        u'Australian Capital Territory Labour hire licence expiry,'
+        'Seller name,Test Supplier1',
+        'ABN,1', 'Email,test1@email.com',
+        'Specialist given name(s),foo',
+        'Specialist surname,bar',
+        'Availability date,in the future',
+        'Hourly rate (including GST),11',
+        'Hourly rate (excluding GST),10',
+        'Eligibility to work,Australian citizen',
+        'Previous agency experience,Yes',
+        'Security clearance,N/A',
+        'Contact number,123',
+        'ess critiera 1,ess criteria 1 answer',
+        'ess critiera 2,ess criteria 2 answer',
+        'nth critiera 1,',
+        'Australian Capital Territory Labour hire licence,',
+        'Australian Capital Territory Labour hire licence expiry,',
+        'Queensland Labour hire licence,',
+        'Queensland Labour hire licence expiry,',
+        'Victoria Labour hire licence,',
+        'Victoria Labour hire licence expiry,'
     ]
     assert csvdata.splitlines() == lines

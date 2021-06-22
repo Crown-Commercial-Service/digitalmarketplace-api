@@ -91,7 +91,7 @@ class SupplierValidator(object):
             errors.append({
                 'message': 'You must update {{{title}}} to demonstrate the {{minimum number of criteria}} for {domain}.'
                 .format(
-                    title=case_study.data.get('title', '').encode('utf-8'),
+                    title=case_study.data.get('title', ''),
                     domain=case_study.data.get('service')
                 ),
                 'links': {
@@ -240,7 +240,7 @@ class SupplierValidator(object):
         if recruiter and (recruiter == 'yes' or recruiter == 'both'):
             labour_hire = self.supplier.data.get('labourHire', {})
             now = pendulum.now('Australia/Canberra').date()
-            for state, state_value in labour_hire.iteritems():
+            for state, state_value in labour_hire.items():
                 if not state_value or state == 'sa':
                     continue
                 licence_number = state_value.get('licenceNumber')
@@ -256,7 +256,11 @@ class SupplierValidator(object):
 
                 if expiry:
                     try:
-                        expiry_date = pendulum.parse(expiry, tz='Australia/Sydney')
+                        expiry_date = pendulum.from_format(
+                            expiry,
+                            'YYYY-MM-DD',
+                            tz='Australia/Sydney'
+                        )
 
                         if now > expiry_date.date():
                             errors.append({

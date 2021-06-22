@@ -85,8 +85,8 @@ def get_sellers_to_invite(brief, sellers_to_invite):
     if brief.lot.slug == 'atm':
         return new_sellers
 
-    invited_seller_codes = brief.data.get('sellers', {}).keys()
-    new_seller_codes = sellers_to_invite.keys()
+    invited_seller_codes = list(brief.data.get('sellers', {}).keys())
+    new_seller_codes = list(sellers_to_invite.keys())
 
     for code in new_seller_codes:
         if code not in invited_seller_codes:
@@ -111,7 +111,7 @@ def edit_opportunity(user_id, brief_id, edits):
         raise NotFoundError('User {} does not exist'.format(user_id))
 
     previous_data = copy.deepcopy(brief.data)
-    previous_data['closed_at'] = brief.closed_at.to_iso8601_string(extended=True)
+    previous_data['closed_at'] = brief.closed_at.to_iso8601_string()
 
     edit_title(brief, edits['title'])
     edit_summary(brief, edits['summary'])
@@ -130,7 +130,7 @@ def edit_opportunity(user_id, brief_id, edits):
     if (
         title_was_edited(brief.data['title'], previous_data['title']) or
         summary_was_edited(brief.data['summary'], previous_data['summary']) or
-        closing_date_was_edited(brief.closed_at.to_iso8601_string(extended=True), previous_data['closed_at']) or
+        closing_date_was_edited(brief.closed_at.to_iso8601_string(), previous_data['closed_at']) or
         documents_were_edited(brief.data.get('attachments', []), previous_data.get('attachments', [])) or
         documents_were_edited(
             brief.data.get('requirementsDocument', []), previous_data.get('requirementsDocument', [])
@@ -203,7 +203,7 @@ def edit_opportunity(user_id, brief_id, edits):
         errors.append(message)
 
     if (
-        closing_date_was_edited(brief.closed_at.to_iso8601_string(extended=True), previous_data['closed_at']) and
+        closing_date_was_edited(brief.closed_at.to_iso8601_string(), previous_data['closed_at']) and
         not validator.validate_closed_at(minimum_days=1)
     ):
         message = (
@@ -325,8 +325,8 @@ def title_was_edited(title, previous_title):
 
 
 def sellers_were_edited(sellers, previous_sellers):
-    invited_sellers = sellers.keys()
-    previous_invited_sellers = previous_sellers.keys()
+    invited_sellers = list(sellers.keys())
+    previous_invited_sellers = list(previous_sellers.keys())
 
     for code in invited_sellers:
         if code not in previous_invited_sellers:
@@ -340,10 +340,10 @@ def summary_was_edited(summary, previous_summary):
 
 
 def closing_date_was_edited(closing_date, previous_closing_date):
-    closing_date = pendulum.parse(closing_date) if isinstance(closing_date, basestring) else closing_date
+    closing_date = pendulum.parse(closing_date) if isinstance(closing_date, str) else closing_date
     previous_closing_date = (
         pendulum.parse(previous_closing_date)
-        if isinstance(previous_closing_date, basestring) else previous_closing_date
+        if isinstance(previous_closing_date, str) else previous_closing_date
     )
 
     return True if closing_date != previous_closing_date else False
@@ -459,7 +459,7 @@ def only_sellers_were_edited(brief_id):
     only_sellers_edited = False
 
     for edit in history['edits']:
-        for key, value in edit.iteritems():
+        for key, value in edit.items():
             if key != 'editedAt' and key != 'sellers':
                 return False
             elif key == 'sellers':

@@ -283,7 +283,7 @@ def get_application_by_id(application_id):
 @main.route('/prioritise/<int:application_id>', methods=['POST'])
 def prioritise_application(application_id):
     brief_closing_date = request.get_json()
-    if type(brief_closing_date) is not unicode:
+    if not isinstance(brief_closing_date, str):
         abort(400, 'Invalid  %s type argument received. Expected unicode') % (type(brief_closing_date))
 
     application = Application.query.filter(
@@ -399,7 +399,7 @@ def format_applications(applications, with_task_status):
 
 @main.route('/applications/<int:application_id>/submit', methods=['POST'])
 def submit_application(application_id):
-    current_time = pendulum.now('UTC').to_iso8601_string(extended=True)
+    current_time = pendulum.now('UTC').to_iso8601_string()
 
     application = Application.query.get(application_id)
     if application is None:

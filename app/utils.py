@@ -132,15 +132,15 @@ def json_has_matching_id(data, id):
         abort(400, "id parameter must match id in data")
 
 
-def display_list(l):
+def display_list(lst):
     """Returns a comma-punctuated string for the input list
     with a trailing ('Oxford') comma."""
-    length = len(l)
+    length = len(lst)
     if length <= 2:
-        return " and ".join(l)
+        return " and ".join(lst)
     else:
         # oxford comma
-        return ", ".join(l[:-1]) + ", and " + l[-1]
+        return ", ".join(lst[:-1]) + ", and " + lst[-1]
 
 
 def strip_whitespace_from_data(data):
@@ -148,8 +148,7 @@ def strip_whitespace_from_data(data):
         if isinstance(value, list):
             # Strip whitespace and remove empty items from lists
             data[key] = list(
-                filter(lambda x: x != '',
-                       map(lambda x: x.strip() if isinstance(x, string_types) else x, value))
+                [x for x in [x.strip() if isinstance(x, string_types) else x for x in value] if x != '']
             )
         elif isinstance(value, string_types):
             # Strip whitespace from strings
@@ -168,7 +167,7 @@ def get_request_page_questions():
 
 def format_date(date):
     dt = pendulum.parse(str(date))
-    return dt.format('DD/MM/YYYY', formatter='alternative')
+    return dt.format('DD/MM/YYYY')
 
 
 def format_price(price):

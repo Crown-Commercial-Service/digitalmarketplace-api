@@ -16,9 +16,9 @@ def test_check_one_seller_email_not_found():
         patch.object(suppliers,
                      'get_suppliers_by_contact_email',
                      return_value=[]) as get_suppliers_by_contact_email:
-            error = check_seller_emails(brief_data, errs)
-            assert error is not None
-            assert error['sellerEmail'] == 'email_not_found~nofound@a.com'
+        error = check_seller_emails(brief_data, errs)
+        assert error is not None
+        assert error['sellerEmail'] == 'email_not_found~nofound@a.com'
 
 
 def test_check_one_seller_email_found():
@@ -105,9 +105,9 @@ def test_check_some_seller_email_not_found():
         patch.object(suppliers,
                      'get_suppliers_by_contact_email',
                      return_value=[]) as get_suppliers_by_contact_email:
-            error = check_seller_emails(brief_data, errs)
-            assert error is not None
-            assert error['sellerEmailList'] == 'email_not_found~notfound@a.com'
+        error = check_seller_emails(brief_data, errs)
+        assert error is not None
+        assert error['sellerEmailList'] == 'email_not_found~notfound@a.com'
 
 
 def test_check_seller_email_return_none_when_error():
@@ -139,8 +139,8 @@ def test_contact_email_found_for_one_seller():
                      return_value=[Supplier(data={
                          'contact_email': 'found@a.com'
                      })]) as get_suppliers_by_contact_email:
-            error = check_seller_emails(brief_data, errs)
-            assert error is None
+        error = check_seller_emails(brief_data, errs)
+        assert error is None
 
 
 def test_contact_email_found_for_some_sellers():
@@ -157,5 +157,5 @@ def test_contact_email_found_for_some_sellers():
                      return_value=[Supplier(data={
                          'contact_email': 'found@a.com'
                      })]) as get_suppliers_by_contact_email:
-            error = check_seller_emails(brief_data, errs)
-            assert error is None
+        error = check_seller_emails(brief_data, errs)
+        assert error is None

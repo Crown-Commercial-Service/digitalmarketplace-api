@@ -11,12 +11,12 @@ import dmapiclient
 def main(api_url, api_access_token):
     client = dmapiclient.DataAPIClient(api_url, api_access_token)
     for id in [1, 2, 3]:
-        print id
+        print(id)
         try:
             client.req.applications(id).delete(data={"updated_by": ''})
-            print "deleted {}".format(id)
-        except Exception, e:
-            print e
+            print("deleted {}".format(id))
+        except Exception as e:
+            print(e)
 
 
 if __name__ == "__main__":

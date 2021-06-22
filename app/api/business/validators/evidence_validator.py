@@ -82,7 +82,7 @@ class EvidenceDataValidator(object):
     def validate_evidence_dates(self):
         if 'evidence' not in self.data:
             return False
-        used_criteria_ids = self.data['evidence'].keys()
+        used_criteria_ids = list(self.data['evidence'].keys())
         for criteria_id in used_criteria_ids:
             if 'startDate' not in self.data['evidence'][criteria_id]:
                 return False
@@ -97,7 +97,7 @@ class EvidenceDataValidator(object):
     def validate_evidence_client(self):
         if 'evidence' not in self.data:
             return False
-        used_criteria_ids = self.data['evidence'].keys()
+        used_criteria_ids = list(self.data['evidence'].keys())
         for criteria_id in used_criteria_ids:
             if 'client' not in self.data['evidence'][criteria_id]:
                 return False
@@ -108,7 +108,7 @@ class EvidenceDataValidator(object):
     def validate_evidence_background(self):
         if 'evidence' not in self.data:
             return False
-        used_criteria_ids = self.data['evidence'].keys()
+        used_criteria_ids = list(self.data['evidence'].keys())
         for criteria_id in used_criteria_ids:
             if 'background' not in self.data['evidence'][criteria_id]:
                 return False
@@ -120,7 +120,7 @@ class EvidenceDataValidator(object):
         if 'evidence' not in self.data:
             return False
         valid_criteria_ids = [x.id for x in self.domain_criteria]
-        used_criteria_ids = self.data['evidence'].keys()
+        used_criteria_ids = list(self.data['evidence'].keys())
         for criteria_id in used_criteria_ids:
             if int(criteria_id) not in valid_criteria_ids:
                 return False
@@ -155,7 +155,7 @@ class EvidenceDataValidator(object):
             return True
         if previous_evidence and 'evidence' in previous_evidence.data:
             changed = False
-            for criteria_id in self.data['evidence'].keys():
+            for criteria_id in list(self.data['evidence'].keys()):
                 if (str(criteria_id) in previous_evidence.data['evidence']):
                     if (
                         'response' in previous_evidence.data['evidence'][criteria_id] and
@@ -200,7 +200,7 @@ class EvidenceDataValidator(object):
     def field_whitelist(self, whitelist, data):
         violations = []
         whitelisted_keys = [key['name'] for key in whitelist]
-        keys = data.keys()
+        keys = list(data.keys())
         for key in keys:
             if key not in whitelisted_keys:
                 violations.append('Unexpected field "%s"' % key)
@@ -240,19 +240,19 @@ class EvidenceDataValidator(object):
 
             # allowed fields and types inside each response in the evidence dict
             whitelist_evidence = [
-                {'name': 'client', 'type': basestring},
-                {'name': 'background', 'type': basestring},
-                {'name': 'response', 'type': basestring},
-                {'name': 'refereeName', 'type': basestring},
-                {'name': 'refereeNumber', 'type': basestring},
-                {'name': 'startDate', 'type': basestring},
-                {'name': 'endDate', 'type': basestring},
+                {'name': 'client', 'type': str},
+                {'name': 'background', 'type': str},
+                {'name': 'response', 'type': str},
+                {'name': 'refereeName', 'type': str},
+                {'name': 'refereeNumber', 'type': str},
+                {'name': 'startDate', 'type': str},
+                {'name': 'endDate', 'type': str},
                 {'name': 'sameAsFirst', 'type': bool}
             ]
             for criteria_id in self.data['evidence'].keys():
                 errors = errors + self.field_whitelist(whitelist_evidence, self.data['evidence'][criteria_id])
 
         except Exception as e:
-            errors.append(e.message)
+            errors.append(str(e))
 
         return errors

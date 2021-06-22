@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import mock
 from flask import current_app
 from app.jiraapi import get_api, get_api_oauth, get_marketplace_jira
@@ -91,19 +89,19 @@ class TestJira(BaseApplicationTest):
                 9: {
                     'id': 98,
                     'key': 'T-98',
-                    u'self': u'http://api/topissue',
-                    u'link': 'http://jira.example.com/browse/T-98',
-                    u'status': u'to-do',
-                    u'subtasks': [
+                    'self': 'http://api/topissue',
+                    'link': 'http://jira.example.com/browse/T-98',
+                    'status': 'to-do',
+                    'subtasks': [
                         {
                             'id': 99,
                             'key': 'T-99',
-                            u'self': u'http://api/subissue',
-                            u'link': 'http://jira.example.com/browse/T-99',
-                            u'status': u'done',
-                            u'summary': u'A subtask'
+                            'self': 'http://api/subissue',
+                            'link': 'http://jira.example.com/browse/T-99',
+                            'status': 'done',
+                            'summary': 'A subtask'
                         }
                     ],
-                    u'summary': u'a task'
+                    'summary': 'a task'
                 }
             }

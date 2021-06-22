@@ -5,8 +5,6 @@ import mock
 import pendulum
 import pytest
 from nose.tools import assert_equal, assert_raises
-from pendulum import create as datetime
-from pendulum import interval
 from pytest import raises
 from sqlalchemy.exc import DataError, IntegrityError
 
@@ -24,7 +22,7 @@ from .helpers import (INCOMING_APPLICATION_DATA, BaseApplicationTest,
 
 
 def naive_datetime(*args, **kwargs):
-    p = pendulum.create(*args, **kwargs)
+    p = pendulum.datetime(*args, **kwargs)
     return naive(p)
 
 
@@ -127,11 +125,11 @@ class TestBriefs(BaseApplicationTest):
         TZ = 'Australia/Sydney'
         with self.app.app_context():
             for hour in range(24):
-                NOW = SYDNEY = pendulum.create(2016, 1, 3, hour, tz=TZ)
+                NOW = SYDNEY = pendulum.datetime(2016, 1, 3, hour, tz=TZ)
                 UTC = NOW.in_tz('UTC')
                 SYDNEY_DAY = SYDNEY.date()
-                CLOSING_DAY = SYDNEY_DAY + interval(weeks=1)
-                CLOSING_AT = pendulum.create(2016, 1, 10, 18, 0, 0, tz=TZ)
+                CLOSING_DAY = SYDNEY_DAY + pendulum.duration(weeks=1)
+                CLOSING_AT = pendulum.datetime(2016, 1, 10, 18, 0, 0, tz=TZ)
                 CLOSING_AT_UTC = CLOSING_AT.in_timezone('UTC')
 
                 QUESTIONS_CLOSING_AT_1 = CLOSING_AT.subtract(days=7).add(days=2)
@@ -173,7 +171,7 @@ class TestBriefs(BaseApplicationTest):
                 assert brief.questions_duration_workdays == 2
 
                 assert brief.published_day == SYDNEY_DAY
-                assert brief.applications_closing_date == CLOSING_DAY
+                assert brief.applications_closing_date.date() == CLOSING_DAY
 
                 assert brief.applications_closed_at == \
                     CLOSING_AT_UTC
@@ -318,7 +316,7 @@ class TestBriefs(BaseApplicationTest):
         with self.app.app_context():
             db.session.add(Brief(
                 data={}, framework=self.framework, lot=self.lot,
-                published_at=utcnow() - interval(days=1), withdrawn_at=utcnow()
+                published_at=utcnow() - pendulum.duration(days=1), withdrawn_at=utcnow()
             ))
             db.session.commit()
 
@@ -332,7 +330,15 @@ class TestBriefs(BaseApplicationTest):
 
     def test_query_closed_brief(self):
         with self.app.app_context():
-            db.session.add(Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2000, 1, 1)))
+            db.session.add(
+                Brief(
+                    data={},
+                    framework=self.framework,
+                    lot=self.lot,
+                    published_at=pendulum.datetime(2000, 1, 1)
+                )
+            )
+
             db.session.commit()
 
             assert Brief.query.filter(Brief.status == 'draft').count() == 0
@@ -357,32 +363,44 @@ class TestBriefs(BaseApplicationTest):
     def test_closing_dates_are_set_with_published_at_when_no_requirements_length(self):
         with self.app.app_context():
             brief = Brief(data={}, framework=self.framework, lot=self.lot,
-                          published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
+                          published_at=pendulum.datetime(2016, 3, 3, 12, 30, 1, 2))
 
-            assert brief.applications_closed_at == datetime(2016, 3, 17, 7, 0, 0)
-            assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 7, 0, 0)
-            assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 7, 0, 0)
+            assert brief.applications_closed_at == pendulum.datetime(2016, 3, 17, 7, 0, 0)
+            assert brief.clarification_questions_closed_at == pendulum.datetime(2016, 3, 10, 7, 0, 0)
+            assert brief.clarification_questions_published_by == pendulum.datetime(2016, 3, 16, 7, 0, 0)
 
     def test_closing_dates_are_set_with_published_at_when_requirements_length_is_two_weeks(self):
         with self.app.app_context():
             brief = Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot,
-                          published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
+                          published_at=pendulum.datetime(2016, 3, 3, 12, 30, 1, 2))
 
-            assert brief.applications_closed_at == datetime(2016, 3, 17, 7, 0, 0)
-            assert brief.clarification_questions_closed_at == datetime(2016, 3, 10, 7, 0, 0)
-            assert brief.clarification_questions_published_by == datetime(2016, 3, 16, 7, 0, 0)
+            assert brief.applications_closed_at == pendulum.datetime(2016, 3, 17, 7, 0, 0)
+            assert brief.clarification_questions_closed_at == pendulum.datetime(2016, 3, 10, 7, 0, 0)
+            assert brief.clarification_questions_published_by == pendulum.datetime(2016, 3, 16, 7, 0, 0)
 
     def test_closing_dates_are_set_with_published_at_when_requirements_length_is_one_week(self):
         with self.app.app_context():
-            brief = Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot)
-            brief.published_at = datetime(2016, 3, 3, 12, 30, 1, 2)
-            assert brief.applications_closed_at == datetime(2016, 3, 10, 7, 0, 0)
-            assert brief.clarification_questions_closed_at == datetime(2016, 3, 7, 7, 0, 0)
-            assert brief.clarification_questions_published_by == datetime(2016, 3, 9, 7, 0, 0)
+            brief = Brief(
+                data={
+                    'requirementsLength': '1 week'
+                },
+                framework=self.framework,
+                lot=self.lot
+            )
+
+            brief.published_at = pendulum.datetime(2016, 3, 3, 12, 30, 1, 2)
+            assert brief.applications_closed_at == pendulum.datetime(2016, 3, 10, 7, 0, 0)
+            assert brief.clarification_questions_closed_at == pendulum.datetime(2016, 3, 7, 7, 0, 0)
+            assert brief.clarification_questions_published_by == pendulum.datetime(2016, 3, 9, 7, 0, 0)
 
     def test_query_brief_applications_closed_at_date_for_brief_with_no_requirements_length(self):
         with self.app.app_context():
-            b = Brief(data={}, framework=self.framework, lot=self.lot, published_at=datetime(2016, 3, 3, 12, 30, 1, 2))
+            b = Brief(
+                data={},
+                framework=self.framework,
+                lot=self.lot,
+                published_at=pendulum.datetime(2016, 3, 3, 12, 30, 1, 2)
+            )
 
             db.session.add(b)
             db.session.commit()
@@ -395,7 +413,14 @@ class TestBriefs(BaseApplicationTest):
 
             apps_closed_sql = app_closed_query.first()[0]
 
-            assert apps_closed_sql == apps_closed_py
+            assert apps_closed_sql == builtindatetime(
+                apps_closed_py.year,
+                apps_closed_py.month,
+                apps_closed_py.day,
+                apps_closed_py.hour,
+                apps_closed_py.minute,
+                apps_closed_py.second
+            )
 
             assert Brief.query.filter(Brief.applications_closed_at == naive_datetime(2016, 3, 17, 7, 0, 0)).count() == 1
 
@@ -404,7 +429,7 @@ class TestBriefs(BaseApplicationTest):
             new_brief = Brief(data={'requirementsLength': '1 week'}, framework=self.framework, lot=self.lot)
             db.session.add(new_brief)
             db.session.commit()
-            new_brief.published_at = datetime(2016, 3, 3, 12, 30, 1, 2)
+            new_brief.published_at = pendulum.datetime(2016, 3, 3, 12, 30, 1, 2)
 
             assert Brief.query.filter(Brief.applications_closed_at == naive_datetime(2016, 3, 10, 7, 0, 0)).count() == 1
 
@@ -413,7 +438,7 @@ class TestBriefs(BaseApplicationTest):
             new_brief = Brief(data={'requirementsLength': '2 weeks'}, framework=self.framework, lot=self.lot)
             db.session.add(new_brief)
             db.session.commit()
-            new_brief.published_at = datetime(2016, 3, 3, 12, 30, 1, 2)
+            new_brief.published_at = pendulum.datetime(2016, 3, 3, 12, 30, 1, 2)
             db.session.add(new_brief)
             db.session.commit()
             assert Brief.query.filter(Brief.applications_closed_at == naive_datetime(2016, 3, 17, 7, 0, 0)).count() == 1
@@ -427,9 +452,9 @@ class TestBriefs(BaseApplicationTest):
             db.session.add(briefB)
             db.session.add(briefC)
             db.session.commit()
-            briefA.published_at = datetime(2016, 3, 10, 12, 30, 1, 2)
-            briefB.published_at = datetime(2016, 3, 3, 12, 30, 1, 2)
-            briefC.published_at = datetime(2016, 3, 3, 12, 30, 1, 2)
+            briefA.published_at = pendulum.datetime(2016, 3, 10, 12, 30, 1, 2)
+            briefB.published_at = pendulum.datetime(2016, 3, 3, 12, 30, 1, 2)
+            briefC.published_at = pendulum.datetime(2016, 3, 3, 12, 30, 1, 2)
             db.session.add(briefA)
             db.session.add(briefB)
             db.session.add(briefC)
@@ -439,7 +464,7 @@ class TestBriefs(BaseApplicationTest):
     def test_expired_status_for_a_brief_with_passed_close_date(self):
         with self.app.app_context():
             brief = Brief(data={}, framework=self.framework, lot=self.lot,
-                          published_at=utcnow() - interval(days=1000))
+                          published_at=utcnow() - pendulum.duration(days=1000))
 
             assert brief.status == 'closed'
             assert brief.clarification_questions_are_closed
@@ -477,18 +502,18 @@ class TestBriefs(BaseApplicationTest):
             brief = Brief(data={}, framework=self.framework, lot=self.lot, published_at=utcnow())
 
             with pytest.raises(ValidationError):
-                brief.closed_at = utcnow() + pendulum.interval(days=999)
+                brief.closed_at = utcnow() + pendulum.duration(days=999)
 
             with pytest.raises(ValidationError):
-                brief.closed_at = utcnow() - pendulum.interval(days=10)
+                brief.closed_at = utcnow() - pendulum.duration(days=10)
 
             with pytest.raises(ValidationError):
-                brief.closed_at = utcnow() + pendulum.interval(days=5)
+                brief.closed_at = utcnow() + pendulum.duration(days=5)
 
-            brief.closed_at = utcnow() + pendulum.interval(days=10)
+            brief.closed_at = utcnow() + pendulum.duration(days=10)
 
             with pytest.raises(ValidationError):
-                brief.questions_closed_at = utcnow() + pendulum.interval(days=20)
+                brief.questions_closed_at = utcnow() + pendulum.duration(days=20)
 
     def test_cannot_set_live_brief_to_draft(self):
         with self.app.app_context():
@@ -521,7 +546,7 @@ class TestBriefs(BaseApplicationTest):
         with self.app.app_context():
             brief = Brief(
                 data={}, framework=self.framework, lot=self.lot,
-                published_at=utcnow() - interval(days=1), withdrawn_at=utcnow()
+                published_at=utcnow() - pendulum.duration(days=1), withdrawn_at=utcnow()
             )
 
             for status in ['draft', 'live', 'closed']:
@@ -642,7 +667,11 @@ class TestBriefResponses(BaseApplicationTest):
             try:
                 brief_response.validate()
             except ValidationError as v:
-                errors = v.message
+                try:
+                    errors = v.message
+                except AttributeError:
+                    (errors,) = v.args
+
                 assert 'essentialRequirements' not in errors
 
             assert brief_response.id is not None
@@ -1026,13 +1055,13 @@ class TestLot(BaseApplicationTest):
             self.lot = self.framework.get_lot('user-research-studios')
 
             assert self.lot.serialize() == {
-                u'id': 8,
-                u'name': u'User research studios',
-                u'slug': u'user-research-studios',
-                u'allowsBrief': False,
-                u'oneServiceLimit': False,
-                u'unitSingular': u'lab',
-                u'unitPlural': u'labs',
+                'id': 8,
+                'name': 'User research studios',
+                'slug': 'user-research-studios',
+                'allowsBrief': False,
+                'oneServiceLimit': False,
+                'unitSingular': 'lab',
+                'unitPlural': 'labs',
             }
 
 

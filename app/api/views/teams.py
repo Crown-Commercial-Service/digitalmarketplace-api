@@ -44,11 +44,11 @@ def create_team():
     try:
         team = team_business.create_team()
     except TeamError as e:
-        abort(e.message)
+        abort(str(e))
     except NotFoundError as e:
-        return not_found(e.message)
+        return not_found(str(e))
     except UnauthorisedError as e:
-        return forbidden(e.message)
+        return forbidden(str(e))
 
     return jsonify(team)
 
@@ -62,9 +62,9 @@ def get_team(team_id):
     try:
         team = team_business.get_team(team_id)
     except NotFoundError as e:
-        return not_found(e.message)
+        return not_found(str(e))
     except UnauthorisedError as e:
-        return forbidden(e.message)
+        return forbidden(str(e))
 
     return jsonify(team)
 
@@ -78,11 +78,11 @@ def update_team(team_id):
     try:
         team = team_business.update_team(team_id, data)
     except ValidationError as e:
-        return abort(e.message)
+        return abort(str(e))
     except NotFoundError as e:
-        return not_found(e.message)
+        return not_found(str(e))
     except UnauthorisedError as e:
-        return forbidden(e.message)
+        return forbidden(str(e))
 
     return jsonify(team)
 
@@ -118,7 +118,7 @@ def request_access():
     try:
         team_business.request_access(data)
     except ValidationError as e:
-        abort(e.message)
+        abort(str(e))
 
     return jsonify(success=True)
 
@@ -131,11 +131,11 @@ def request_to_join(team_id):
     try:
         team_business.request_to_join(current_user.email_address, team_id, current_user.agency_id)
     except NotFoundError as e:
-        return not_found(e.message)
+        return not_found(str(e))
     except UnauthorisedError as e:
-        return forbidden(e.message)
+        return forbidden(str(e))
     except ValidationError as e:
-        abort(e.message)
+        abort(str(e))
 
     return jsonify(success=True)
 
@@ -167,9 +167,9 @@ def get_join_request(team_id, token):
     try:
         team = team_business.get_team(team_id)
     except NotFoundError as e:
-        return not_found(e.message)
+        return not_found(str(e))
     except UnauthorisedError as e:
-        return forbidden(e.message)
+        return forbidden(str(e))
 
     join_request = team_business.get_join_request(token)
     if not join_request or int(join_request.data['team_id']) != team_id:
@@ -191,9 +191,9 @@ def decline_join_request(team_id, token):
     try:
         team = team_business.get_team(team_id)
     except NotFoundError as e:
-        return not_found(e.message)
+        return not_found(str(e))
     except UnauthorisedError as e:
-        return forbidden(e.message)
+        return forbidden(str(e))
 
     join_request = team_business.get_join_request(token)
     if not join_request or int(join_request.data['team_id']) != team_id:

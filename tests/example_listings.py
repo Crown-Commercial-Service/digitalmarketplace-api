@@ -18,13 +18,13 @@ settings.load_profile("unit")
 
 _descriptive_alphabet = (
     # start with some normal alphanumerics
-    u"abcdefghijklmnopABCDEFGHIJKLMNOP123"
+    "abcdefghijklmnopABCDEFGHIJKLMNOP123"
     # some characters likely to fudge up poor escaping
-    u"\"\'<&%"
+    "\"\'<&%"
     # some printable unicode oddities
-    u"£Ⰶⶼ"
+    "£Ⰶⶼ"
     # various weird types of spaces
-    u" \u200d\u2029\u202f"
+    " \u200d\u2029\u202f"
 )
 _nonspace_cluster_re = re.compile(r"\S+", flags=re.UNICODE)
 
@@ -46,7 +46,7 @@ def requirements_list(draw, length, answers=False):
     if answers:
         elements = text() if length is not None else one_of(text(), none())
     else:
-        elements = text(min_size=1, average_size=10, max_size=300, alphabet=_descriptive_alphabet).filter(
+        elements = text(min_size=1, max_size=300, alphabet=_descriptive_alphabet).filter(
             partial(_word_count_filter, max_words=30)
         )
     return draw(lists(
@@ -56,7 +56,7 @@ def requirements_list(draw, length, answers=False):
     ))
 
 
-_brief_response_availability = text(min_size=1, average_size=10, max_size=100, alphabet=_descriptive_alphabet).filter(
+_brief_response_availability = text(min_size=1, max_size=100, alphabet=_descriptive_alphabet).filter(
     _word_count_filter
 )
 

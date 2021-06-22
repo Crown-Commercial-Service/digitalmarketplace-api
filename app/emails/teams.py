@@ -25,7 +25,7 @@ def send_removed_team_member_notification_emails(team_id, user_ids):
         team_name=escape_markdown(team.name)
     )
 
-    subject = 'You have been removed from the {} team'.format(team.name.encode('utf-8'))
+    subject = 'You have been removed from the {} team'.format(team.name)
 
     send_or_handle_error(
         to_addresses,
@@ -118,7 +118,7 @@ def send_team_member_notification_emails(team_id, user_ids=None):
         team_name=escape_markdown(team.name)
     )
 
-    subject = '{} added you as a member of {}'.format(current_user.name, team.name.encode('utf-8'))
+    subject = '{} added you as a member of {}'.format(current_user.name, team.name)
 
     send_or_handle_error(
         to_addresses,

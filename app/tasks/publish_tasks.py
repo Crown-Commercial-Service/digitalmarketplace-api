@@ -1,7 +1,8 @@
-from app.api.services import (
-    publish
-)
+from app.api.services.publish import Publish
 from . import celery
+
+
+publish = Publish()
 
 
 @celery.task

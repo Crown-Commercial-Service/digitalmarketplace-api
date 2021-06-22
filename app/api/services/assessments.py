@@ -20,6 +20,8 @@ class AssessmentsService(Service):
                  .group_by(Brief.id)
                  .scalar())
 
+        count = 0 if count is None else count
+
         return count > 0
 
     def get_supplier_assessments(self, code):

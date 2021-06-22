@@ -25,7 +25,7 @@ def get_metrics():
     for kv in key_values:
         updated_at = kv['updated_at'].to_iso8601_string()
         if kv['key'] == 'brief_metrics':
-            for k, v in kv['data'].iteritems():
+            for k, v in kv['data'].items():
                 metrics["briefs_" + k] = {"value": v, "ts": updated_at}
         elif kv['key'] == 'total_contracted':
             metrics['total_contracted'] = {"value": kv['data']['total'], "ts": updated_at}
@@ -155,7 +155,7 @@ def get_application_metrics():
 @main.route('/metrics/applications/history', methods=['GET'])
 def get_application_historical_metrics():
     metrics = defaultdict(list)
-    period = pendulum.period(pendulum.Pendulum(2016, 11, 1), pendulum.tomorrow())
+    period = pendulum.period(pendulum.datetime(2016, 11, 1), pendulum.tomorrow())
     for dt in period.range('days'):
         date = dt.to_date_string()
         timestamp = dt.to_iso8601_string()
@@ -188,7 +188,7 @@ def get_application_metrics_csv():
     si = io.StringIO()
 
     writer = csv.writer(si, delimiter=',', quotechar='"')
-    writer.writerow(metrics.keys())
+    writer.writerow(list(metrics.keys()))
     writer.writerow([timestamp] + [x['value'] for x in metrics.values()])
 
     output = make_response(si.getvalue())

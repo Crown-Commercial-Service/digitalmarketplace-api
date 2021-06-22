@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from urllib import quote, unquote_plus
+from urllib.parse import quote, unquote_plus
 
 from flask import current_app, jsonify, request, session
 from flask_login import current_user, login_required, login_user, logout_user
@@ -451,7 +451,12 @@ def send_reset_password_email():
         )
 
     except Exception as error:
-        return jsonify(message=error.message), 400
+        try:
+            msg = error.message
+        except AttributeError:
+            msg = str(error)
+
+        return jsonify(message=msg), 400
 
     return jsonify(
         email_address=email_address
@@ -505,7 +510,12 @@ def reset_password(token):
         ), 200
 
     except Exception as error:
-        return jsonify(message=error.message), 400
+        try:
+            msg = error.message
+        except AttributeError:
+            msg = str(error)
+
+        return jsonify(message=msg), 400
 
 
 @api.route('/generate-api-key/<int:user_id>', methods=['POST'])

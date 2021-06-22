@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 from app.emails import render_email_template, escape_token_markdown
 
 EXPECTED = """<!DOCTYPE html>
@@ -30,8 +28,8 @@ color: #007554; border-radius: 2rem;">&#x2714;</span>
 def test_render_email_template():
     rendered = render_email_template(
         'example.md',
-        variable=u'ünicode & ascii <marquee>no marquee</marquee>\n'
-                 u'<blink script="window.alert(\'xss issue\');">no blink</blink>',
+        variable='ünicode & ascii <marquee>no marquee</marquee>\n'
+                 '<blink script="window.alert(\'xss issue\');">no blink</blink>',
         styles={'h1': 'font-weight: bold'},
         header='<div style="padding: 0rem; border: 2px solid #007554; font-size: 2rem;">'
                '<p style="background: white; margin: 0;">\n<span style="background: #007554; padding: 1rem; '

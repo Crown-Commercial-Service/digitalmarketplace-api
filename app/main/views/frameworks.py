@@ -137,7 +137,7 @@ def get_framework_stats(framework_slug):
 
     def label_columns(labels, query):
         return [
-            dict(zip(labels, item))
+            dict(list(zip(labels, item)))
             for item in sorted(query, key=lambda x: list(map(str, x)))
         ]
 

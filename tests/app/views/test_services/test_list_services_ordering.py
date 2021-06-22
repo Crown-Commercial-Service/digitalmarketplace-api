@@ -23,7 +23,7 @@ class TestListServicesOrdering(BaseApplicationTest):
 
             db.session.add(
                 Supplier(code=1,
-                         name=u"Supplier 1",
+                         name="Supplier 1",
                          description="",
                          summary="",
                          addresses=[Address(address_line="{} Dummy Street 1",

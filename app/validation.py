@@ -86,7 +86,7 @@ def get_sections(schema_name):
         schema = _SCHEMAS[schema_name]
         return schema['sections']
     except KeyError as e:
-        abort(500, 'Missing key: {}'.format(e.message))
+        abort(500, 'Missing key: {}'.format(str(e)))
 
 
 def get_required_fields(brief):
@@ -114,14 +114,19 @@ def validate_updater_json_or_400(submitted_json):
     try:
         get_validator('services-update').validate(submitted_json)
     except ValidationError as e1:
-        abort(400, "JSON validation error: {}".format(e1.message))
+        try:
+            msg = e1.message
+        except AttributeError:
+            msg = str(e1)
+
+        abort(400, "JSON validation error: {}".format(msg))
 
 
 def validate_user_json_or_400(submitted_json):
     try:
         get_validator('users').validate(submitted_json)
     except ValidationError as e:
-        abort(400, "JSON was not a valid format. {}".format(e.message))
+        abort(400, "JSON was not a valid format. {}".format(str(e)))
     if submitted_json['role'] == 'supplier' \
             and 'supplierCode' not in submitted_json:
         abort(400, "No supplier code provided for supplier user")
@@ -131,28 +136,28 @@ def validate_user_auth_json_or_400(submitted_json):
     try:
         validates_against_schema('users-auth', submitted_json)
     except ValidationError as e:
-        abort(400, "JSON was not a valid format. {}".format(e.message))
+        abort(400, "JSON was not a valid format. {}".format(str(e)))
 
 
 def validate_supplier_json_or_400(submitted_json):
     try:
         get_validator('suppliers').validate(submitted_json)
     except ValidationError as e:
-        abort(400, "JSON was not a valid format. {}".format(e.message))
+        abort(400, "JSON was not a valid format. {}".format(str(e)))
 
 
 def validate_new_supplier_json_or_400(submitted_json):
     try:
         get_validator('new-supplier').validate(submitted_json)
     except ValidationError as e:
-        abort(400, "JSON was not a valid format. {}".format(e.message))
+        abort(400, "JSON was not a valid format. {}".format(str(e)))
 
 
 def validate_contact_information_json_or_400(submitted_json):
     try:
         get_validator('contact-information').validate(submitted_json)
     except ValidationError as e:
-        abort(400, "JSON was not a valid format. {}".format(e.message))
+        abort(400, "JSON was not a valid format. {}".format(str(e)))
 
 
 def validates_against_schema(validator_name, submitted_json):

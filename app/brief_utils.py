@@ -21,7 +21,7 @@ def add_defaults(brief_json):
     if brief_json.get('lot') != 'training':
         return
 
-    brief_json['evaluationTypeSellerSubmissions'] = ['Written proposal', 'Project costs', u'Trainer r\u00E9sum\u00E9s']
+    brief_json['evaluationTypeSellerSubmissions'] = ['Written proposal', 'Project costs', 'Trainer r\u00E9sum\u00E9s']
 
 
 def validate_brief_data(brief, enforce_required=True, required_fields=None):
@@ -45,17 +45,17 @@ def validate_brief_data(brief, enforce_required=True, required_fields=None):
 
     seller_email_error = check_seller_emails(brief.data, errs)
     if seller_email_error:
-        for k, value in seller_email_error.iteritems():
+        for k, value in seller_email_error.items():
             errs[k] = value
 
     lds_errors = check_lds(brief, required_fields)
     for lds_error in lds_errors:
-        for k, value in lds_error.iteritems():
+        for k, value in lds_error.items():
             errs[k] = value
 
     training_method_error = check_training_method(brief)
     if training_method_error:
-        for k, value in training_method_error.iteritems():
+        for k, value in training_method_error.items():
             errs[k] = value
 
     if errs:
@@ -319,7 +319,7 @@ def __get_lds_fields_from_what_training(what_training):
             'trainingDetailCover'
         ]
     }
-    for k, v in lds_fields.iteritems():
+    for k, v in lds_fields.items():
         if what_training.lower() == k:
             return v
     return None

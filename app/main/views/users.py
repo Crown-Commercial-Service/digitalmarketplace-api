@@ -28,7 +28,7 @@ from app.api.helpers import get_email_domain, is_valid_email
 from app.api.services import agency_service, user_claims_service, users as user_service
 from app.tasks import publish_tasks
 
-from dmutils.logging import notify_team
+from dmutils.logs import notify_team
 
 
 @main.route('/users/auth', methods=['POST'])
@@ -465,7 +465,7 @@ def export_users_for_framework(framework_slug):
 
             # get number of completed draft services per supplier
             # `application_status` is based on a complete declaration and at least one completed draft service
-            if sf.supplier_code not in submitted_draft_counts_per_supplier.keys():
+            if sf.supplier_code not in list(submitted_draft_counts_per_supplier.keys()):
                 submitted_draft_counts_per_supplier[sf.supplier_code] = db.session.query(
                     func.count()
                 ).filter(

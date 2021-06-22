@@ -202,11 +202,11 @@ class TestBriefsService(BaseApplicationTest):
 
         closed_brief = briefs_service.close_opportunity_early(brief)
         assert closed_brief.data['originalQuestionsClosedAt'] == (
-            original_questions_closed_at.to_iso8601_string(extended=True)
+            original_questions_closed_at.to_iso8601_string()
         )
 
         assert closed_brief.data['originalClosedAt'] == (
-            original_closed_at.to_iso8601_string(extended=True)
+            original_closed_at.to_iso8601_string()
         )
 
     def test_opportunity_is_withdrawn(self, brief):

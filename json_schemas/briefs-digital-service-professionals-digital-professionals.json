@@ -33,7 +33,6 @@
       "type": "array"
     },
     "culturalWeighting": {
-      "exclusiveMaximum": false,
       "maximum": 100,
       "minimum": 0,
       "type": "integer"
@@ -97,7 +96,6 @@
       "type": "array"
     },
     "numberOfSuppliers": {
-      "exclusiveMaximum": false,
       "maximum": 15,
       "minimum": 1,
       "type": "integer"
@@ -108,7 +106,6 @@
       "type": "string"
     },
     "priceWeighting": {
-      "exclusiveMaximum": false,
       "maximum": 100,
       "minimum": 0,
       "type": "integer"
@@ -185,7 +182,6 @@
       "type": "string"
     },
     "technicalWeighting": {
-      "exclusiveMaximum": false,
       "maximum": 100,
       "minimum": 0,
       "type": "integer"

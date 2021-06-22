@@ -1,7 +1,6 @@
 from operator import itemgetter
 
 from flask import abort, current_app, jsonify, request
-from pendulum import Pendulum
 from sqlalchemy import asc
 
 from app.utils import get_json_from_request, json_has_required_keys
@@ -102,7 +101,7 @@ def list_services():
             role=request.args.get('role')
         )
     except ValidationError as e:
-        abort(400, e.message)
+        abort(400, str(e))
 
     if supplier_code is not None:
         supplier = Supplier.query.filter(Supplier.code == supplier_code).all()

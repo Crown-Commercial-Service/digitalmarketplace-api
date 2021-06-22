@@ -31,7 +31,7 @@ class TestDraftServices(BaseApplicationTest):
 
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1",
+                Supplier(code=1, name="Supplier 1",
                          addresses=[Address(address_line="{} Dummy Street 1",
                                             suburb="Dummy",
                                             state="ZZZ",
@@ -467,7 +467,7 @@ class TestDraftServices(BaseApplicationTest):
         errors = json.loads(res2.get_data())['error']
 
         assert_equal(res2.status_code, 400)
-        assert_equal(errors, {u'serviceName': u'answer_required', u'serviceBenefits': u'answer_required'})
+        assert_equal(errors, {'serviceName': 'answer_required', 'serviceBenefits': 'answer_required'})
 
     def test_update_draft_should_not_validate_full_draft_if_not_submitted(self):
 
@@ -1083,7 +1083,7 @@ class TestCopyDraft(BaseApplicationTest, JSONUpdateTestMixin):
 
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1",
+                Supplier(code=1, name="Supplier 1",
                          addresses=[Address(address_line="{} Dummy Street 1",
                                             suburb="Dummy",
                                             state="ZZZ",
@@ -1198,7 +1198,7 @@ class TestCompleteDraft(BaseApplicationTest, JSONUpdateTestMixin):
         super(TestCompleteDraft, self).setup()
 
         with self.app.app_context():
-            db.session.add(Supplier(code=1, name=u"Supplier 1",
+            db.session.add(Supplier(code=1, name="Supplier 1",
                                     addresses=[Address(address_line="{} Dummy Street 1",
                                                        suburb="Dummy",
                                                        state="ZZZ",
@@ -1307,7 +1307,7 @@ class TestDOSServices(BaseApplicationTest):
             self.set_framework_status('digital-outcomes-and-specialists', 'open')
 
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1",
+                Supplier(code=1, name="Supplier 1",
                          addresses=[Address(address_line="{} Dummy Street 1",
                                             suburb="Dummy",
                                             state="ZZZ",
@@ -1552,7 +1552,7 @@ class TestUpdateDraftStatus(BaseApplicationTest, JSONUpdateTestMixin):
         super(TestUpdateDraftStatus, self).setup()
 
         with self.app.app_context():
-            db.session.add(Supplier(code=1, name=u"Supplier 1",
+            db.session.add(Supplier(code=1, name="Supplier 1",
                                     addresses=[Address(address_line="{} Dummy Street 1",
                                                        suburb="Dummy",
                                                        state="ZZZ",

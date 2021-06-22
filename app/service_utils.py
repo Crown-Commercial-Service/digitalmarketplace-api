@@ -148,7 +148,7 @@ def index_service(service):
         except dmapiclient.HTTPError as e:
             current_app.logger.warning(
                 'Failed to add {} to search index: {}'.format(
-                    service.service_id, e.message))
+                    service.service_id, str(e)))
 
 
 def delete_service_from_index(service):
@@ -157,7 +157,7 @@ def delete_service_from_index(service):
     except dmapiclient.HTTPError as e:
         current_app.logger.warning(
             'Failed to remove {} to search index: {}'.format(
-                service.service_id, e.message))
+                service.service_id, str(e)))
 
 
 def create_service_from_draft(draft, status):

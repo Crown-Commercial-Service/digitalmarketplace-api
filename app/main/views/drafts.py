@@ -255,7 +255,7 @@ def publish_draft_service(draft_id):
         current_app.logger.warning(
             'Failed to {action} draft {draft_id} after publishing service {service_id}: {error}'.format(
                 extra=dict(
-                    action=action, draft_id=draft_id, service_id=service_from_draft.service_id, error=e.message)))
+                    action=action, draft_id=draft_id, service_id=service_from_draft.service_id, error=str(e))))
 
     index_service(service_from_draft)
 

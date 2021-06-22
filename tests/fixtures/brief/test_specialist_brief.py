@@ -122,19 +122,19 @@ def supplier_user(app, request, suppliers):
 
 def test_validate_closed_at():
     assert SpecialistDataValidator({
-        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=21).format('%Y-%m-%d')
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=21).format('YYYY-MM-DD')
     }).validate_closed_at()
 
     assert SpecialistDataValidator({
-        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=2).format('YYYY-MM-DD')
     }).validate_closed_at()
 
     assert not SpecialistDataValidator({
-        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=365).format('%Y-%m-%d')
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=365).format('YYYY-MM-DD')
     }).validate_closed_at()
 
     assert not SpecialistDataValidator({
-        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=1).format('%Y-%m-%d')
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=1).format('YYYY-MM-DD')
     }).validate_closed_at()
 
     assert not SpecialistDataValidator({
@@ -210,11 +210,11 @@ def test_validate_security_clearance_other():
 
 def test_validate_start_date():
     assert SpecialistDataValidator({
-        'startDate': pendulum.now('Australia/Canberra').start_of('day').format('%Y-%m-%d')
+        'startDate': pendulum.now('Australia/Canberra').start_of('day').format('YYYY-MM-DD')
     }).validate_start_date()
 
     assert not SpecialistDataValidator({
-        'startDate': pendulum.now('Australia/Canberra').subtract(days=1).start_of('day').format('%Y-%m-%d')
+        'startDate': pendulum.now('Australia/Canberra').subtract(days=1).start_of('day').format('YYYY-MM-DD')
     }).validate_start_date()
 
 
@@ -396,7 +396,7 @@ def test_validate_response_formats():
     assert SpecialistDataValidator({
         'evaluationType': [
             'Responses to selection criteria',
-            'Résumés'.decode('utf-8'),
+            'Résumés',
             'References',
             'Interviews',
             'Scenarios or tests',
@@ -407,7 +407,7 @@ def test_validate_response_formats():
     assert not SpecialistDataValidator({
         'evaluationType': [
             'Responses to selection criteria',
-            'Résumés'.decode('utf-8'),
+            'Résumés',
             'xxx',
         ]
     }).validate_response_formats()

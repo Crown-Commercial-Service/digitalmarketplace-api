@@ -29,11 +29,11 @@ def test_authenticated(client, users):
 
 
 def test_basic_auth(client, users):
-    header = b64encode('{}:{}'.format('test@digital.gov.au', 'testpassword'))
+    header = b64encode('{}:{}'.format('test@digital.gov.au', 'testpassword').encode()).decode()
     res = client.get('/2/_protected', headers={'Authorization': 'Basic {}'.format(header)})
     assert res.status_code == 200
 
-    wrong_password = b64encode('{}:{}'.format('test@digital.gov.au', 'testpasswor'))
+    wrong_password = b64encode('{}:{}'.format('test@digital.gov.au', 'testpasswor').encode()).decode()
     res = client.get('/2/_protected', headers={'Authorization': 'Basic {}'.format(wrong_password)})
     assert res.status_code == 401
 

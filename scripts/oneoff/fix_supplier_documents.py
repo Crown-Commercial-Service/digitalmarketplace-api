@@ -12,14 +12,14 @@ def update_supplier_documents(client, counters, code):
     applications = client.req.suppliers(code).applications().get()
 
     if not applications or not applications.get('applications'):
-        print '{}: has no applications'.format(code)
+        print('{}: has no applications'.format(code))
         counters['no_app'] += 1
         return
 
     approved_applications = [a for a in applications['applications'] if a['status'] == 'approved']
 
     if not approved_applications:
-        print '{}: has no approved applications'.format(code)
+        print('{}: has no approved applications'.format(code))
         counters['not_approved'] += 1
         return
 
@@ -31,10 +31,10 @@ def update_supplier_documents(client, counters, code):
 
     try:
         client.req.suppliers(code).patch(data={'supplier': {'documents': documents}})
-        print 'supplier:{} application:{}'.format(code, application['id'])
+        print('supplier:{} application:{}'.format(code, application['id']))
         counters['approved'] += 1
     except Exception as e:
-        print '{}:{}'.format(code, e)
+        print('{}:{}'.format(code, e))
         counters['errors'] += 1
 
 

@@ -1,6 +1,5 @@
-from __future__ import absolute_import, unicode_literals
 from celery import Celery
-from urllib import quote_plus
+from urllib.parse import quote_plus
 from os import getenv
 from kombu.transport import SQS
 from flask import current_app

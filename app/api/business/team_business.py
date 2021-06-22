@@ -112,7 +112,7 @@ def get_team(team_id, allow_anyone=None):
             raise UnauthorisedError('Only team leads can edit a team')
 
     if team['teamMembers'] is not None:
-        for user_id, team_member in team['teamMembers'].iteritems():
+        for user_id, team_member in team['teamMembers'].items():
             missing_permissions = [permission for permission in permission_types
                                    if permission not in team_member['permissions']]
 

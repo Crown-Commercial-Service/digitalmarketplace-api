@@ -67,7 +67,7 @@ class EnvDeploy:
                         self.__print_result(
                             s.cf("create-user-provided-service", v, "-p {}".format(file)).run())
                     else:
-                        print "Cannot find '{}'. Execute python generate_config_files {} first".format(file, name)
+                        print("Cannot find '{}'. Execute python generate_config_files {} first".format(file, name))
 
     def postgres_service(self, name, delete=False):
         postgres_service_name = self.__get_postgres_service_name(name)
@@ -101,7 +101,7 @@ class EnvDeploy:
                             s.npm(npm_command).and_()
                         s.cf("zero-downtime-push", v, "-show-app-log", "-f {}".format(file)).and_()
                     else:
-                        print "Cannot find '{}'. Execute python generate_manifest_files {} first".format(file, name)
+                        print("Cannot find '{}'. Execute python generate_manifest_files {} first".format(file, name))
                     
                     i += 1
                     if i <= apps_len:
@@ -168,7 +168,7 @@ class EnvDeploy:
         env_name = self.__get_env_name(name)
         db_task_name = "{}-db-task".format(env_name)
         if delete is True:
-            print "deleting {}".format(db_task_name)
+            print("deleting {}".format(db_task_name))
             with Sultan.load() as s:
                 self.__print_result(s.echo("y").pipe().cf("delete", db_task_name).run())
             return
@@ -205,7 +205,7 @@ class EnvDeploy:
                 db_task_env = json.load(data_file)
 
             postgres_uri = db_task_env["system_env_json"]["VCAP_SERVICES"]["postgres"][0]["credentials"]["uri"]
-            print postgres_uri
+            print(postgres_uri)
 
             result = s.cf("run-and-wait",
                           db_task_name,
@@ -217,16 +217,16 @@ class EnvDeploy:
             self.__print_result(s.cf("stop", db_task_name).run())
 
     def __print_result(self, result):
-        print "stdout"
+        print("stdout")
         for i in result.stdout:
-            print i
+            print(i)
 
-        print "stderr"
+        print("stderr")
         for i in result.stderr:
-            print i
+            print(i)
 
-        print "return code"
-        print result.rc
+        print("return code")
+        print(result.rc)
 
     def __get_app_names(self, name):
         env_name = self.__get_env_name(name)

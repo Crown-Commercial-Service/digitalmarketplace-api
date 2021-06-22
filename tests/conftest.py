@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-
 import pytest
 import os
 import json
 import io
 import mock
-
 
 from app import create_app
 from app.models import db, Framework, Application
@@ -94,4 +91,24 @@ def live_framework(request, app, status='live'):
 
 @pytest.fixture()
 def expired_framework(request, app):
-    return live_framework(request, app, status='expired')
+    with app.app_context():
+        framework = Framework.query.filter(
+            Framework.slug == 'digital-outcomes-and-specialists'
+        ).first()
+
+        original_framework_status = framework.status
+        framework.status = 'expired'
+        db.session.add(framework)
+        db.session.commit()
+
+    def teardown():
+        with app.app_context():
+            framework = Framework.query.filter(
+                Framework.slug == 'digital-outcomes-and-specialists'
+            ).first()
+            framework.status = original_framework_status
+
+            db.session.add(framework)
+            db.session.commit()
+
+    request.addfinalizer(teardown)

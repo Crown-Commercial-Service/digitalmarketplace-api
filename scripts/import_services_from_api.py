@@ -12,7 +12,6 @@ Example:
     ./import_services_from_api.py http://api myToken http://source-api token
 """
 
-from __future__ import print_function
 from six.moves import map
 
 import getpass
@@ -93,7 +92,7 @@ class ServiceUpdater(object):
             )
             return True
         except dmapiclient.APIError as e:
-            print("ERROR: {}. {} not imported".format(e.message,
+            print("ERROR: {}. {} not imported".format(str(e),
                                                       service.get('id')),
                   file=sys.stderr)
             return False
@@ -143,7 +142,7 @@ def do_index(api_url, api_access_token, source_api_url,
         try:
             services = list(islice(iter_services, 0, 100))
         except dmapiclient.APIError as e:
-            print('API request failed: {}'.format(e.message), file=sys.stderr)
+            print('API request failed: {}'.format(str(e)), file=sys.stderr)
             return False
 
         for result in mapper(indexer, services):

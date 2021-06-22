@@ -27,7 +27,7 @@ class TestCanCloseOpportunity(BaseApplicationTest):
 
     @pytest.mark.parametrize('lot_slug', ['rfx', 'specialist', 'training2'])
     def test_can_close_published_opportunity_early_with_single_invited_seller_that_responded(
-        self, briefs, brief_responses, lot_slug
+        self, overview_briefs, brief_responses, lot_slug
     ):
         lot = lots_service.find(slug=lot_slug).one_or_none()
         brief = briefs_service.find(lot=lot, status='live').one_or_none()

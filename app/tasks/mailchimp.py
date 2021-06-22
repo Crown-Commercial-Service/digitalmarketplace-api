@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from os import getenv
 
 import pendulum
@@ -70,7 +68,7 @@ def create_campaign(client, recipients, settings=None):
         publish_tasks.mailchimp.delay(
             'error',
             message='Mailchimp API error occurred when creating a campaign',
-            error=e.message
+            error=str(e)
         )
         current_app.logger.error(
             'A Mailchimp API error occurred while creating a campaign, aborting: {} {}'.format(e, e.response))
@@ -80,7 +78,7 @@ def create_campaign(client, recipients, settings=None):
         publish_tasks.mailchimp.delay(
             'error',
             message='Mailchimp API error occurred when creating a campaign',
-            error=error.message
+            error=str(error)
         )
 
 
@@ -89,7 +87,7 @@ def update_campaign_content(client, campaign_id, email_body):
         response = client.campaigns.content.update(
             campaign_id=campaign_id,
             data={
-                'html': email_body.encode('utf-8')
+                'html': email_body
             }
         )
 
@@ -100,7 +98,7 @@ def update_campaign_content(client, campaign_id, email_body):
         publish_tasks.mailchimp.delay(
             'error',
             message='Mailchimp API error occurred when updating campaign content',
-            error=e.message
+            error=str(e)
         )
         current_app.logger.error(
             'A Mailchimp API error occurred while updating content for campaign {}, aborting: {} {}'
@@ -111,7 +109,7 @@ def update_campaign_content(client, campaign_id, email_body):
         publish_tasks.mailchimp.delay(
             'error',
             message='Mailchimp API error occurred when updating campaign content',
-            error=error.message
+            error=str(error)
         )
 
 
@@ -127,7 +125,7 @@ def schedule_campaign(client, campaign_id, schedule_time):
         publish_tasks.mailchimp.delay(
             'error',
             message='Mailchimp API error occurred when scheduling campaign',
-            error=e.message
+            error=str(e)
         )
         current_app.logger.error(
             'A Mailchimp API error occurred while scheduling campaign {}, aborting: {} {}'
@@ -138,7 +136,7 @@ def schedule_campaign(client, campaign_id, schedule_time):
         publish_tasks.mailchimp.delay(
             'error',
             message='Mailchimp API error occurred when scheduling campaign',
-            error=error.message
+            error=str(error)
         )
 
 
@@ -148,7 +146,7 @@ def add_members_to_list(client, list_id, email_addresses):
             'members': [{
                 'email_address': email_address,
                 'status': 'subscribed'
-            } for email_address in email_addresses]
+            } for email_address in list(set(email_addresses))]
         }
 
         response = client.lists.update_members(list_id=list_id, data=data)
@@ -158,7 +156,7 @@ def add_members_to_list(client, list_id, email_addresses):
         publish_tasks.mailchimp.delay(
             'error',
             message='Mailchimp API error occurred while adding a member to list',
-            error=e.message
+            error=str(e)
         )
         current_app.logger.error(
             'A Mailchimp API error occurred while adding a member to list {}, aborting: {} {}'
@@ -169,7 +167,7 @@ def add_members_to_list(client, list_id, email_addresses):
         publish_tasks.mailchimp.delay(
             'error',
             message='Mailchimp API error occurred while adding a member to list',
-            error=error.message
+            error=str(error)
         )
 
 
@@ -189,7 +187,7 @@ def send_document_expiry_campaign(client, sellers):
         AuditEvent.data['campaign_title'].astext == title
     ).one_or_none()
 
-    if (sent_expiring_documents_audit_event > 0):
+    if (sent_expiring_documents_audit_event is not None):
         return
 
     conditions = []
@@ -253,7 +251,7 @@ def send_labour_hire_licence_expiry_campaign(client, sellers):
         AuditEvent.data['campaign_title'].astext == title
     ).one_or_none()
 
-    if (sent_expiring_licence_audit_event > 0):
+    if (sent_expiring_licence_audit_event is not None):
         return
 
     conditions = []
@@ -345,10 +343,10 @@ def send_labour_hire_expiry_reminder():
 @celery.task
 def send_new_briefs_email():
     client = get_client()
-    list_id = getenv('MAILCHIMP_SELLER_EMAIL_LIST_ID')
+    list_id = getenv('MAILCHIMP_SELLER_LIST_ID')
 
     if not list_id:
-        raise MailChimpConfigException('Failed to get MAILCHIMP_SELLER_EMAIL_LIST_ID from the environment variables.')
+        raise MailChimpConfigException('Failed to get MAILCHIMP_SELLER_LIST_ID from the environment variables.')
 
     # determine the age of the briefs being requested, defaulting to 24 hours ago
     last_run_audit = (
@@ -460,7 +458,7 @@ def sync_mailchimp_seller_list():
         .filter(User.role == 'supplier', User.active == true(), User.supplier_code.in_(sub3))\
         .all()
 
-    supplier_users = [x[0].lower() for x in results]
+    supplier_users = [x[0].lower() for x in results if x[0]]
 
     # get the contact addresses for DM service suppliers
     sub1 = db.session.query(SupplierFramework.supplier_code)\
@@ -472,7 +470,7 @@ def sync_mailchimp_seller_list():
         .order_by(Supplier.id)\
         .all()
 
-    supplier_contacts = [x[0].lower() for x in results]
+    supplier_contacts = [x[0].lower() for x in results if x[0]]
 
     # combine the user and supplier contact lists
     combined_supplier_addresses = [x for x in supplier_contacts if x not in supplier_users]

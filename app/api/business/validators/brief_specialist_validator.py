@@ -4,41 +4,41 @@ from app.api.services import domain_service, suppliers
 
 whitelist_fields = [
     {'name': 'id', 'type': int},
-    {'name': 'title', 'type': basestring},
-    {'name': 'organisation', 'type': basestring},
-    {'name': 'summary', 'type': basestring},
+    {'name': 'title', 'type': str},
+    {'name': 'organisation', 'type': str},
+    {'name': 'summary', 'type': str},
     {'name': 'location', 'type': list},
     {'name': 'attachments', 'type': list},
-    {'name': 'contactNumber', 'type': basestring},
-    {'name': 'internalReference', 'type': basestring},
+    {'name': 'contactNumber', 'type': str},
+    {'name': 'internalReference', 'type': str},
     {'name': 'includeWeightingsEssential', 'type': bool},
     {'name': 'essentialRequirements', 'type': list},
     {'name': 'includeWeightingsNiceToHave', 'type': bool},
     {'name': 'niceToHaveRequirements', 'type': list},
-    {'name': 'numberOfSuppliers', 'type': basestring},
+    {'name': 'numberOfSuppliers', 'type': str},
     {'name': 'evaluationType', 'type': list},
-    {'name': 'preferredFormatForRates', 'type': basestring},
-    {'name': 'maxRate', 'type': basestring},
-    {'name': 'budgetRange', 'type': basestring},
-    {'name': 'securityClearance', 'type': basestring},
-    {'name': 'industryBriefing', 'type': basestring},
-    {'name': 'securityClearanceObtain', 'type': basestring},
-    {'name': 'securityClearanceCurrent', 'type': basestring},
-    {'name': 'securityClearanceOther', 'type': basestring},
-    {'name': 'sellerCategory', 'type': basestring},
-    {'name': 'openTo', 'type': basestring},
+    {'name': 'preferredFormatForRates', 'type': str},
+    {'name': 'maxRate', 'type': str},
+    {'name': 'budgetRange', 'type': str},
+    {'name': 'securityClearance', 'type': str},
+    {'name': 'industryBriefing', 'type': str},
+    {'name': 'securityClearanceObtain', 'type': str},
+    {'name': 'securityClearanceCurrent', 'type': str},
+    {'name': 'securityClearanceOther', 'type': str},
+    {'name': 'sellerCategory', 'type': str},
+    {'name': 'openTo', 'type': str},
     {'name': 'sellers', 'type': dict},
-    {'name': 'startDate', 'type': basestring},
-    {'name': 'contractLength', 'type': basestring},
-    {'name': 'contractExtensions', 'type': basestring},
-    {'name': 'areaOfExpertise', 'type': basestring},
-    {'name': 'closedAt', 'type': basestring},
+    {'name': 'startDate', 'type': str},
+    {'name': 'contractLength', 'type': str},
+    {'name': 'contractExtensions', 'type': str},
+    {'name': 'areaOfExpertise', 'type': str},
+    {'name': 'closedAt', 'type': str},
     {'name': 'publish', 'type': bool},
     {'name': 'comprehensiveTerms', 'type': bool},
-    {'name': 'sellerSelector', 'type': basestring},
-    {'name': 'originalClosedAt', 'type': basestring},
-    {'name': 'originalQuestionsClosedAt', 'type': basestring},
-    {'name': 'reasonToWithdraw', 'type': basestring}
+    {'name': 'sellerSelector', 'type': str},
+    {'name': 'originalClosedAt', 'type': str},
+    {'name': 'originalQuestionsClosedAt', 'type': str},
+    {'name': 'reasonToWithdraw', 'type': str}
 ]
 
 
@@ -102,11 +102,11 @@ class SpecialistDataValidator(object):
         has_responses = False
         has_resume = False
         for val in self.data.get('evaluationType', []):
-            if val.encode('utf-8') not in whitelist:
+            if val not in whitelist:
                 return False
-            if val.encode('utf-8') == whitelist[0]:
+            if val == whitelist[0]:
                 has_responses = True
-            if val.encode('utf-8') == whitelist[1]:
+            if val == whitelist[1]:
                 has_resume = True
         if not has_responses or not has_resume:
             return False
@@ -366,7 +366,7 @@ class SpecialistDataValidator(object):
             if publish:
                 errors = errors + self.validate_required()
 
-            request_keys = self.data.keys()
+            request_keys = list(self.data.keys())
             whitelisted_keys = [key['name'] for key in whitelist_fields]
             for key in request_keys:
                 if key not in whitelisted_keys:
@@ -377,6 +377,6 @@ class SpecialistDataValidator(object):
                     errors.append('Field "%s" is invalid, unexpected type' % key['name'])
 
         except Exception as e:
-            errors.append(e.message)
+            errors.append(str(e))
 
         return errors

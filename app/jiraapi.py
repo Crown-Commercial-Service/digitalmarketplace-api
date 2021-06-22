@@ -1,8 +1,6 @@
-from __future__ import unicode_literals
-
 import io
 import re
-import StringIO
+from io import StringIO
 import pendulum
 
 from jira import JIRA
@@ -120,7 +118,7 @@ class MarketplaceJIRA(object):
         }
         if brief:
             description_values["brief_name"] = brief.data.get('title')
-            description_values["brief_close_date"] = brief.applications_closed_at.format('%A %-d %B %Y')
+            description_values["brief_close_date"] = brief.applications_closed_at.format('dddd DD MMMM YYYY')
 
         description = ('[{supplier_name}|{supplier_url}] has applied for assessment '
                        'under the "*{domain}*" domain'
@@ -244,7 +242,7 @@ class MarketplaceJIRA(object):
             "supplier_url": current_app.config['ADMIN_ADDRESS'] + "/admin/assessments/supplier/" + str(supplier.code),
             "domain": domain_name,
             "brief_name": brief.data.get('title'),
-            "brief_close_date": brief.applications_closed_at.format('%A %-d %B %Y'),
+            "brief_close_date": brief.applications_closed_at.format('dddd DD MMMM YYYY'),
             "case_study_links": case_study_links,
             "price_description": price_description,
             "application_awaiting_approval": application_awaiting_approval
@@ -290,7 +288,7 @@ class MarketplaceJIRA(object):
 
         new_issue.update(new_issue_update_data)
 
-        attachment = StringIO.StringIO()
+        attachment = StringIO()
         attachment.write(json.dumps(relevant_case_studies))
         self.generic_jira.jira.add_attachment(new_issue.id, attachment, 'casestudies.json')
 
@@ -320,7 +318,7 @@ class MarketplaceJIRA(object):
         description += "---\n\n"
         supplier = application.supplier
         if pricing:
-            for k, v in pricing.iteritems():
+            for k, v in pricing.items():
                 max_price = float(v.get('maxPrice')) if v.get('maxPrice', None) else 0
                 domain = next(d for d in domains if d.name == k)
                 domain_price_min = domain.price_minimum
@@ -388,7 +386,7 @@ class MarketplaceJIRA(object):
                 )
 
             case_studies = application.data.get('case_studies', [])
-            for k, case_study in case_studies.iteritems():
+            for k, case_study in case_studies.items():
                 current_case_study = next(
                     iter(
                         [scs for scs in supplier.case_studies if scs.id == case_study.get('id')]
@@ -445,7 +443,7 @@ class MarketplaceJIRA(object):
             if closing_date is None:
                 duedate = pendulum.now().add(weeks=2).to_date_string()
             else:
-                duedate = pendulum.from_format(closing_date, '%Y-%m-%d').subtract(days=3).to_date_string()
+                duedate = pendulum.from_format(closing_date, 'YYYY-MM-DD').subtract(days=3).to_date_string()
             new_issue.update({
                 'summary': summary,
                 'duedate': duedate,
@@ -471,7 +469,7 @@ class MarketplaceJIRA(object):
             application_approval(application.id, True)
             self.generic_jira.jira.transition_issue(new_issue, 'Done')
 
-        attachment = StringIO.StringIO()
+        attachment = StringIO()
         attachment.write(json.dumps(application.json))
         self.generic_jira.jira.add_attachment(new_issue.id, attachment,
                                               'snapshot_{}.json'.format(pendulum.now().to_date_string()))

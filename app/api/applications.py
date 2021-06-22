@@ -1,6 +1,6 @@
 from app import db
 from app.models import Application, AuditEvent, AuditTypes
-from helpers import notify_team
+from .helpers import notify_team
 from app.tasks import publish_tasks
 
 

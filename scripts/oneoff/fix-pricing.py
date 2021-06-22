@@ -35,7 +35,7 @@ def update(client):
                     client.update_service(service['id'], update, 'migration')
                     return 1
                 except dmapiclient.APIError as e:
-                    print(e.message)
+                    print(str(e))
                     print(service)
                     pass
         return 0

@@ -34,7 +34,7 @@ class TestGetService(BaseApplicationTest):
                 lot_id=1
             ))
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1",
+                Supplier(code=1, name="Supplier 1",
                          addresses=[Address(address_line="{} Dummy Street 1",
                                             suburb="Dummy",
                                             state="ZZZ",
@@ -111,7 +111,7 @@ class TestGetService(BaseApplicationTest):
         data = json.loads(response.get_data())
 
         assert_equal(data['services']['supplierCode'], 1)
-        assert_equal(data['services']['supplierName'], u'Supplier 1')
+        assert_equal(data['services']['supplierName'], 'Supplier 1')
 
     def test_get_service_returns_framework_and_lot_info(self):
         response = self.client.get('/services/123-published-456')

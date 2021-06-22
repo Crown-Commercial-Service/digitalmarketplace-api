@@ -60,7 +60,7 @@ specialist_data = {
     'securityClearanceOther': '',
     'sellers': {},
     'sellerCategory': '6',
-    'startDate': pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+    'startDate': pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD'),
     'summary': 'asdf',
     'title': 'Developer'
 }
@@ -185,7 +185,7 @@ def supplier_user(app, request, suppliers):
     'specialist_brief',
     [{
         'data': specialist_data,
-        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('YYYY-MM-DD')
     }], indirect=True
 )
 def test_create_new_brief_response(brief_response,
@@ -209,7 +209,7 @@ def test_create_new_brief_response(brief_response,
     'specialist_brief',
     [{
         'data': specialist_data,
-        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('YYYY-MM-DD')
     }], indirect=True
 )
 def test_save_draft_brief_response(brief_response,
@@ -261,7 +261,7 @@ def test_save_draft_brief_response(brief_response,
     'specialist_brief',
     [{
         'data': specialist_data,
-        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('YYYY-MM-DD')
     }], indirect=True
 )
 def test_create_brief_response_creates_an_audit_event(brief_response, client, supplier_user, supplier_domains,
@@ -288,7 +288,7 @@ def test_create_brief_response_creates_an_audit_event(brief_response, client, su
     'specialist_brief',
     [{
         'data': specialist_data,
-        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('YYYY-MM-DD')
     }], indirect=True
 )
 def test_cannot_respond_to_a_brief_more_than_three_times_from_the_same_supplier(brief_response,
@@ -315,7 +315,7 @@ def test_cannot_respond_to_a_brief_more_than_three_times_from_the_same_supplier(
     'specialist_brief',
     [{
         'data': specialist_data,
-        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('YYYY-MM-DD')
     }], indirect=True
 )
 def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, supplier_user,
@@ -363,7 +363,7 @@ def test_cannot_respond_to_a_brief_with_wrong_number_of_essential_reqs(client, s
     'specialist_brief',
     [{
         'data': specialist_data,
-        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('YYYY-MM-DD')
     }], indirect=True
 )
 def test_create_brief_response_success_with_audit_exception(brief_response, mock_audit_service,
@@ -414,7 +414,7 @@ def test_create_brief_response_success_with_audit_exception(brief_response, mock
     'specialist_brief',
     [{
         'data': specialist_data,
-        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('YYYY-MM-DD')
     }], indirect=True
 )
 def test_create_brief_response_fail_with_incorrect_attachment(mock_audit_service, client, supplier_user,
@@ -483,7 +483,7 @@ def test_create_brief_response_fail_with_incorrect_attachment(mock_audit_service
     'specialist_brief',
     [{
         'data': specialist_data,
-        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('%Y-%m-%d')
+        'published_at': pendulum.yesterday(tz='Australia/Sydney').subtract(days=1).format('YYYY-MM-DD')
     }], indirect=True
 )
 @mock.patch('app.tasks.publish_tasks.brief_response')
@@ -784,7 +784,7 @@ def test_rfx_field_access_as_owner(brief, client, supplier_domains, suppliers, b
 
     data = rfx_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     response = json.loads(res.data)
@@ -796,7 +796,7 @@ def test_rfx_field_access_as_owner(brief, client, supplier_domains, suppliers, b
     assert response['brief']['attachments'] == ['TEST3.pdf']
     assert response['brief']['sellers'] == {'1': {'name': 'Test Supplier1'}}
     assert response['brief']['evaluationType'] == ['Response template', 'Written proposal']
-    assert response['brief']['proposalType'] == ['Breakdown of costs', u'R\xe9sum\xe9s']
+    assert response['brief']['proposalType'] == ['Breakdown of costs', 'R\xe9sum\xe9s']
     assert response['brief']['requirementsDocument'] == ['TEST.pdf']
     assert response['brief']['responseTemplate'] == ['TEST2.pdf']
     assert response['brief']['contactNumber'] == '0263635544'
@@ -812,7 +812,7 @@ def test_rfx_field_access_as_invited_seller(brief, client, supplier_domains, sup
 
     data = rfx_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert brief.delay.called is True
 
@@ -827,7 +827,7 @@ def test_rfx_field_access_as_invited_seller(brief, client, supplier_domains, sup
     assert response['brief']['attachments'] == ['TEST3.pdf']
     assert response['brief']['sellers'] == {}
     assert response['brief']['evaluationType'] == ['Response template', 'Written proposal']
-    assert response['brief']['proposalType'] == ['Breakdown of costs', u'R\xe9sum\xe9s']
+    assert response['brief']['proposalType'] == ['Breakdown of costs', 'R\xe9sum\xe9s']
     assert response['brief']['requirementsDocument'] == ['TEST.pdf']
     assert response['brief']['responseTemplate'] == ['TEST2.pdf']
     assert response['brief']['contactNumber'] == ''
@@ -843,7 +843,7 @@ def test_rfx_field_access_as_non_invited_seller(brief, client, supplier_domains,
 
     data = rfx_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
     data['sellers'] = {'2': 'Test Supplier2'}
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert brief.delay.called is True
@@ -875,7 +875,7 @@ def test_rfx_field_access_as_anonymous_user(brief, client, supplier_domains, sup
 
     data = rfx_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert brief.delay.called is True
 
@@ -902,18 +902,18 @@ def test_rfx_publish_success_2_days_correct_dates(brief, client, supplier_domain
 
     data = rfx_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert res.status_code == 200
     assert brief.delay.called is True
 
     response = json.loads(res.data)
-    assert response['closedAt'] == pendulum.today().add(days=2).format('%Y-%m-%d')
-    question_closing_date = pendulum.instance(workday(pendulum.today().add(days=2), -1)).format('%Y-%m-%d')
+    assert response['closedAt'] == pendulum.today().add(days=2).format('YYYY-MM-DD')
+    question_closing_date = pendulum.instance(workday(pendulum.today().add(days=2), -1)).format('YYYY-MM-DD')
     if question_closing_date > response['closedAt']:
-        question_closing_date = pendulum.today().format('%Y-%m-%d')
-    if pendulum.today() > question_closing_date:
+        question_closing_date = pendulum.today().format('YYYY-MM-DD')
+    if pendulum.today().format('YYYY-MM-DD') > question_closing_date:
         question_closing_date = pendulum.today()
     assert response['dates']['questions_closing_date'] == question_closing_date
 
@@ -926,7 +926,7 @@ def test_rfx_publish_failure_next_day(client, buyer_user, supplier_domains, supp
 
     data = rfx_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today().add(days=1).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today().add(days=1).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert res.status_code == 400
@@ -954,18 +954,20 @@ def test_rfx_publish_success_3_days_and_under_correct_dates(brief, client, buyer
 
     data = rfx_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today().add(days=get_day_count).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(rfx_data))
     assert res.status_code == 200
     assert brief.delay.called is True
 
     response = json.loads(res.data)
-    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
-    question_closing_date = pendulum.instance(workday(pendulum.today().add(days=get_day_count), -1)).format('%Y-%m-%d')
+    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('YYYY-MM-DD')
+    question_closing_date = pendulum.instance(
+        workday(pendulum.today().add(days=get_day_count), -1)
+    ).format('YYYY-MM-DD')
     if question_closing_date > response['closedAt']:
         question_closing_date = response['closedAt']
-    if pendulum.today() > question_closing_date:
+    if pendulum.today().format('YYYY-MM-DD') > question_closing_date:
         question_closing_date = pendulum.today()
     assert response['dates']['questions_closing_date'] == question_closing_date
 
@@ -985,16 +987,16 @@ def test_rfx_publish_success_over_3_days_correct_dates(brief, client, buyer_user
 
     data = rfx_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today().add(days=get_day_count).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert res.status_code == 200
     assert brief.delay.called is True
 
     response = json.loads(res.data)
-    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('YYYY-MM-DD')
     assert response['dates']['questions_closing_date'] == (
-        pendulum.instance(workday(pendulum.today().add(days=get_day_count), -2)).format('%Y-%m-%d')
+        pendulum.instance(workday(pendulum.today().add(days=get_day_count), -2)).format('YYYY-MM-DD')
     )
 
 
@@ -1015,11 +1017,11 @@ def test_rfx_brief_update_success(client, buyer_user, rfx_brief):
     assert res.status_code == 200
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps({
-        'closedAt': pendulum.today().add(weeks=2).format('%Y-%m-%d')
+        'closedAt': pendulum.today().add(weeks=2).format('YYYY-MM-DD')
     }))
     assert res.status_code == 200
     response = json.loads(res.data)
-    assert response['closedAt'] == pendulum.today().add(weeks=2).format('%Y-%m-%d')
+    assert response['closedAt'] == pendulum.today().add(weeks=2).format('YYYY-MM-DD')
 
 
 def test_rfx_brief_update_failure_closing_date_invalid(client, buyer_user, rfx_brief):
@@ -1165,7 +1167,7 @@ def test_rfx_validate_proposal_type():
             'Breakdown of costs',
             'Case study',
             'References',
-            'Résumés'.decode('utf-8')
+            'Résumés'
         ]
     }
     valid = RFXDataValidator(data).validate_proposal_type()
@@ -1297,19 +1299,19 @@ def test_rfx_validate_evaluation_criteria():
 
 def test_rfx_validate_closed_at():
     data = {
-        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=21).format('%Y-%m-%d')
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=21).format('YYYY-MM-DD')
     }
     valid = RFXDataValidator(data).validate_closed_at()
     assert valid
 
     data = {
-        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=2).format('YYYY-MM-DD')
     }
     valid = RFXDataValidator(data).validate_closed_at()
     assert valid
 
     data = {
-        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=1).format('%Y-%m-%d')
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=1).format('YYYY-MM-DD')
     }
     valid = RFXDataValidator(data).validate_closed_at()
     assert not valid
@@ -1388,7 +1390,7 @@ def test_atm_field_access_as_owner(brief, client, supplier_domains, suppliers, b
 
     data = atm_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     response = json.loads(res.data)
@@ -1416,7 +1418,7 @@ def test_atm_field_access_as_seller_open_to_all(brief, client, supplier_domains,
     data = atm_data
     data['publish'] = True
     data['openTo'] = 'all'
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
 
     res = client.post('/2/login', data=json.dumps({
@@ -1446,7 +1448,7 @@ def test_atm_field_access_as_anonymous_user(brief, client, supplier_domains, sup
 
     data = atm_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
 
     res = client.get('/2/logout')
@@ -1472,16 +1474,16 @@ def test_atm_publish_success_2_days_correct_dates(brief, client, supplier_domain
 
     data = atm_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=2).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert res.status_code == 200
     response = json.loads(res.data)
-    assert response['closedAt'] == pendulum.today().add(days=2).format('%Y-%m-%d')
-    question_closing_date = pendulum.instance(workday(pendulum.today().add(days=2), -1)).format('%Y-%m-%d')
+    assert response['closedAt'] == pendulum.today().add(days=2).format('YYYY-MM-DD')
+    question_closing_date = pendulum.instance(workday(pendulum.today().add(days=2), -1)).format('YYYY-MM-DD')
     if question_closing_date > response['closedAt']:
-        question_closing_date = pendulum.today().format('%Y-%m-%d')
-    if pendulum.today() > question_closing_date:
+        question_closing_date = pendulum.today().format('YYYY-MM-DD')
+    if pendulum.today().format('YYYY-MM-DD') > question_closing_date:
         question_closing_date = pendulum.today()
     assert response['dates']['questions_closing_date'] == question_closing_date
 
@@ -1495,7 +1497,7 @@ def test_atm_publish_failure_next_day(brief, client, buyer_user, supplier_domain
 
     data = atm_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today().add(days=1).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today().add(days=1).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert res.status_code == 400
@@ -1522,16 +1524,18 @@ def test_atm_publish_success_3_days_and_under_correct_dates(brief, client, buyer
 
     data = atm_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today().add(days=get_day_count).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(atm_data))
     assert res.status_code == 200
     response = json.loads(res.data)
-    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
-    question_closing_date = pendulum.instance(workday(pendulum.today().add(days=get_day_count), -1)).format('%Y-%m-%d')
+    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('YYYY-MM-DD')
+    question_closing_date = pendulum.instance(
+        workday(pendulum.today().add(days=get_day_count), -1)
+    ).format('YYYY-MM-DD')
     if question_closing_date > response['closedAt']:
         question_closing_date = response['closedAt']
-    if pendulum.today() > question_closing_date:
+    if pendulum.today().format('YYYY-MM-DD') > question_closing_date:
         question_closing_date = pendulum.today()
     assert response['dates']['questions_closing_date'] == question_closing_date
 
@@ -1550,14 +1554,14 @@ def test_atm_publish_success_over_3_days_correct_dates(brief, client, buyer_user
 
     data = atm_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today().add(days=get_day_count).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
     assert res.status_code == 200
     response = json.loads(res.data)
-    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('%Y-%m-%d')
+    assert response['closedAt'] == pendulum.today().add(days=get_day_count).format('YYYY-MM-DD')
     assert response['dates']['questions_closing_date'] == (
-        pendulum.instance(workday(pendulum.today().add(days=get_day_count), -2)).format('%Y-%m-%d')
+        pendulum.instance(workday(pendulum.today().add(days=get_day_count), -2)).format('YYYY-MM-DD')
     )
 
 
@@ -1579,11 +1583,11 @@ def test_atm_brief_update_success(brief, client, buyer_user, atm_brief):
     assert res.status_code == 200
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps({
-        'closedAt': pendulum.today().add(weeks=2).format('%Y-%m-%d')
+        'closedAt': pendulum.today().add(weeks=2).format('YYYY-MM-DD')
     }))
     assert res.status_code == 200
     response = json.loads(res.data)
-    assert response['closedAt'] == pendulum.today().add(weeks=2).format('%Y-%m-%d')
+    assert response['closedAt'] == pendulum.today().add(weeks=2).format('YYYY-MM-DD')
 
 
 @mock.patch('app.tasks.publish_tasks.brief')
@@ -1804,19 +1808,19 @@ def test_atm_validate_evaluation_criteria():
 
 def test_atm_validate_closed_at():
     data = {
-        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=21).format('%Y-%m-%d')
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=21).format('YYYY-MM-DD')
     }
     valid = ATMDataValidator(data).validate_closed_at()
     assert valid
 
     data = {
-        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=2).format('%Y-%m-%d')
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=2).format('YYYY-MM-DD')
     }
     valid = ATMDataValidator(data).validate_closed_at()
     assert valid
 
     data = {
-        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=1).format('%Y-%m-%d')
+        'closedAt': pendulum.today(tz='Australia/Sydney').add(days=1).format('YYYY-MM-DD')
     }
     valid = ATMDataValidator(data).validate_closed_at()
     assert not valid
@@ -1858,7 +1862,7 @@ def test_buyer_can_not_publish_atm_opportunity_without_permission(client, buyer_
 
     data = atm_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
 
@@ -1874,7 +1878,7 @@ def test_buyer_can_publish_atm_opportunity_with_permission(brief, client, buyer_
 
     data = atm_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
 
@@ -1889,7 +1893,7 @@ def test_buyer_can_not_publish_rfx_opportunity_without_permission(client, buyer_
 
     data = rfx_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
 
@@ -1906,7 +1910,7 @@ def test_buyer_can_publish_rfx_opportunity_with_permission(brief, client, buyer_
 
     data = rfx_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
 
@@ -1921,7 +1925,7 @@ def test_buyer_can_not_publish_specialist_opportunity_without_permission(client,
 
     data = specialist_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
 
@@ -1938,7 +1942,7 @@ def test_buyer_can_publish_specialist_opportunity_with_permission(brief, client,
 
     data = specialist_data
     data['publish'] = True
-    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d')
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
 
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
 

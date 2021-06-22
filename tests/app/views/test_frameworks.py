@@ -21,7 +21,7 @@ class TestListFrameworks(BaseApplicationTest):
                          len(Framework.query.all()))
             assert_equal(
                 set(data['frameworks'][0].keys()),
-                set([
+                {
                     'clarificationQuestionsOpen',
                     'framework',
                     'frameworkAgreementVersion',
@@ -30,7 +30,7 @@ class TestListFrameworks(BaseApplicationTest):
                     'name',
                     'slug',
                     'status',
-                ]))
+                })
 
 
 class TestCreateFramework(BaseApplicationTest):
@@ -152,40 +152,40 @@ class TestGetFramework(BaseApplicationTest):
         data = json.loads(response.get_data())
         assert data['frameworks']['lots'] == [
             {
-                u'id': 1,
-                u'name': u'Software as a Service',
-                u'slug': u'saas',
-                u'allowsBrief': False,
-                u'unitSingular': u'service',
-                u'oneServiceLimit': False,
-                u'unitPlural': u'services',
+                'id': 1,
+                'name': 'Software as a Service',
+                'slug': 'saas',
+                'allowsBrief': False,
+                'unitSingular': 'service',
+                'oneServiceLimit': False,
+                'unitPlural': 'services',
             },
             {
-                u'id': 2,
-                u'name': u'Platform as a Service',
-                u'slug': u'paas',
-                u'allowsBrief': False,
-                u'oneServiceLimit': False,
-                u'unitSingular': u'service',
-                u'unitPlural': u'services',
+                'id': 2,
+                'name': 'Platform as a Service',
+                'slug': 'paas',
+                'allowsBrief': False,
+                'oneServiceLimit': False,
+                'unitSingular': 'service',
+                'unitPlural': 'services',
             },
             {
-                u'id': 3,
-                u'name': u'Infrastructure as a Service',
-                u'slug': u'iaas',
-                u'allowsBrief': False,
-                u'oneServiceLimit': False,
-                u'unitSingular': u'service',
-                u'unitPlural': u'services',
+                'id': 3,
+                'name': 'Infrastructure as a Service',
+                'slug': 'iaas',
+                'allowsBrief': False,
+                'oneServiceLimit': False,
+                'unitSingular': 'service',
+                'unitPlural': 'services',
             },
             {
-                u'id': 4,
-                u'name': u'Specialist Cloud Services',
-                u'slug': u'scs',
-                u'allowsBrief': False,
-                u'oneServiceLimit': False,
-                u'unitSingular': u'service',
-                u'unitPlural': u'services',
+                'id': 4,
+                'name': 'Specialist Cloud Services',
+                'slug': 'scs',
+                'allowsBrief': False,
+                'oneServiceLimit': False,
+                'unitSingular': 'service',
+                'unitPlural': 'services',
             }
         ]
 
@@ -344,7 +344,7 @@ class TestFrameworkStats(BaseApplicationTest):
         with self.app.app_context():
             framework = Framework.query.filter(Framework.slug == framework_slug).first()
 
-        self.register_framework_interest(framework.id, range(20))
+        self.register_framework_interest(framework.id, list(range(20)))
         self.make_declaration(framework.id, [1, 3, 5, 7, 9, 11], status='started')
         self.make_declaration(framework.id, [0, 2, 4, 6, 8, 10], status='complete')
 
@@ -373,51 +373,51 @@ class TestFrameworkStats(BaseApplicationTest):
 
         response = self.client.get('/frameworks/g-cloud-7/stats')
         assert_equal(json.loads(response.get_data()), {
-            u'services': [
-                {u'count': 1, u'status': u'not-submitted',
-                 u'declaration_made': False, u'lot': u'iaas'},
-                {u'count': 2, u'status': u'not-submitted',
-                 u'declaration_made': True, u'lot': u'iaas'},
-                {u'count': 2, u'status': u'not-submitted',
-                 u'declaration_made': False, u'lot': u'paas'},
-                {u'count': 2, u'status': u'not-submitted',
-                 u'declaration_made': True, u'lot': u'paas'},
-                {u'count': 3, u'status': u'not-submitted',
-                 u'declaration_made': False, u'lot': u'saas'},
-                {u'count': 2, u'status': u'not-submitted',
-                 u'declaration_made': True, u'lot': u'saas'},
-                {u'count': 1, u'status': u'not-submitted',
-                 u'declaration_made': True, u'lot': u'scs'},
+            'services': [
+                {'count': 1, 'status': 'not-submitted',
+                 'declaration_made': False, 'lot': 'iaas'},
+                {'count': 2, 'status': 'not-submitted',
+                 'declaration_made': True, 'lot': 'iaas'},
+                {'count': 2, 'status': 'not-submitted',
+                 'declaration_made': False, 'lot': 'paas'},
+                {'count': 2, 'status': 'not-submitted',
+                 'declaration_made': True, 'lot': 'paas'},
+                {'count': 3, 'status': 'not-submitted',
+                 'declaration_made': False, 'lot': 'saas'},
+                {'count': 2, 'status': 'not-submitted',
+                 'declaration_made': True, 'lot': 'saas'},
+                {'count': 1, 'status': 'not-submitted',
+                 'declaration_made': True, 'lot': 'scs'},
 
-                {u'count': 2, u'status': u'submitted',
-                 u'declaration_made': False, u'lot': u'iaas'},
-                {u'count': 4, u'status': u'submitted',
-                 u'declaration_made': True, u'lot': u'iaas'},
-                {u'count': 4, u'status': u'submitted',
-                 u'declaration_made': False, u'lot': u'paas'},
-                {u'count': 4, u'status': u'submitted',
-                 u'declaration_made': True, u'lot': u'paas'},
-                {u'count': 4, u'status': u'submitted',
-                 u'declaration_made': False, u'lot': u'saas'},
-                {u'count': 4, u'status': u'submitted',
-                 u'declaration_made': True, u'lot': u'saas'},
-                {u'count': 1, u'status': u'submitted',
-                 u'declaration_made': False, u'lot': u'scs'},
-                {u'count': 3, u'status': u'submitted',
-                 u'declaration_made': True, u'lot': u'scs'},
+                {'count': 2, 'status': 'submitted',
+                 'declaration_made': False, 'lot': 'iaas'},
+                {'count': 4, 'status': 'submitted',
+                 'declaration_made': True, 'lot': 'iaas'},
+                {'count': 4, 'status': 'submitted',
+                 'declaration_made': False, 'lot': 'paas'},
+                {'count': 4, 'status': 'submitted',
+                 'declaration_made': True, 'lot': 'paas'},
+                {'count': 4, 'status': 'submitted',
+                 'declaration_made': False, 'lot': 'saas'},
+                {'count': 4, 'status': 'submitted',
+                 'declaration_made': True, 'lot': 'saas'},
+                {'count': 1, 'status': 'submitted',
+                 'declaration_made': False, 'lot': 'scs'},
+                {'count': 3, 'status': 'submitted',
+                 'declaration_made': True, 'lot': 'scs'},
             ],
-            u'interested_suppliers': [
-                {u'count': 7, u'declaration_status': None, u'has_completed_services': False},
-                {u'count': 1, u'declaration_status': None, u'has_completed_services': True},
-                {u'count': 5, u'declaration_status': 'complete', u'has_completed_services': False},
-                {u'count': 1, u'declaration_status': 'complete', u'has_completed_services': True},
-                {u'count': 4, u'declaration_status': 'started', u'has_completed_services': False},
-                {u'count': 2, u'declaration_status': 'started', u'has_completed_services': True},
+            'interested_suppliers': [
+                {'count': 7, 'declaration_status': None, 'has_completed_services': False},
+                {'count': 1, 'declaration_status': None, 'has_completed_services': True},
+                {'count': 5, 'declaration_status': 'complete', 'has_completed_services': False},
+                {'count': 1, 'declaration_status': 'complete', 'has_completed_services': True},
+                {'count': 4, 'declaration_status': 'started', 'has_completed_services': False},
+                {'count': 2, 'declaration_status': 'started', 'has_completed_services': True},
             ],
-            u'supplier_users': [
-                {u'count': 4, u'recent_login': False},
-                {u'count': 2, u'recent_login': None},
-                {u'count': 5, u'recent_login': True},
+            'supplier_users': [
+                {'count': 4, 'recent_login': False},
+                {'count': 2, 'recent_login': None},
+                {'count': 5, 'recent_login': True},
             ]
         })
 
@@ -425,12 +425,12 @@ class TestFrameworkStats(BaseApplicationTest):
         self.setup_data('g-cloud-6')
         response = self.client.get('/frameworks/g-cloud-7/stats')
         assert_equal(json.loads(response.get_data()), {
-            u'interested_suppliers': [],
-            u'services': [],
-            u'supplier_users': [
-                {u'count': 4, u'recent_login': False},
-                {u'count': 2, u'recent_login': None},
-                {u'count': 5, u'recent_login': True},
+            'interested_suppliers': [],
+            'services': [],
+            'supplier_users': [
+                {'count': 4, 'recent_login': False},
+                {'count': 2, 'recent_login': None},
+                {'count': 5, 'recent_login': True},
             ]
         })
 

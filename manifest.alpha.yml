@@ -1,7 +1,7 @@
 applications:
 - name: dm-alpha-api
   command: ./scripts/cf_run_app.sh
-  buildpack: python2_buildpack
+  buildpack: python_buildpack
   health-check-type: port
   health-check-timeout: 180
   instances: 1

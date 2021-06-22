@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-
 import pendulum
 import pytest
 from faker import Faker
@@ -557,7 +555,7 @@ def specialist_data():
         'securityClearanceOther': '',
         'sellers': {},
         'sellerCategory': '6',
-        'startDate': pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+        'startDate': pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD'),
         'summary': 'asdf',
         'title': 'Developer'
     }

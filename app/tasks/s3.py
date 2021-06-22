@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import tempfile
 import zipfile
 from io import BytesIO
@@ -46,7 +44,7 @@ def create_responses_zip(brief_id):
     if brief.lot.slug not in ['digital-professionals', 'training', 'rfx', 'training2', 'atm', 'specialist']:
         raise CreateResponsesZipException('Opportunity id {} is not a compatible lot'.format(brief_id))
 
-    print 'Generating zip for opportunity id: {}'.format(brief_id)
+    print('Generating zip for opportunity id: {}'.format(brief_id))
 
     BUCKET_NAME = getenv('S3_BUCKET_NAME')
     s3 = boto3.resource(
@@ -120,11 +118,11 @@ def create_responses_zip(brief_id):
                 supplier_labour_hire = {}
                 for response in responses:
                     labour_hire = []
-                    for state, state_value in response.supplier.data.get('labourHire', {}).iteritems():
+                    for state, state_value in response.supplier.data.get('labourHire', {}).items():
                         if state_value.get('licenceNumber') and state_value.get('expiry'):
                             state_value['state'] = state.upper()
                             state_value['expiry'] = (
-                                pendulum.parse(state_value['expiry']).format('DD MMMM YYYY', formatter='alternative')
+                                pendulum.parse(state_value['expiry'], strict=False).format('DD MMMM YYYY')
                             )
                             labour_hire.append(state_value)
                     supplier_labour_hire[response.supplier.code] = labour_hire

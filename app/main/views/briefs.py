@@ -240,7 +240,7 @@ def update_brief_remove_rfx_seller(brief_id, supplier_code):
     brief = briefs.get(brief_id)
     sellers = brief.data['sellers']
 
-    for key in sellers.keys():
+    for key in list(sellers.keys()):
         try:
             if key == str(supplier_code):
                 del sellers[key]
@@ -323,8 +323,8 @@ def update_brief_admin(brief_id):
             d = pendulum.parse(brief_json['clarification_questions_closed_at'])
             combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
             brief.questions_closed_at = combined.in_timezone('UTC')
-        except ParserError, e:
-            raise ValidationError(e.message)
+        except ParserError as e:
+            raise ValidationError(str(e))
 
     applications_closed_at = brief_json.get('applications_closed_at')
     if applications_closed_at:
@@ -332,8 +332,8 @@ def update_brief_admin(brief_id):
             d = pendulum.parse(brief_json['applications_closed_at'])
             combined = combine_date_and_time(d, t, DEADLINES_TZ_NAME)
             brief.closed_at = combined.in_timezone('UTC')
-        except ParserError, e:
-            raise ValidationError(e.message)
+        except ParserError as e:
+            raise ValidationError(str(e))
 
     if 'sellerEmailList' in brief_json:
         brief.update_from_json({'sellerEmailList': brief_json.get('sellerEmailList')})

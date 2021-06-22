@@ -119,7 +119,7 @@ def parse_vcap_services():
     vcap = None
     if 'VCAP_SERVICES' in os.environ:
         try:
-            vcap = json.loads(os.environ['VCAP_SERVICES'].decode('utf-8'))
+            vcap = json.loads(os.environ['VCAP_SERVICES'])
         except ValueError:
             pass
     return vcap

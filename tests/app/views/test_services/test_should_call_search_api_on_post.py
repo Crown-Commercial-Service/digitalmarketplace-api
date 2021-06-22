@@ -25,7 +25,7 @@ class TestShouldCallSearchApiOnPost(BaseApplicationTest):
         g4_payload = self.load_example_listing("G4")
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1",
+                Supplier(code=1, name="Supplier 1",
                          addresses=[Address(address_line="{} Dummy Street 1",
                                             suburb="Dummy",
                                             state="ZZZ",

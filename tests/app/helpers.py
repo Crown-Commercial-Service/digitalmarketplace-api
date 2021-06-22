@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import os
 import json
 import pytest
@@ -332,7 +330,7 @@ class BaseApplicationTest(object):
             for i in range(n):
                 s = Supplier(
                     code=(i),
-                    name=u"Supplier {}".format(i),
+                    name="Supplier {}".format(i),
                     description="",
                     summary="",
                     addresses=[Address(address_line="{} Dummy Street".format(i),
@@ -396,7 +394,7 @@ class BaseApplicationTest(object):
                     contacts=[],
                     references=[],
                     prices=prices,
-                    last_update_time=t + pendulum.interval(seconds=(i % 3))
+                    last_update_time=t + pendulum.duration(seconds=(i % 3))
                 )
 
                 if i == 2:
@@ -425,7 +423,7 @@ class BaseApplicationTest(object):
                 db.session.add(sf)
 
             ds = Supplier(
-                name=u"Dummy Supplier",
+                name="Dummy Supplier",
                 abn=Supplier.DUMMY_ABN,
                 description="",
                 summary="",
@@ -460,7 +458,7 @@ class BaseApplicationTest(object):
                 db.session.add(
                     Supplier(
                         code=str(i),
-                        name=u"{} suppliers Ltd {}".format(initial, i),
+                        name="{} suppliers Ltd {}".format(initial, i),
                         description="",
                         summary="",
                         addresses=[Address(address_line="{} Additional Street".format(i),
@@ -518,7 +516,7 @@ class BaseApplicationTest(object):
                 status='enabled')
             # Add an extra supplier that will have no services
             db.session.add(
-                Supplier(code=TEST_SUPPLIERS_COUNT, name=u"Supplier {}"
+                Supplier(code=TEST_SUPPLIERS_COUNT, name="Supplier {}"
                          .format(TEST_SUPPLIERS_COUNT),
                          addresses=[Address(address_line="{} Empty Street".format(TEST_SUPPLIERS_COUNT),
                                             suburb="Empty",
@@ -564,7 +562,7 @@ class BaseApplicationTest(object):
             return json.load(f)
 
     def string_to_time_to_string(self, value):
-        return pendulum.parse(value).to_iso8601_string(extended=True)
+        return pendulum.parse(value).to_iso8601_string()
 
     def string_to_time(self, value):
         return pendulum.parse(value)
@@ -663,7 +661,7 @@ def assert_api_compatible_list(old, new):
 def pairwise(iterable):
     a, b = tee(iterable)
     next(b, None)
-    return zip(a, b)
+    return list(zip(a, b))
 
 
 def is_sorted(iterable, key=lambda a, b: a <= b):

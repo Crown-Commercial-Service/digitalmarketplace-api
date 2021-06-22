@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 from flask import current_app
 
 from .util import render_email_template, send_or_handle_error, escape_markdown
@@ -48,7 +46,7 @@ def send_brief_response_received_email(supplier, brief, brief_response, supplier
         brief_url=brief_url,
         brief_response_url=brief_response_url,
         ask_question_url=ask_question_url,
-        closing_at=brief.closed_at.format('%d %B %Y'),
+        closing_at=brief.closed_at.format('DD MMMM YYYY'),
         brief_title=brief_title,
         supplier_name=supplier.name,
         frontend_url=current_app.config['FRONTEND_ADDRESS'],
@@ -219,7 +217,7 @@ def send_specialist_brief_response_received_email(supplier, brief, brief_respons
         criteria_responses=criteriaResponses,
         resume=resume,
         attachments=attachments,
-        closing_at=brief.closed_at.format('%d %B %Y'),
+        closing_at=brief.closed_at.format('DD MMMM YYYY'),
         specialist_name=escape_markdown(specialist_name),
         brief_response_url=brief_response_url,
         response_rates=response_rates,
@@ -539,7 +537,7 @@ def send_specialist_brief_published_email(brief):
     if brief.data.get('sellerSelector', '') == 'someSellers':
         sellers_text = ''
         seller_codes = []
-        for key, value in brief.data.get('sellers', {}).iteritems():
+        for key, value in brief.data.get('sellers', {}).items():
             seller_codes.append(key)
         sellers = suppliers.filter(Supplier.code.in_(seller_codes)).all()
         for seller in sellers:
@@ -741,7 +739,7 @@ def send_brief_clarification_to_seller(brief, brief_question, to_address):
         message=escape_markdown(brief_question.data.get('question'))
     )
 
-    subject = u"You submitted a question for {} ({}) successfully".format(brief.data.get('title'), brief.id)
+    subject = "You submitted a question for {} ({}) successfully".format(brief.data.get('title'), brief.id)
 
     send_or_handle_error(
         to_address,
@@ -819,14 +817,14 @@ def send_opportunity_edited_email_to_buyers(brief, current_user, edit):
     if 'closingDate' in changes:
         seller_questions_message = (
             'The last day sellers can ask questions is now {}. '.format(
-                brief.questions_closed_at.in_timezone(timezone).format('%-d %B %Y')
+                brief.questions_closed_at.in_timezone(timezone).format('DD MMMM YYYY')
             ) +
             'You must answer all relevant questions while the opportunity is live.'
         )
 
         summary = '* Closing date changed from {} to {}\n'.format(
-            pendulum.parse(edit.data['closed_at'], tz=timezone).format('%-d %B %Y'),
-            brief.closed_at.in_timezone(timezone).format('%-d %B %Y')
+            pendulum.parse(edit.data['closed_at'], tz=timezone).format('DD MMMM YYYY'),
+            brief.closed_at.in_timezone(timezone).format('DD MMMM YYYY')
         )
 
     if 'title' in changes:
@@ -921,7 +919,7 @@ def send_opportunity_edited_email_to_seller(brief, email_address, buyer):
         candidate_message = "candidate's "
 
     formatted_closing_date = (
-        brief.closed_at.in_timezone('Australia/Canberra').format('%A %-d %B %Y at %-I:%M%p (in Canberra)')
+        brief.closed_at.in_timezone('Australia/Canberra').format('dddd DD MMMM YYYY at h:mmA (in Canberra)')
     )
 
     email_body = render_email_template(
@@ -965,7 +963,7 @@ def send_opportunity_withdrawn_email_to_buyers(brief, current_user):
 
     to_addresses = get_brief_emails(brief)
     seller_message = ''
-    invited_seller_codes = brief.data.get('sellers', {}).keys()
+    invited_seller_codes = list(brief.data.get('sellers', {}).keys())
 
     if brief_business.is_open_to_all(brief):
         seller_message = 'We have notified sellers who have drafted or submitted responses to this opportunity'

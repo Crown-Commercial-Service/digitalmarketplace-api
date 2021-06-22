@@ -99,7 +99,7 @@ class TestAbrService():
         with pytest.raises(requests.exceptions.HTTPError) as ex_info:
             abr_service.call_abr_api(url)
 
-        assert ex_info.value.message == 'HTTP Error'
+        assert str(ex_info.value) == 'HTTP Error'
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
     def test_proxy_exception_message(self, mock_requests_get):
@@ -108,7 +108,7 @@ class TestAbrService():
         with pytest.raises(requests.exceptions.ProxyError) as ex_msg:
             abr_service.call_abr_api(url)
 
-        assert ex_msg.value.message == 'Proxy Error'
+        assert str(ex_msg.value) == 'Proxy Error'
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
     def test_ssl_exception_message(self, mock_requests_get):
@@ -117,7 +117,7 @@ class TestAbrService():
         with pytest.raises(requests.exceptions.SSLError) as ex_msg:
             abr_service.call_abr_api(url)
 
-        assert ex_msg.value.message == 'SSL Error'
+        assert str(ex_msg.value) == 'SSL Error'
 
     @mock.patch('app.api.services.abr_service.call_abr_api')
     def test_exception_message(self, mock_requests_get):
@@ -126,4 +126,4 @@ class TestAbrService():
         with pytest.raises(requests.exceptions.RequestException) as ex_msg:
             abr_service.call_abr_api(url)
 
-        assert ex_msg.value.message == 'Unexpected request error'
+        assert str(ex_msg.value) == 'Unexpected request error'

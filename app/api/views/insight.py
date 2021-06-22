@@ -22,7 +22,7 @@ def get_insight():
     try:
         insight = insight_business.get_insight(current_user, now)
     except NotFoundError as nfe:
-        not_found(nfe.message)
+        not_found(str(nfe))
 
     return jsonify(insight), 200
 

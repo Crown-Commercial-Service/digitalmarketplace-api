@@ -29,7 +29,7 @@ class TestShouldCallSearchApiOnPostStatusUpdate(BaseApplicationTest):
 
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1",
+                Supplier(code=1, name="Supplier 1",
                          addresses=[Address(address_line="{} Dummy Street 1",
                                             suburb="Dummy",
                                             state="ZZZ",

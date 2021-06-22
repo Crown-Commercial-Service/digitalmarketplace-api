@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from .applications import (  # noqa
     send_approval_notification,
     send_rejection_notification,

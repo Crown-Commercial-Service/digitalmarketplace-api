@@ -15,7 +15,7 @@ class AbrService(Service):
     def find_business_by_abn(self, abn):
         url = self.build_abn_search_url(abn)
         response = self.call_abr_api(url)
-        result = self.get_data(response)
+        result = self.get_data(response.decode())
         return result
 
     def build_abn_search_url(self, abn):
@@ -29,7 +29,7 @@ class AbrService(Service):
         try:
             response = requests.get(url)
             if response.ok:
-                error = self.get_abr_exception(response.content)
+                error = self.get_abr_exception(response.content.decode())
                 if error is None:
                     return response.content
                 else:

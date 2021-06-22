@@ -7,9 +7,14 @@ from ..models import ValidationError
 
 @main.app_errorhandler(ValidationError)
 def validation_error(e):
-    msg = 'validation error: {}'.format(e.message)
+    try:
+        message = e.message
+    except AttributeError:
+        message = str(e)
+
+    msg = 'validation error: {}'.format(message)
     current_app.logger.error(msg)
-    return jsonify(error=e.message), 400
+    return jsonify(error=message), 400
 
 
 def generic_error_handler(e):

@@ -7,7 +7,7 @@ Usage:
 Example:
     ./update_service.py http://localhost:5000 myToken ~/update.json
 """
-from __future__ import print_function
+
 import json
 import requests
 import getpass

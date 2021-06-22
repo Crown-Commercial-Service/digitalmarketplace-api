@@ -14,7 +14,6 @@ Example:
     ./import_suppliers_from_api.py http://api myToken http://source-api token
 """
 
-from __future__ import print_function
 from six.moves import map
 
 import sys
@@ -73,7 +72,7 @@ class SupplierUpdater(object):
             client.import_supplier(supplier['id'],
                                    self.clean_data(supplier, supplier['id']))
         except dmapiclient.APIError as e:
-            print("ERROR: {}. {} not imported".format(e.message,
+            print("ERROR: {}. {} not imported".format(str(e),
                                                       supplier.get('id')),
                   file=sys.stderr)
             return False
@@ -94,7 +93,7 @@ class SupplierUpdater(object):
         except dmapiclient.APIError as e:
             if e.status_code != 409:
                 print("ERROR: {}. Could not create user account for {}".format(
-                    e.message, supplier.get('id')), file=sys.stderr)
+                    str(e), supplier.get('id')), file=sys.stderr)
                 return False
 
         return True
@@ -139,7 +138,7 @@ def do_index(api_url, api_access_token, source_api_url,
         try:
             suppliers = list(islice(iter_suppliers, 0, 100))
         except dmapiclient.APIError as e:
-            print('API request failed: {}'.format(e.message), file=sys.stderr)
+            print('API request failed: {}'.format(str(e)), file=sys.stderr)
             return False
 
         for result in mapper(indexer, suppliers):

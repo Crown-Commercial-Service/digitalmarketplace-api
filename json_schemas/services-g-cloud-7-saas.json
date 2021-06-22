@@ -717,7 +717,6 @@
           ]
         },
         "value": {
-          "exclusiveMaximum": true,
           "maximum": 100,
           "minimum": 0,
           "type": "number"

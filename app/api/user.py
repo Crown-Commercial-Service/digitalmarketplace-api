@@ -212,7 +212,7 @@ def check_supplier_role(role, supplier_code):
     if role == 'supplier' and supplier_code is None:
         raise ValueError("'supplier_code' is required for users with 'supplier' role")
     elif role != 'supplier' and supplier_code is not None:
-        raise("'supplier_code' is only valid for users with 'supplier' role, not '{}'".format(role))
+        raise ValueError("'supplier_code' is only valid for users with 'supplier' role, not '{}'".format(role))
 
 
 def create_user(
@@ -261,9 +261,14 @@ def create_user(
                 # If ABR API is down, it will publish a slack message
 
             except AbrError as error:
+                try:
+                    msg = error.message
+                except AttributeError:
+                    msg = str(error)
+
                 publish_tasks.abr.delay(
                     'abr_failed',
-                    error=error.message
+                    error=msg
                 )
 
             # adding the abn business info into the seller application
@@ -298,7 +303,17 @@ def create_user(
         return jsonify(user)
 
     except IntegrityError as error:
-        return jsonify(message=error.message), 409
+        try:
+            msg = error.message
+        except AttributeError:
+            msg = str(error)
+
+        return jsonify(message=msg), 409
 
     except Exception as error:
-        return jsonify(message=error.message), 400
+        try:
+            msg = error.message
+        except AttributeError:
+            msg = str(error)
+
+        return jsonify(message=msg), 400

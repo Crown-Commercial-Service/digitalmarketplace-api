@@ -47,7 +47,7 @@ def main(service_roles_file, domains_file, domain_mapping_file):
                 if statement not in STATEMENTS:
                     STATEMENTS.append(statement)
                     update_file.write(statement)
-                    print statement
+                    print(statement)
 
 
 if __name__ == "__main__":

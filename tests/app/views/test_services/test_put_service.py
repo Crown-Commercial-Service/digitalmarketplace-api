@@ -28,7 +28,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
         del payload['id']
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1",
+                Supplier(code=1, name="Supplier 1",
                          addresses=[Address(address_line="{} Dummy Street 1",
                                             suburb="Dummy",
                                             state="ZZZ",
@@ -314,7 +314,7 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             payload = self.load_example_listing("G6-IaaS")
             payload['id'] = "1234567890123456"
             payload['supplierCode'] = 1
-            payload['supplierName'] = u'New Name'
+            payload['supplierName'] = 'New Name'
 
             response = self.client.put(
                 '/services/1234567890123456',
@@ -331,4 +331,4 @@ class TestPutService(BaseApplicationTest, JSONUpdateTestMixin):
             data = json.loads(response.get_data())
 
             assert_equal(response.status_code, 200)
-            assert_equal(data['services']['supplierName'], u'Supplier 1')
+            assert_equal(data['services']['supplierName'], 'Supplier 1')

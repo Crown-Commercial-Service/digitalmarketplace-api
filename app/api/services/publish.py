@@ -71,7 +71,7 @@ class Publish(object):
 
         message = {}
         if kwargs:
-            for key, value in kwargs.iteritems():
+            for key, value in kwargs.items():
                 message[key] = value
 
         response = client.publish(

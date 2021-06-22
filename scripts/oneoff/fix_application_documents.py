@@ -12,7 +12,7 @@ def update_application_documents(client, counters, application):
     documents = application.get('documents')
 
     if not documents:
-        print '{}: has no documents'.format(application['id'])
+        print('{}: has no documents'.format(application['id']))
         counters['no_docs'] += 1
         return
 
@@ -21,10 +21,10 @@ def update_application_documents(client, counters, application):
 
     try:
         client.req.applications(application['id']).patch(data={'application': {'documents': documents}})
-        print 'application:{}'.format(application['id'])
+        print('application:{}'.format(application['id']))
         counters['total'] += 1
     except Exception as e:
-        print '{}:{}'.format(application['id'], e)
+        print('{}:{}'.format(application['id'], e))
         counters['errors'] += 1
 
 

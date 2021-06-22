@@ -621,8 +621,8 @@ class BriefsService(Service):
     def close_opportunity_early(self, brief):
         now = pendulum.now('utc')
 
-        brief.data['originalQuestionsClosedAt'] = brief.questions_closed_at.to_iso8601_string(extended=True)
-        brief.data['originalClosedAt'] = brief.closed_at.to_iso8601_string(extended=True)
+        brief.data['originalQuestionsClosedAt'] = brief.questions_closed_at.to_iso8601_string()
+        brief.data['originalClosedAt'] = brief.closed_at.to_iso8601_string()
 
         # To pass validation, questions_closed_at needs to be before closed_at
         brief.data['closedAt'] = now.in_timezone('Australia/Canberra').to_date_string()
@@ -696,7 +696,7 @@ class BriefsService(Service):
         invited_seller_email_addresses = []
 
         if not open_to_all:
-            invited_seller_codes = brief.data.get('sellers', {}).keys()
+            invited_seller_codes = list(brief.data.get('sellers', {}).keys())
             invited_sellers = (
                 db
                 .session

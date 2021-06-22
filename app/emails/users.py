@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
 import six
 
 from flask import current_app, session, jsonify
-from urllib import quote_plus
+from urllib.parse import quote, quote_plus
 from app.models import Supplier, Application, User
 from dmutils.email import EmailError, hash_email
 import rollbar
 
 from .util import render_email_template, send_or_handle_error, escape_markdown
-from urllib import quote
 
 
 def get_root_url(framework_slug):

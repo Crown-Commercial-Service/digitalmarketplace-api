@@ -87,7 +87,7 @@ def load_user_from_request(request):
     if payload is None:
         return None
 
-    email_address, password = b64decode(payload).split(':', 1)
+    email_address, password = b64decode(payload).decode().split(':', 1)
     user = User.get_by_email_address(email_address.lower())
 
     if user is not None:
@@ -135,7 +135,7 @@ from app.api.business.validators import (  # noqa
 
 
 def get_token_from_headers(headers):
-    print headers
+    print(headers)
     auth_header = headers.get('Authorization', '')
     if auth_header[:6] != 'Basic ':
         return None

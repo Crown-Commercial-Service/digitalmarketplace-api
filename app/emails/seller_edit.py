@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
-from urllib import quote_plus
+from urllib.parse import quote_plus
 
 import pendulum
 import rollbar
@@ -26,7 +24,7 @@ def send_notify_auth_rep_email(supplier_code):
     )
 
     supplier = suppliers.get_supplier_by_code(supplier_code)
-    to_address = supplier.data.get('email', '').encode('utf-8')
+    to_address = supplier.data.get('email', '')
 
     agreement = get_new_agreement()
     if agreement is None:

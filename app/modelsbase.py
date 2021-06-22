@@ -48,7 +48,7 @@ class CustomEncoder(json.JSONEncoder):
         if hasattr(obj, 'serializable'):
             return obj.serializable
         if isinstance(obj, datetime.datetime):
-            return pendulum.instance(obj).to_iso8601_string(extended=True)
+            return pendulum.instance(obj).to_iso8601_string()
         if isinstance(obj, decimal.Decimal):
             return str(obj)
         return super(CustomEncoder, self).default(obj)
@@ -333,7 +333,7 @@ class MyModel(Model):
 
 
 class MySQLAlchemy(SQLAlchemy):
-    def make_declarative_base(self, metadata=None):
+    def make_declarative_base(self, model_class, metadata=None):
         """Creates the declarative base."""
         base = declarative_base(cls=MyModel, name='Model',
                                 metadata=metadata,

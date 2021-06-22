@@ -19,7 +19,7 @@ from app.validation import get_sections as get_validation_sections
 
 def can_close_opportunity_early(brief):
     seller_selector = brief.data.get('sellerSelector', '')
-    invited_sellers = brief.data.get('sellers', {}).keys()
+    invited_sellers = list(brief.data.get('sellers', {}).keys())
     number_of_candidates = int(brief.data.get('numberOfSuppliers', 0))
 
     if brief.status == 'live' and len(invited_sellers) == 1 and (

@@ -5,7 +5,6 @@ from nose.tools import assert_equal, assert_not_equal, assert_in, assert_is_none
 from app import db, encryption
 from app.models import Address, User, Supplier, Application, Brief
 import pendulum
-from pendulum import create as datetime
 from ..helpers import \
     BaseApplicationTest, \
     JSONTestMixin, \
@@ -153,7 +152,7 @@ class TestUsersAuth(BaseUserTest):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=1,
-                         name=u"Supplier 1",
+                         name="Supplier 1",
                          status="deleted",
                          addresses=[Address(address_line="{} Dummy Street",
                                             suburb="Dummy",
@@ -203,7 +202,7 @@ class TestUsersAuth(BaseUserTest):
             self.valid_login()
             user = User.get_by_email_address('joeblogs@email.com')
 
-            assert_equal(user.logged_in_at, datetime(2015, 6, 6))
+            assert_equal(user.logged_in_at, pendulum.datetime(2015, 6, 6))
 
     def test_logged_in_at_is_not_updated_on_failed_login(self):
         self.create_user()
@@ -416,7 +415,7 @@ class TestUsersPost(BaseUserTest, JSONTestMixin):
         with self.app.app_context():
             db.session.add(
                 Supplier(code=1,
-                         name=u"Supplier 1",
+                         name="Supplier 1",
                          addresses=[Address(address_line="{} Dummy Street",
                                             suburb="Dummy",
                                             state="ZZZ",
@@ -468,7 +467,7 @@ class TestUsersPost(BaseUserTest, JSONTestMixin):
     def test_post_a_user_creates_audit_event(self):
         with self.app.app_context():
             db.session.add(
-                Supplier(code=1, name=u"Supplier 1",
+                Supplier(code=1, name="Supplier 1",
                          addresses=[Address(address_line="{} Dummy Street",
                                             suburb="Dummy",
                                             state="ZZZ",
@@ -1127,7 +1126,7 @@ class TestUsersUpdate(BaseUserTest, JSONUpdateTestMixin):
             assert_equal(data['emailAddress'], 'myshinynew@digital.gov.au')
 
     def test_can_update_terms_acceptance_timestamp(self):
-        timestamp = datetime(2000, 1, 1).to_iso8601_string(extended=True)
+        timestamp = pendulum.datetime(2000, 1, 1).to_iso8601_string()
 
         with self.app.app_context():
             response = self.client.post(

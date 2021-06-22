@@ -11,7 +11,7 @@ class TestRoleListing(BaseApplicationTest):
         roles = data['roles']
         assert len(roles) > 0
         for role in roles:
-            assert_equal(set(role.keys()), set(('role', 'category', 'roleAbbreviation', 'categoryAbbreviation')))
+            assert_equal(set(role.keys()), {'role', 'category', 'roleAbbreviation', 'categoryAbbreviation'})
             assert_is_not_none(role['role'])
             assert_is_not_none(role['category'])
             assert_is_not_none(role['roleAbbreviation'])

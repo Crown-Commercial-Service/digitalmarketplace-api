@@ -72,7 +72,7 @@ class TestEditOpportunity(BaseApplicationTest):
                 id=1,
                 data={
                     'title': 'ATM title',
-                    'closedAt': pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+                    'closedAt': pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD'),
                     'organisation': 'ABC',
                     'summary': 'My ATM summary',
                     'location': [
@@ -125,7 +125,7 @@ class TestEditOpportunity(BaseApplicationTest):
                     'areaOfExpertise': 'Software engineering and Development',
                     'attachments': [],
                     'budgetRange': '',
-                    'closedAt': pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+                    'closedAt': pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD'),
                     'contactNumber': '0123456789',
                     'contractExtensions': '',
                     'contractLength': '1 year',
@@ -142,7 +142,7 @@ class TestEditOpportunity(BaseApplicationTest):
                     ],
                     'evaluationType': [
                         'Responses to selection criteria',
-                        'Résumés'.decode('utf-8')
+                        'Résumés'
                     ],
                     'includeWeightingsEssential': False,
                     'includeWeightingsNiceToHave': False,
@@ -172,7 +172,7 @@ class TestEditOpportunity(BaseApplicationTest):
                     },
                     'sellerCategory': '6',
                     'sellerSelector': 'oneSeller',
-                    'startDate': pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+                    'startDate': pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD'),
                     'summary': 'My specialist summary',
                     'title': 'Specialist title'
                 },
@@ -191,7 +191,7 @@ class TestEditOpportunity(BaseApplicationTest):
                 id=3,
                 data={
                     'title': 'TEST',
-                    'closedAt': pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+                    'closedAt': pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD'),
                     'organisation': 'ABC',
                     'summary': 'TEST',
                     'workingArrangements': 'TEST',

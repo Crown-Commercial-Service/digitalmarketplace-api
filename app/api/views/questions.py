@@ -29,9 +29,9 @@ def get_questions(brief_id):
     try:
         result = questions_business.get_questions(current_user, brief_id)
     except NotFoundError as nfe:
-        not_found(nfe.message)
+        not_found(str(nfe))
     except UnauthorisedError as ue:
-        return forbidden(ue.message)
+        return forbidden(str(ue))
 
     return jsonify(result), 200
 
@@ -47,9 +47,9 @@ def get_question(brief_id):
     try:
         result = questions_business.get_question(current_user, brief_id, question_id)
     except NotFoundError as nfe:
-        not_found(nfe.message)
+        not_found(str(nfe))
     except UnauthorisedError as ue:
-        return forbidden(ue.message)
+        return forbidden(str(ue))
 
     return jsonify(result), 200
 
@@ -64,7 +64,7 @@ def get_answers(brief_id):
     try:
         result = questions_business.get_answers(brief_id)
     except NotFoundError as nfe:
-        return not_found(nfe.message)
+        return not_found(str(nfe))
 
     return jsonify(result), 200
 
@@ -80,10 +80,10 @@ def publish_answer(brief_id):
     try:
         questions_business.publish_answer(current_user, brief_id, data)
     except NotFoundError as nfe:
-        return not_found(nfe.message)
+        return not_found(str(nfe))
     except ValidationError as ve:
-        return abort(ve.message)
+        return abort(str(ve))
     except UnauthorisedError as ue:
-        return forbidden(ue.message)
+        return forbidden(str(ue))
 
     return jsonify(success=True), 200

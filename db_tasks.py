@@ -1,12 +1,10 @@
-from __future__ import unicode_literals, print_function
-
 import json
 import os
 import sys
 from base64 import b64decode
-import httplib
+import http.client
 import ssl
-import urllib
+import urllib.parse
 import base64
 
 from sqlbag import S, load_sql_from_file, temporary_database as temporary_db, sql_from_folder, raw_execute, DB_ERROR_TUPLE
@@ -43,7 +41,7 @@ def shelf_full_path(filename):
 def shelve_result(filename, result):
     shelf_path = shelf_full_path(filename)
 
-    with open(shelf_path, "w") as shelf_file:
+    with open(shelf_path, "wb") as shelf_file:
         pickle.dump(result, shelf_file)
 
 
@@ -52,7 +50,7 @@ def get_shelved_result(filename):
     if not (os.access(shelf_path, os.R_OK)):
         raise Exception('Migration test results not found.')
 
-    with open(shelf_path, "r") as shelf_file:
+    with open(shelf_path, "rb") as shelf_file:
         result = pickle.load(shelf_file)
 
     return result
@@ -85,16 +83,16 @@ def remove_search_path(outfile):
 # dbexport_host: db-export.system.example.com
 def do_schema_dump(outfile, cld_host, dbexport_host, username, password, service_binding):
     ctx = ssl.create_default_context()
-
+    auth_str = "%s:%s" % ("db-export-tool-api", "notasecret")
     print('GETTING TOKEN')
-    conn = httplib.HTTPSConnection(cld_host, 443, context=ctx)
-    conn.request("POST", "/oauth/token", urllib.urlencode({
+    conn = http.client.HTTPSConnection(cld_host, 443, context=ctx)
+    conn.request("POST", "/oauth/token", urllib.parse.urlencode({
         "grant_type": "password",
         "scope": ",".join(["openid", "cloud_controller.read"]),
         "username": username,
         "password": password,
     }), {
-        "Authorization": "Basic %s" % base64.b64encode("%s:%s" % ("db-export-tool-api", "notasecret")),
+        "Authorization": "Basic %s" % base64.b64encode(auth_str.encode('utf-8')).decode('ascii'),
         "Content-Type": "application/x-www-form-urlencoded",
     })
     resp = conn.getresponse()
@@ -104,8 +102,8 @@ def do_schema_dump(outfile, cld_host, dbexport_host, username, password, service
     conn.close()
 
     print('DOWNLOADING SCHEMA')
-    conn = httplib.HTTPSConnection(dbexport_host, 443, context=ctx)
-    conn.request("GET", "/dbSchema?%s" % urllib.urlencode({
+    conn = http.client.HTTPSConnection(dbexport_host, 443, context=ctx)
+    conn.request("GET", "/dbSchema?%s" % urllib.parse.urlencode({
         "servicebinding": service_binding,
     }), None, {
         "Authorization": "Bearer %s" % token,
@@ -117,7 +115,7 @@ def do_schema_dump(outfile, cld_host, dbexport_host, username, password, service
     schema = resp.read()
     conn.close()
 
-    with open(outfile, "w") as schema_file:
+    with open(outfile, "wb") as schema_file:
         schema_file.write(schema)
 
     remove_search_path(outfile)
@@ -128,11 +126,12 @@ def v2_test_migration(shelf_filename, cfapi_host, username, password, service_na
     cld_host = '.'.join(['uaa'] + cfapi_host.split('.')[1:])
     dbexport_host = '.'.join(['db-export'] + cfapi_host.split('.')[1:])
 
-    service_guid = subprocess.check_output(['cf', 'service', service_name, '--guid']).strip()
+    service_guid = subprocess.check_output(['cf', 'service', service_name, '--guid']).strip().decode()
     if not len(service_guid):
         raise ValueError("service_guid returned empty")
 
-    service_binding = json.loads(subprocess.check_output(['cf', 'curl', '/v2/service_instances/%s/service_bindings' % service_guid]))["resources"][0]["metadata"]["guid"]
+    response = json.loads(subprocess.check_output(['cf', 'curl', '/v2/service_instances/%s/service_bindings' % service_guid]))
+    service_binding = response["resources"][0]["metadata"]["guid"]
 
     return test_migration(shelf_filename, cld_host, dbexport_host, username, password, service_binding)
 

@@ -96,7 +96,7 @@ def parse_interval(x):
         unit = '{}s'.format(unit)
 
     spec = {unit: count}
-    return pendulum.interval(**spec)
+    return pendulum.duration(**spec)
 
 
 def parse_time_of_day(x):

@@ -1,7 +1,3 @@
-from __future__ import \
-    unicode_literals, \
-    absolute_import
-
 from . import celery
 import boto3
 import botocore.exceptions
@@ -12,6 +8,7 @@ from flask import current_app
 from flask._compat import string_types
 from dmutils.email import hash_email, to_bytes, to_text, EmailError
 from os import getenv
+import importlib
 
 
 @celery.task
@@ -27,10 +24,9 @@ def send_email(to_email_addresses, email_body, subject, from_email, from_name, r
     if current_app.config.get('DM_SEND_EMAIL_TO_STDERR', False):
         email_body = to_text(email_body)
         subject = to_text(subject)
-        reload(sys)
-        sys.setdefaultencoding('utf8')
+        importlib.reload(sys)
 
-        print ("""
+        print("""
 ------------------------
 To: {to}
 Bcc: {bcc}
@@ -72,16 +68,16 @@ Reply-To: {reply_to}
         return_address = current_app.config.get('DM_EMAIL_RETURN_ADDRESS')
 
         result = email_client.send_email(
-            Source=u"{} <{}>".format(from_name, from_email),
+            Source="{} <{}>".format(from_name, from_email),
             Destination=destination_addresses,
             Message={
                 'Subject': {
-                    'Data': subject,
+                    'Data': subject.decode(),
                     'Charset': 'UTF-8'
                 },
                 'Body': {
                     'Html': {
-                        'Data': email_body,
+                        'Data': email_body.decode(),
                         'Charset': 'UTF-8'
                     }
                 }

@@ -65,7 +65,7 @@ class SuppliersService(Service):
         self, keyword, framework_slug=None, category=None, exclude=None, exclude_recruiters=False
     ):
         query = (db.session.query(Supplier)
-                 .filter(Supplier.name.ilike('%{}%'.format(keyword.encode('utf-8'))))
+                 .filter(Supplier.name.ilike('%{}%'.format(keyword)))
                  .filter(Supplier.status != 'deleted')
                  .options(
                      joinedload(Supplier.frameworks),

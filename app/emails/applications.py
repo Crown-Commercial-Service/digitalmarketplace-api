@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 from flask import current_app
 from app.models import Assessment, Application, User, Supplier, Domain
 
@@ -171,7 +169,7 @@ def send_assessment_approval_notification(supplier_id, domain_id):
 def send_assessment_requested_notification(assessment, requested_by):
     TEMPLATE_FILENAME = 'assessment_requested.md'
     supplier = Supplier.query.get(assessment.supplier_domain.supplier_id)
-    email_addresses = list(set([supplier.contacts[0].email, requested_by]))
+    email_addresses = list({supplier.contacts[0].email, requested_by})
     assessment_criteria_url = 'https://marketplace1.zendesk.com/hc/en-gb/articles/333757011655-Assessment-criteria'
 
     subject = "Assessment request for {} received".format(assessment.supplier_domain.domain.name)

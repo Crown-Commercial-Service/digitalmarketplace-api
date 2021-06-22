@@ -1,5 +1,5 @@
 command: ./scripts/cf_run_app.sh
-buildpack: python2_buildpack
+buildpack: python_buildpack
 health-check-type: port
 instances: 1
 memory: 512M

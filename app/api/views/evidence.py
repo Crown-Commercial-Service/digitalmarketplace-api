@@ -96,7 +96,7 @@ def create_evidence(domain_id, brief_id=None):
 
     except Exception as e:
         rollbar.report_exc_info()
-        abort(e.message)
+        abort(str(e))
 
     publish_tasks.evidence.delay(
         publish_tasks.compress_evidence(evidence),
@@ -173,8 +173,8 @@ def get_evidence_feedback(evidence_id):
     criteria = {}
     failed_criteria = evidence_assessment.data.get('failed_criteria', {})
     vfm = evidence_assessment.data.get('vfm', None)
-    for criteria_id, criteria_response in evidence.get_criteria_responses().iteritems():
-        has_feedback = True if criteria_id in failed_criteria.keys() else False
+    for criteria_id, criteria_response in evidence.get_criteria_responses().items():
+        has_feedback = True if criteria_id in list(failed_criteria.keys()) else False
         criteria[criteria_id] = {
             "response": criteria_response,
             "name": criteria_from_domain[criteria_id]['name'] if criteria_id in criteria_from_domain else '',
@@ -232,7 +232,7 @@ def update_evidence(evidence_id):
     # Validate the evidence request data
     errors = EvidenceDataValidator(data, evidence=evidence).validate(publish=publish)
     if len(errors) > 0:
-            abort(', '.join(errors))
+        abort(', '.join(errors))
 
     if publish:
         evidence.submit()

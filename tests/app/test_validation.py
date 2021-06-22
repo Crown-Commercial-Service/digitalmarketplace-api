@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import os
 import json
 
@@ -489,7 +487,12 @@ def check_schema(schema):
     try:
         validate({}, schema)
     except SchemaError as ex:
-        print('Invalid JSON schema: %s' % ex.message)
+        try:
+            msg = ex.message
+        except AttributeError:
+            msg = str(ex)
+
+        print('Invalid JSON schema: %s' % msg)
         return False
     except ValidationError:
         return True

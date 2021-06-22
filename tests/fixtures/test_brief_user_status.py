@@ -61,7 +61,7 @@ open_to_all_atm_data = {
         "test.pdf"
     ],
     "backgroundInformation": "Old website needs a refresh",
-    "closedAt": pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+    "closedAt": pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD'),
     "contactNumber": "0412345678",
     "endUsers": "Users need a new website",
     "evaluationCriteria": [
@@ -88,7 +88,7 @@ open_to_all_atm_data = {
     "requestMoreInfo": "no",
     "sellerCategory": "",
     "sellerSelector": "allSellers",
-    "startDate": pendulum.today(tz='Australia/Sydney').add(days=24).format('%Y-%m-%d'),
+    "startDate": pendulum.today(tz='Australia/Sydney').add(days=24).format('YYYY-MM-DD'),
     "summary": "Build new website",
     "timeframeConstraints": "",
     "title": "New website",
@@ -101,7 +101,7 @@ open_to_category_atm_data = {
         "test.pdf"
     ],
     "backgroundInformation": "Fix potential problems",
-    "closedAt": pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+    "closedAt": pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD'),
     "contactNumber": "0412345678",
     "endUsers": "Users don't want to get hacked",
     "evaluationCriteria": [
@@ -129,7 +129,7 @@ open_to_category_atm_data = {
     "requestMoreInfo": "no",
     "sellerCategory": "8",
     "sellerSelector": "someSellers",
-    "startDate": pendulum.today(tz='Australia/Sydney').add(days=24).format('%Y-%m-%d'),
+    "startDate": pendulum.today(tz='Australia/Sydney').add(days=24).format('YYYY-MM-DD'),
     "summary": "Conduct security assessments on website",
     "timeframeConstraints": "",
     "title": "Security review of website",
@@ -142,7 +142,7 @@ open_to_all_specialist_data = {
         "test.pdf"
     ],
     "budgetRange": "",
-    "closedAt": pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+    "closedAt": pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD'),
     "comprehensiveTerms": False,
     "contactNumber": "0412 345 678",
     "contractExtensions": "",
@@ -182,7 +182,7 @@ open_to_all_specialist_data = {
     "sellerCategory": "6",
     "sellerSelector": "allSellers",
     "sellers": {},
-    "startDate": pendulum.today(tz='Australia/Sydney').add(days=24).format('%Y-%m-%d'),
+    "startDate": pendulum.today(tz='Australia/Sydney').add(days=24).format('YYYY-MM-DD'),
     "summary": "Code",
     "title": "Developer"
 }
@@ -193,7 +193,7 @@ open_to_selected_specialist_data = {
         "test.pdf"
     ],
     "budgetRange": "",
-    "closedAt": pendulum.today(tz='Australia/Sydney').add(days=14).format('%Y-%m-%d'),
+    "closedAt": pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD'),
     "comprehensiveTerms": False,
     "contactNumber": "0412 345 678",
     "contractExtensions": "",
@@ -237,7 +237,7 @@ open_to_selected_specialist_data = {
             "name": "Test Supplier1"
         }
     },
-    "startDate": pendulum.today(tz='Australia/Sydney').add(days=24).format('%Y-%m-%d'),
+    "startDate": pendulum.today(tz='Australia/Sydney').add(days=24).format('YYYY-MM-DD'),
     "summary": "Code",
     "title": "Developer"
 }

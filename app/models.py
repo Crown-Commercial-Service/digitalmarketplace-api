@@ -461,7 +461,7 @@ class PriceSchedule(db.Model):
     @staticmethod
     def from_submitted_pricing_json(as_dict):
         def it():
-            for k, v in as_dict.iteritems():
+            for k, v in as_dict.items():
                 for level in ['Junior', 'Senior']:
                     if level == 'Junior':
                         price_field = 'minPrice'
@@ -566,7 +566,7 @@ class SignedAgreement(db.Model):
             'user_id': str(self.user_id),
             'application_id': str(self.application_id),
             'supplier_code': str(self.supplier_code),
-            'signed_at': self.signed_at.to_iso8601_string(extended=True),
+            'signed_at': self.signed_at.to_iso8601_string(),
         }
         return serialized
 
@@ -872,7 +872,7 @@ class Supplier(db.Model):
     def serializable_after(self, j):
         legacy = {
             'longName': self.long_name,
-            'extraLinks': [l.serialize() for l in self.extra_links],
+            'extraLinks': [link.serialize() for link in self.extra_links],
             'case_study_ids': [c.id for c in self.case_studies],
             'creationTime': self.creation_time,
             'lastUpdateTime': self.last_update_time,
@@ -949,7 +949,7 @@ class Supplier(db.Model):
             self.long_name = data['longName']
 
         if 'extraLinks' in data:
-            self.extra_links = [WebsiteLink.from_json(l) for l in data['extraLinks']]
+            self.extra_links = [WebsiteLink.from_json(link) for link in data['extraLinks']]
 
         if 'recruiter' in data:
             self.is_recruiter = data['recruiter'].lower() in ('both', 'yes', 'true', 't')
@@ -1355,11 +1355,11 @@ class SupplierFramework(db.Model):
     def serialize(self, data=None):
         agreement_returned_at = self.agreement_returned_at
         if agreement_returned_at:
-            agreement_returned_at = agreement_returned_at.to_iso8601_string(extended=True)
+            agreement_returned_at = agreement_returned_at.to_iso8601_string()
 
         countersigned_at = self.countersigned_at
         if countersigned_at:
-            countersigned_at = countersigned_at.to_iso8601_string(extended=True)
+            countersigned_at = countersigned_at.to_iso8601_string()
 
         supplier_framework = dict({
             "supplierCode": self.supplier_code,
@@ -1553,10 +1553,7 @@ class User(db.Model):
         return any(self.has_role(role) for role in roles)
 
     def get_id(self):
-        try:
-            return unicode(self.id)  # python 2
-        except NameError:
-            return str(self.id)  # python 3
+        return str(self.id)
 
 
 class UserClaim(db.Model):
@@ -1727,8 +1724,8 @@ class ServiceTableMixin(object):
             'lot': self.lot.slug,
             'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
-            'updatedAt': self.updated_at.to_iso8601_string(extended=True),
-            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'updatedAt': self.updated_at.to_iso8601_string(),
+            'createdAt': self.created_at.to_iso8601_string(),
             'status': self.status
         })
 
@@ -1784,7 +1781,7 @@ class Service(ServiceTableMixin, db.Model):
             return self.filter(Service.data[key_to_find].astext != '')  # SQLAlchemy weirdness
 
         def data_key_contains_value(self, k, v):
-            return self.filter(Service.data[k].astext.contains(u'"{}"'.format(v)))  # Postgres 9.3: use string matching
+            return self.filter(Service.data[k].astext.contains('"{}"'.format(v)))  # Postgres 9.3: use string matching
 
     def get_link(self):
         return url_for(".get_service", service_id=self.service_id)
@@ -1853,7 +1850,7 @@ class DraftService(ServiceTableMixin, db.Model):
         data = self.data.copy()
         name = data.get('serviceName', '')
         if len(name) <= 95:
-            data['serviceName'] = u"{} copy".format(name)
+            data['serviceName'] = "{} copy".format(name)
 
         do_not_copy = [
             "serviceSummary",
@@ -1939,7 +1936,7 @@ class AuditEvent(db.Model):
             'acknowledged': self.acknowledged,
             'user': self.user,
             'data': self.data,
-            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'createdAt': self.created_at.to_iso8601_string(),
             'links': filter_null_value_fields({
                 "self": url_for(".list_audits"),
                 "oldArchivedService": ArchivedService.link_object(
@@ -1954,7 +1951,7 @@ class AuditEvent(db.Model):
         if self.acknowledged:
             data.update({
                 'acknowledgedAt':
-                    self.acknowledged_at.to_iso8601_string(extended=True),
+                    self.acknowledged_at.to_iso8601_string(),
                 'acknowledgedBy':
                     self.acknowledged_by,
             })
@@ -2048,7 +2045,7 @@ class Brief(db.Model):
                 t, DEADLINES_TZ_NAME).in_tz('UTC')
             if closed_at_parsed <= now_plus_three_days:
                 questions_closed_at = workday(closed_at_parsed, -1)
-                if (self.published_day > questions_closed_at):
+                if (self.published_day > questions_closed_at.date()):
                     questions_closed_at = self.published_day
             else:
                 questions_closed_at = workday(closed_at_parsed, -2)
@@ -2341,8 +2338,8 @@ class Brief(db.Model):
             'lot': self.lot.slug,
             'lotSlug': self.lot.slug,
             'lotName': self.lot.name,
-            'createdAt': self.created_at.to_iso8601_string(extended=True),
-            'updatedAt': self.updated_at.to_iso8601_string(extended=True),
+            'createdAt': self.created_at.to_iso8601_string(),
+            'updatedAt': self.updated_at.to_iso8601_string(),
             'clarificationQuestions': [
                 question.serialize() for question in self.clarification_questions
             ],
@@ -2362,19 +2359,19 @@ class Brief(db.Model):
 
         if self.published_at:
             data.update({
-                'publishedAt': self.published_at.to_iso8601_string(extended=True),
-                'applicationsClosedAt': self.closed_at.to_iso8601_string(extended=True) if self.closed_at else None,
-                'clarificationQuestionsClosedAt': self.questions_closed_at.to_iso8601_string(extended=True)
+                'publishedAt': self.published_at.to_iso8601_string(),
+                'applicationsClosedAt': self.closed_at.to_iso8601_string() if self.closed_at else None,
+                'clarificationQuestionsClosedAt': self.questions_closed_at.to_iso8601_string()
                 if self.questions_closed_at else None,
                 'clarificationQuestionsPublishedBy':
-                    self.clarification_questions_published_by.to_iso8601_string(extended=True)
+                    self.clarification_questions_published_by.to_iso8601_string()
                     if self.clarification_questions_published_by else None,
                 'clarificationQuestionsAreClosed': self.clarification_questions_are_closed,
             })
 
         if self.withdrawn_at:
             data.update({
-                'withdrawnAt': self.withdrawn_at.to_iso8601_string(extended=True)
+                'withdrawnAt': self.withdrawn_at.to_iso8601_string()
             })
 
         data['links'] = {
@@ -2501,11 +2498,11 @@ class BriefResponse(db.Model):
                     return text_type(x)
 
             def clean(answers):
-                if type(answers) is list:
+                if isinstance(answers, list):
                     return [to_text(x) for x in answers]
-                if type(answers) is dict:
+                if isinstance(answers, dict):
                     result = []
-                    keys = sorted([int(x) for x in answers.iterkeys()])
+                    keys = sorted([int(x) for x in answers.keys()])
                     max_key = max(keys)
                     for i in range(0, max_key + 1):
                         if i in keys:
@@ -2529,13 +2526,13 @@ class BriefResponse(db.Model):
 
                 try:
                     self.data['attachedDocumentURL'] = \
-                        filter(None, clean(self.data['attachedDocumentURL']))
+                        [_f for _f in clean(self.data['attachedDocumentURL']) if _f]
                     self.data['responseTemplate'] = \
-                        filter(None, clean(self.data['responseTemplate']))
+                        [_f for _f in clean(self.data['responseTemplate']) if _f]
                     self.data['resume'] = \
-                        filter(None, clean(self.data['resume']))
+                        [_f for _f in clean(self.data['resume']) if _f]
                     self.data['writtenProposal'] = \
-                        filter(None, clean(self.data['writtenProposal']))
+                        [_f for _f in clean(self.data['writtenProposal']) if _f]
                 except KeyError:
                     pass
 
@@ -2551,7 +2548,7 @@ class BriefResponse(db.Model):
 
         def strip_quotes_from_criteria_keys(criteria):
             new = {}
-            for k, v in criteria.iteritems():
+            for k, v in criteria.items():
                 stripped = k.strip("'")
                 new[stripped] = v
             return new
@@ -2654,7 +2651,7 @@ class BriefResponse(db.Model):
         if (
             self.brief.lot.slug not in ['training', 'rfx', 'training2', 'atm'] and
             'essentialRequirements' not in errs and
-            len(filter(None, self.data.get('essentialRequirements', []))) !=
+            len([_f for _f in self.data.get('essentialRequirements', []) if _f]) !=
             len(self.brief.data['essentialRequirements'])
         ):
             errs['essentialRequirements'] = 'answer_required'
@@ -2701,9 +2698,9 @@ class BriefResponse(db.Model):
             'supplierCode': self.supplier_code,
             'supplierName': self.supplier.name,
             'status': self.status,
-            'createdAt': self.created_at.to_iso8601_string(extended=True),
-            'updatedAt': self.updated_at.to_iso8601_string(extended=True),
-            'submittedAt': self.submitted_at.to_iso8601_string(extended=True) if self.submitted_at else None,
+            'createdAt': self.created_at.to_iso8601_string(),
+            'updatedAt': self.updated_at.to_iso8601_string(),
+            'submittedAt': self.submitted_at.to_iso8601_string() if self.submitted_at else None,
             'links': {
                 'self': url_for('.get_brief_response', brief_response_id=self.id),
                 'brief': url_for('.get_brief', brief_id=self.brief_id),
@@ -2776,7 +2773,7 @@ class BriefClarificationQuestion(db.Model):
         return {
             "question": self.question,
             "answer": self.answer,
-            "publishedAt": self.published_at.to_iso8601_string(extended=True),
+            "publishedAt": self.published_at.to_iso8601_string(),
         }
 
 
@@ -2811,7 +2808,7 @@ class WorkOrder(db.Model):
             'briefId': self.brief_id,
             'supplierCode': self.supplier_code,
             'supplierName': self.supplier.name,
-            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'createdAt': self.created_at.to_iso8601_string(),
             'links': {
                 'self': url_for('.get_work_order', work_order_id=self.id),
                 'brief': url_for('.get_brief', brief_id=self.brief_id),
@@ -2920,7 +2917,7 @@ class Application(db.Model):
         data.update({
             'id': self.id,
             'status': self.status,
-            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'createdAt': self.created_at.to_iso8601_string(),
             'links': {
                 'self': url_for('main.get_application_by_id', application_id=self.id),
             }
@@ -2965,7 +2962,7 @@ class Application(db.Model):
                 supplier = self.supplier
 
                 case_studies = self.data.get('case_studies', [])
-                for k, case_study in case_studies.iteritems():
+                for k, case_study in case_studies.items():
                     current_case_study = next(
                         iter(
                             [scs for scs in supplier.case_studies if scs.id == case_study.get('id')]
@@ -2986,7 +2983,7 @@ class Application(db.Model):
             self.data.pop('understandsAssessmentProcess', None)
 
             to_remove = []
-            for state, state_value in self.data.get('labourHire', {}).iteritems():
+            for state, state_value in self.data.get('labourHire', {}).items():
                 if not (
                     state_value.get('expiry') and
                     state_value.get('licenceNumber')
@@ -3116,7 +3113,7 @@ class CaseStudy(db.Model):
         data.update({
             'id': self.id,
             'supplierCode': self.supplier_code,
-            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'createdAt': self.created_at.to_iso8601_string(),
             'status': self.status,
             'links': {
                 'self': url_for('.get_work_order', work_order_id=self.id),
@@ -3213,7 +3210,7 @@ class Project(db.Model):
         data.update({
             'id': self.id,
             'status': self.status,
-            'createdAt': self.created_at.to_iso8601_string(extended=True),
+            'createdAt': self.created_at.to_iso8601_string(),
             'links': {
                 'self': url_for('.get_project', project_id=self.id),
             }
@@ -3354,7 +3351,7 @@ db.Index(
 
 def filter_null_value_fields(obj):
     return dict(
-        filter(lambda x: x[1] is not None, obj.items())
+        [x for x in obj.items() if x[1] is not None]
     )
 
 

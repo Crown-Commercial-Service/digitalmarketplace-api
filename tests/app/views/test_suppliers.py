@@ -13,7 +13,6 @@ from ..helpers import BaseApplicationTest, JSONTestMixin, JSONUpdateTestMixin, a
 from decimal import Decimal
 
 import pendulum
-from pendulum import create as dt
 
 from collections import Mapping, Iterable
 from six import string_types
@@ -131,7 +130,7 @@ class TestListSuppliers(BaseApplicationTest):
     def test_other_prefix_returns_non_alphanumeric_suppliers(self):
         with self.app.app_context():
             db.session.add(
-                Supplier(code=999, name=u"999 Supplier",
+                Supplier(code=999, name="999 Supplier",
                          addresses=[Address(address_line="Asdf",
                                             suburb="Asdf",
                                             state="ZZZ",
@@ -149,7 +148,7 @@ class TestListSuppliers(BaseApplicationTest):
             assert_equal(1, len(data['suppliers']))
             assert_equal(999, data['suppliers'][0]['code'])
             assert_equal(
-                u"999 Supplier",
+                "999 Supplier",
                 data['suppliers'][0]['name']
             )
 
@@ -857,12 +856,12 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
                 supplier_code=0, framework_id=2,
                 declaration={'an_answer': 'Yes it is'},
                 on_framework=True,
-                agreement_returned_at=dt(2015, 10, 10, 10, 10, 10),
-                countersigned_at=dt(2015, 11, 12, 13, 14, 15),
+                agreement_returned_at=pendulum.datetime(2015, 10, 10, 10, 10, 10),
+                countersigned_at=pendulum.datetime(2015, 11, 12, 13, 14, 15),
                 agreement_details={
-                    u'signerName': u'thing',
-                    u'signerRole': u'thing',
-                    u'uploaderUserId': 20
+                    'signerName': 'thing',
+                    'signerRole': 'thing',
+                    'uploaderUserId': 20
                 },
             )
             db.session.add(answers)
@@ -913,9 +912,9 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
         assert data['frameworkInterest']['declaration'] == {'an_answer': 'Yes it is'}
         assert data['frameworkInterest']['onFramework'] is True
         assert data['frameworkInterest']['agreementReturned'] is True
-        assert data['frameworkInterest']['agreementReturnedAt'] == '2015-10-10T10:10:10.000000+00:00'
+        assert data['frameworkInterest']['agreementReturnedAt'] == '2015-10-10T10:10:10Z'
         assert data['frameworkInterest']['countersigned'] is True
-        assert data['frameworkInterest']['countersignedAt'] == '2015-11-12T13:14:15.000000+00:00'
+        assert data['frameworkInterest']['countersignedAt'] == '2015-11-12T13:14:15Z'
         assert data['frameworkInterest']['agreementDetails'] == {
             'signerName': 'thing',
             'signerRole': 'thing',
@@ -975,7 +974,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert data['frameworkInterest']['supplierCode'] == 0
             assert data['frameworkInterest']['frameworkSlug'] == 'digital-outcomes-and-specialists'
             assert data['frameworkInterest']['agreementReturned'] is True
-            assert data['frameworkInterest']['agreementReturnedAt'] == "2012-12-12T00:00:00.000000+00:00"
+            assert data['frameworkInterest']['agreementReturnedAt'] == "2012-12-12T00:00:00Z"
             assert data['frameworkInterest']['countersigned'] is False
             assert data['frameworkInterest']['countersignedAt'] is None
             assert data['frameworkInterest']['agreementDetails'] is None
@@ -999,7 +998,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert data['frameworkInterest']['supplierCode'] == 0
             assert data['frameworkInterest']['frameworkSlug'] == 'g-cloud-8'
             assert data['frameworkInterest']['agreementReturned'] is True
-            assert data['frameworkInterest']['agreementReturnedAt'] == "2012-12-12T00:00:00.000000+00:00"
+            assert data['frameworkInterest']['agreementReturnedAt'] == "2012-12-12T00:00:00Z"
             assert data['frameworkInterest']['countersigned'] is False
             assert data['frameworkInterest']['countersignedAt'] is None
             assert data['frameworkInterest']['agreementDetails'] == {
@@ -1040,7 +1039,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             assert data['frameworkInterest']['agreementReturned'] is False
             assert data['frameworkInterest']['agreementReturnedAt'] is None
             assert data['frameworkInterest']['countersigned'] is True
-            assert data['frameworkInterest']['countersignedAt'] == "2012-12-12T00:00:00.000000+00:00"
+            assert data['frameworkInterest']['countersignedAt'] == "2012-12-12T00:00:00Z"
             assert data['frameworkInterest']['agreementDetails'] is None
 
     def test_agreement_returned_at_timestamp_cannot_be_set(self):
@@ -1052,7 +1051,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             )
             assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert data['frameworkInterest']['agreementReturnedAt'] == '2012-12-12T00:00:00.000000+00:00'
+            assert data['frameworkInterest']['agreementReturnedAt'] == '2012-12-12T00:00:00Z'
 
     def test_agreement_returned_at_and_agreement_details_are_unset_when_agreement_returned_is_false(self):
         response = self.supplier_framework_update(
@@ -1092,7 +1091,7 @@ class TestSupplierFrameworkUpdates(BaseApplicationTest):
             )
             assert response.status_code == 200
             data = json.loads(response.get_data())
-            assert data['frameworkInterest']['countersignedAt'] == '2012-12-12T00:00:00.000000+00:00'
+            assert data['frameworkInterest']['countersignedAt'] == '2012-12-12T00:00:00Z'
 
     def test_setting_signer_details_and_then_returning_agreement(self):
         agreement_details_payload = {

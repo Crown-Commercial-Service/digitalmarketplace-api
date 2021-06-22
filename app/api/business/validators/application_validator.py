@@ -21,7 +21,7 @@ class ApplicationValidator(object):
 
     def __validate_required(self, data, required_fields, step):
         errors = []
-        for field, label in required_fields.iteritems():
+        for field, label in required_fields.items():
             value = data.get(field)
             if not value:
                 errors.append({
@@ -46,7 +46,7 @@ class ApplicationValidator(object):
 
         addresses = self.application.data.get('addresses', [])
         if not isinstance(addresses, list):
-            addresses = [v for k, v in addresses.iteritems()]
+            addresses = [v for k, v in addresses.items()]
 
         if not addresses:
             errors.append({
@@ -73,7 +73,7 @@ class ApplicationValidator(object):
             'website': 'Website',
             'linkedin': 'Linkedin'
         }
-        for field, label in links.iteritems():
+        for field, label in links.items():
             value = self.application.data.get(field)
             if value and not value.startswith('http'):
                 errors.append({
@@ -139,7 +139,7 @@ class ApplicationValidator(object):
             'other_circumstances': 'Other circumstances'
         }
         required_fields = {}
-        for k, v in fields.iteritems():
+        for k, v in fields.items():
             required_fields[k] = v
             if disclosures.get(k, 'no') == 'yes':
                 required_fields['{}_details'.format(k)] = '{} details'.format(v)
@@ -248,7 +248,7 @@ class ApplicationValidator(object):
         if recruiter == 'yes' or recruiter == 'both':
             labour_hire = self.application.data.get('labourHire', {})
             now = pendulum.now('Australia/Canberra').date()
-            for state, state_value in labour_hire.iteritems():
+            for state, state_value in labour_hire.items():
                 if not state_value or state == 'sa':
                     continue
                 licence_number = state_value.get('licenceNumber')
@@ -269,7 +269,11 @@ class ApplicationValidator(object):
 
                 if expiry:
                     try:
-                        expiry_date = pendulum.parse(expiry, tz='Australia/Sydney')
+                        expiry_date = pendulum.from_format(
+                            expiry,
+                            'YYYY-MM-DD',
+                            tz='Australia/Sydney'
+                        )
 
                         if now > expiry_date.date():
                             errors.append({
@@ -306,7 +310,7 @@ class ApplicationValidator(object):
         services = self.application.data.get('services')
 
         if recruiter == 'no' or recruiter == 'both':
-            for service in services.iterkeys():
+            for service in services.keys():
                 field_id = '{}-maxprice'.format(service.lower().replace(' ', '-'))
                 if service not in pricing or not pricing[service].get('maxPrice'):
                     errors.append({
@@ -369,7 +373,7 @@ class ApplicationValidator(object):
         services = self.application.data.get('services')
 
         if recruiter == 'yes' or recruiter == 'both':
-            for service in services.iterkeys():
+            for service in services.keys():
                 if service not in recruiter_info:
                     errors.append({
                         'message': 'Recruiter info is required for {}'.format(service),
@@ -377,7 +381,7 @@ class ApplicationValidator(object):
                         'step': 'candidates'
                     })
                 else:
-                    for s, value in recruiter_info.iteritems():
+                    for s, value in recruiter_info.items():
                         errors = errors + self.__validate_candidate(value, s)
 
         return errors
@@ -391,7 +395,7 @@ class ApplicationValidator(object):
             'markup': 'Mark-up',
             'placed_candidates': 'Number of candidates successfully placed'
         }
-        for field, label in required_fields.iteritems():
+        for field, label in required_fields.items():
             if not candidate.get(field):
                 errors.append({
                     'field': field,
@@ -410,7 +414,7 @@ class ApplicationValidator(object):
             for index, value in enumerate(products):
                 errors = errors + self.__validate_product(index, value)
         else:
-            for index, value in products.iteritems():
+            for index, value in products.items():
                 errors = errors + self.__validate_product(index, value)
 
         return errors
@@ -437,7 +441,7 @@ class ApplicationValidator(object):
                 'products')
         )
 
-        for k, v in url_fields.iteritems():
+        for k, v in url_fields.items():
             value = product.get(k, 'http')
             if value and not value.startswith('http'):
                 errors.append({

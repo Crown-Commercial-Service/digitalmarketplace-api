@@ -29,17 +29,19 @@ class TestTeamMemberValidation(BaseApplicationTest):
         assert len(errors) == 1
         assert all(error['id'] in ['TM004'] for error in errors)
 
-    def test_team_fails_validation_when_member_is_not_a_buyer(self, users, user, teams, team, team_members):
-        seller = users.pop()
-        seller.role = 'supplier'
+    def test_team_fails_validation_when_member_is_not_a_buyer(
+        self, users, user, teams, team, team_member, team_members
+    ):
+        team_member.role = 'supplier'
         errors = TeamValidator(team, user).validate_team_members()
 
         assert len(errors) == 1
         assert all(error['id'] in ['TM005'] for error in errors)
 
-    def test_team_fails_validation_when_member_has_different_email_domain(self, users, user, teams, team, team_members):
-        buyer = users.pop()
-        buyer.agency_id = 11
+    def test_team_fails_validation_when_member_has_different_email_domain(
+        self, users, user, teams, team, team_member, team_members
+    ):
+        team_member.agency_id = 11
         errors = TeamValidator(team, user).validate_team_members()
 
         assert len(errors) == 1

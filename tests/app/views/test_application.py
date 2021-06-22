@@ -10,6 +10,7 @@ from app.models import (Application, AuditEvent, Domain, Framework,
                         MasterAgreement, Product, User, db, utcnow)
 from tests.app.helpers import BaseApplicationTest
 from sqlalchemy import func
+from urllib.parse import quote
 
 application_data = {
     'number_of_employees': 'Sole trader',
@@ -40,17 +41,17 @@ application_data = {
         },
         'indemnity': {
             'application_id': 1,
-            'expiry': pendulum.today().add(years=1).format('%Y-%m-%d'),
+            'expiry': pendulum.today().add(years=1).format('YYYY-MM-DD'),
             'filename': '4.pdf'
         },
         'liability': {
             'application_id': 1,
-            'expiry': pendulum.today().add(years=1).format('%Y-%m-%d'),
+            'expiry': pendulum.today().add(years=1).format('YYYY-MM-DD'),
             'filename': '2.pdf'
         },
         'workers': {
             'application_id': 1,
-            'expiry': pendulum.today().add(years=1).format('%Y-%m-%d'),
+            'expiry': pendulum.today().add(years=1).format('YYYY-MM-DD'),
             'filename': '3.pdf'
         }
     },
@@ -279,7 +280,7 @@ class TestApproveApplication(BaseApplicationsTest):
 
     def search(self, query_body, **args):
         if args:
-            params = '&'.join('{}={}'.format(k, urllib2.quote(v)) for k, v in args.items())
+            params = '&'.join('{}={}'.format(k, quote(v)) for k, v in args.items())
             q = "?{}".format(params)
         else:
             q = ''
@@ -354,7 +355,7 @@ class TestApproveApplication(BaseApplicationsTest):
 
             a = self.list_applications()
 
-            DUMMY_TASKS = {u'self': u'http://topissue'}
+            DUMMY_TASKS = {'self': 'http://topissue'}
 
             mj = mock.Mock()
             mj.assessment_tasks_by_application_id.return_value = \
@@ -547,7 +548,7 @@ class TestListApplications(BaseApplicationsTest):
         def pairwise(iterable):
             a, b = tee(iterable)
             next(b, None)
-            return izip(a, b)
+            return list(zip(a, b))
 
         def is_sorted(iterable, key=lambda a, b: a <= b):
             return all(key(a, b) for a, b in pairwise(iterable))

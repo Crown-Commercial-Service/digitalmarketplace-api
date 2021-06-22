@@ -8,7 +8,7 @@ from ..helpers import BaseApplicationTest, COMPLETE_DIGITAL_SPECIALISTS_BRIEF
 
 from dmapiclient.audit import AuditTypes
 from app import db
-from app.models import Brief, Framework
+from app.models import Brief, Framework, utcnow
 
 
 class TestBriefs(BaseApplicationTest):
@@ -402,7 +402,7 @@ class TestBriefs(BaseApplicationTest):
         assert res.status_code == 404
 
     def test_get_brief(self):
-        NOW = pendulum.create(2015, 1, 1, 12, 34, 56, tz='Australia/Sydney')
+        NOW = pendulum.datetime(2015, 1, 1, 12, 34, 56, tz='Australia/Sydney')
 
         with pendulum.test(NOW):
             self.setup_dummy_briefs(1, title="I need a Developer")
@@ -441,7 +441,7 @@ class TestBriefs(BaseApplicationTest):
                     "teamBriefs": [],
                     "dates": {
                         'answers_close': None,
-                        'application_open_weeks': u'2 weeks',
+                        'application_open_weeks': '2 weeks',
                         'closing_date': None,
                         'closing_time': None,
                         'published_date': None,
@@ -449,7 +449,7 @@ class TestBriefs(BaseApplicationTest):
                         'questions_closing_date': None,
                         'hypothetical': {
                             'answers_close': '2015-01-14T07:00:00+00:00',
-                            'application_open_weeks': u'2 weeks',
+                            'application_open_weeks': '2 weeks',
                             'closing_date': '2015-01-15',
                             'closing_time': '2015-01-15T07:00:00+00:00',
                             'published_date': '2015-01-01',
@@ -466,7 +466,7 @@ class TestBriefs(BaseApplicationTest):
         assert loaded == {"briefs": expected_data}
 
     def test_get_live_brief_has_published_at_time(self):
-        NOW = pendulum.create(2015, 1, 1, 12, 34, 56, tz='Australia/Sydney')
+        NOW = pendulum.datetime(2015, 1, 1, 12, 34, 56, tz='Australia/Sydney')
 
         with pendulum.test(NOW):
             self.setup_dummy_briefs(1, status='live')
@@ -481,7 +481,7 @@ class TestBriefs(BaseApplicationTest):
 
             assert data['briefs']['dates'] == {
                 'answers_close': '2015-01-14T07:00:00+00:00',
-                'application_open_weeks': u'2 weeks',
+                'application_open_weeks': '2 weeks',
                 'closing_date': '2015-01-15',
                 'closing_time': '2015-01-15T07:00:00+00:00',
                 'published_date': '2015-01-01',
@@ -638,19 +638,19 @@ class TestBriefs(BaseApplicationTest):
         assert len(data['briefs']) == data['meta']['total'] == 3, data['briefs']
 
     def test_list_briefs_by_human_readable(self):
-        today = pendulum.utcnow()
+        today = utcnow()
         self.setup_dummy_briefs(1, data={'requirementsLength': '2 weeks'}, status=None, title='First',
                                 published_at=(today + timedelta(days=-40)))
         self.setup_dummy_briefs(1, data={'requirementsLength': '2 weeks'}, status=None, title='Second',
-                                published_at=(today + timedelta(days=-9)), brief_start=2)
+                                published_at=(today + timedelta(days=-23)), brief_start=2)
         self.setup_dummy_briefs(1, data={'requirementsLength': '1 week'}, status=None, title='Third',
-                                published_at=(today + timedelta(days=-8)), brief_start=3)
+                                published_at=(today + timedelta(days=-3)), brief_start=3)
         self.setup_dummy_briefs(1, data={'requirementsLength': '1 week'}, status=None, title='Fourth',
                                 published_at=(today + timedelta(days=-2)), brief_start=4)
 
         res = self.client.get('/briefs?human=True')
         data = json.loads(res.get_data(as_text=True))
-        titles = list(map(lambda brief: brief['title'], data['briefs']))
+        titles = list([brief['title'] for brief in data['briefs']])
 
         assert res.status_code == 200
         assert titles == ['Fourth', 'Third', 'Second', 'First']
@@ -1032,7 +1032,7 @@ class TestBriefs(BaseApplicationTest):
         assert delete.status_code == 400
 
         error = json.loads(delete.get_data(as_text=True))['error']
-        assert error == u"Cannot delete a live opportunity"
+        assert error == "Cannot delete a live opportunity"
 
         fetch_again = self.client.get('/briefs/1')
         assert fetch_again.status_code == 200
@@ -1047,7 +1047,7 @@ class TestBriefs(BaseApplicationTest):
         assert delete.status_code == 400
 
         error = json.loads(delete.get_data(as_text=True))['error']
-        assert error == u"Cannot delete a closed opportunity"
+        assert error == "Cannot delete a closed opportunity"
 
         fetch_again = self.client.get('/briefs/1')
         assert fetch_again.status_code == 200

@@ -28,7 +28,7 @@ from app.utils import (
 )
 from ...supplier_utils import validate_agreement_details_data
 from dmapiclient.audit import AuditTypes
-from dmutils.logging import notify_team
+from dmutils.logs import notify_team
 from app.emails import send_assessment_approval_notification
 import json
 from itertools import groupby, chain
@@ -451,7 +451,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
         seller_types_list.remove('consultant')
 
     if seller_types_list is not None and len(seller_types_list) == 0:
-            seller_types_list = None
+        seller_types_list = None
 
     if seller_types_list is not None:
         selected_seller_types = select(
@@ -484,7 +484,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
     results = []
 
     for x in range(len(raw_results)):
-        if type(raw_results[x]) is Supplier:
+        if isinstance(raw_results[x], Supplier):
             result = raw_results[x]
         else:
             result = raw_results[x][0]
@@ -505,7 +505,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
 
     sliced_results = []
     for key, group in groupby(suppliers, key=itemgetter('code')):
-        supplier = group.next()
+        supplier = next(group)
 
         supplier['seller_type'] = supplier.get('data') and supplier['data'].get('seller_type')
 

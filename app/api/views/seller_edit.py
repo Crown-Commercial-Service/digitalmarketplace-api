@@ -118,11 +118,11 @@ def update_supplier(supplier_code):
             'role': current_user.role
         })
     except NotFoundError as nfe:
-        not_found(nfe.message)
+        not_found(str(nfe))
     except DeletedError as de:
-        abort(de.message)
+        abort(str(de))
     except ValidationError as ve:
-        abort(ve.message)
+        abort(str(ve))
 
     info = seller_edit_business.get_supplier_edit_info({
         'supplier_code': current_user.supplier_code,
@@ -169,13 +169,13 @@ def accept_agreement(supplier_code):
             'user_id': current_user.id
         })
     except NotFoundError as nfe:
-        not_found(nfe.message)
+        not_found(str(nfe))
     except DeletedError as de:
-        abort(de.message)
+        abort(str(de))
     except ValidationError as ve:
-        abort(ve.message)
+        abort(str(ve))
     except UnauthorisedError as ue:
-        abort(ue.message)
+        abort(str(ue))
 
     info = seller_edit_business.get_supplier_edit_info({
         'supplier_code': current_user.supplier_code,
@@ -219,11 +219,11 @@ def decline_agreement(supplier_code):
             'email_address': current_user.email_address
         })
     except NotFoundError as nfe:
-        not_found(nfe.message)
+        not_found(str(nfe))
     except DeletedError as de:
-        abort(de.message)
+        abort(str(de))
     except UnauthorisedError as ue:
-        abort(ue.message)
+        abort(str(ue))
 
     return Response(status=200)
 
@@ -265,9 +265,9 @@ def notify_auth_rep(supplier_code):
             'email_address': current_user.email_address
         })
     except NotFoundError as nfe:
-        not_found(nfe.message)
+        not_found(str(nfe))
     except DeletedError as de:
-        abort(de.message)
+        abort(str(de))
 
     info = seller_edit_business.get_supplier_edit_info({
         'supplier_code': current_user.supplier_code,

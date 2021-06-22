@@ -42,7 +42,7 @@ def remove_keys_not_whitelisted(brief):
         'specialist': whitelist_fields_specialist,
         'training2': whitelist_fields_training
     }
-    for actual_key in brief.data.keys():
+    for actual_key in list(brief.data.keys()):
         whitelisted_keys = [key['name'] for key in field_whitelists[brief.lot.slug]]
         if actual_key not in whitelisted_keys:
             del brief.data[actual_key]

@@ -240,8 +240,8 @@ class TeamService(Service):
         if keywords:
             results = results.filter(
                 or_(
-                    User.name.ilike('%{}%'.format(keywords.encode('utf-8'))),
-                    User.email_address.ilike('%{}%'.format(keywords.encode('utf-8')))
+                    User.name.ilike('%{}%'.format(keywords)),
+                    User.email_address.ilike('%{}%'.format(keywords))
                 )
             )
 
@@ -249,33 +249,33 @@ class TeamService(Service):
         return [r._asdict() for r in results]
 
     def get_list_of_teams(self):
-            subquery = (
-                db
-                .session
-                .query(
-                    TeamMember.team_id,
-                    User.agency_id
-                )
-                .join(User, User.id == TeamMember.user_id)
-                .distinct()
-                .subquery()
+        subquery = (
+            db
+            .session
+            .query(
+                TeamMember.team_id,
+                User.agency_id
             )
+            .join(User, User.id == TeamMember.user_id)
+            .distinct()
+            .subquery()
+        )
 
-            result = (
-                db
-                .session
-                .query(
-                    Team.id.label('team_id'),
-                    Team.name.label('team_name'),
-                    Team.status,
-                    Agency.id.label('agency_id'),
-                    Agency.name.label('agency_name')
-                )
-                .join(subquery, subquery.c.team_id == Team.id)
-                .join(Agency, Agency.id == subquery.c.agency_id)
-                .all()
+        result = (
+            db
+            .session
+            .query(
+                Team.id.label('team_id'),
+                Team.name.label('team_name'),
+                Team.status,
+                Agency.id.label('agency_id'),
+                Agency.name.label('agency_name')
             )
-            return [r._asdict() for r in result]
+            .join(subquery, subquery.c.team_id == Team.id)
+            .join(Agency, Agency.id == subquery.c.agency_id)
+            .all()
+        )
+        return [r._asdict() for r in result]
 
     def get_team_briefs(self, team_id):
         result = (

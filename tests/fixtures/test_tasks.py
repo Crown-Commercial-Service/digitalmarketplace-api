@@ -61,26 +61,19 @@ def test_sync_mailchimp_seller_list_success(mock_mailchimp, app, suppliers, supp
             'members': [{
                 'email_address': email,
                 'status': 'subscribed'
-            } for email in emails_to_subscribe]
+            } for email in list(set(emails_to_subscribe))]
         })
 
 
-@mock.patch('app.tasks.mailchimp.RequestException')
 @mock.patch('app.tasks.mailchimp.MailChimp')
-def test_sync_mailchimp_seller_list_fails_mailchimp_api_call_with_requests_error(mock_mailchimp, mock_request_exception,
-                                                                                 app):
+def test_sync_mailchimp_seller_list_fails_mailchimp_api_call_with_requests_error(mock_mailchimp, app):
     client = MagicMock()
     mock_mailchimp.return_value = client
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
+    client.lists.members.all.side_effect = RequestException()
 
-    with app.app_context():
-        environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
-        client.lists.members.all.side_effect = RequestException
-
-        try:
-            sync_mailchimp_seller_list()
-            assert False
-        except RequestException as e:
-            assert True
+    with pytest.raises(RequestException) as e:
+        sync_mailchimp_seller_list()
 
 
 @mock.patch('app.tasks.mailchimp.MailChimp')
@@ -108,7 +101,7 @@ def test_sync_mailchimp_seller_list_fails_with_empty_list_id(mock_mailchimp, app
 def test_send_new_briefs_email_success(mock_mailchimp, app, briefs):
     client = MagicMock()
     mock_mailchimp.return_value = client
-    environ['MAILCHIMP_SELLER_EMAIL_LIST_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
 
     with app.app_context():
         send_new_briefs_email()
@@ -134,7 +127,7 @@ def test_send_new_briefs_email_success(mock_mailchimp, app, briefs):
 def test_send_new_briefs_email_fails_no_new_briefs_in_past_24hrs(mock_mailchimp, app, briefs):
     client = MagicMock()
     mock_mailchimp.return_value = client
-    environ['MAILCHIMP_SELLER_EMAIL_LIST_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
 
     with app.app_context():
         send_new_briefs_email()
@@ -148,7 +141,7 @@ def test_send_new_briefs_email_fails_no_new_briefs_in_past_24hrs(mock_mailchimp,
 def test_send_new_briefs_email_fails_no_new_briefs_since_last_run(mock_mailchimp, app, briefs):
     client = MagicMock()
     mock_mailchimp.return_value = client
-    environ['MAILCHIMP_SELLER_EMAIL_LIST_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
 
     with app.app_context():
 
@@ -172,18 +165,17 @@ def test_send_new_briefs_email_fails_no_new_briefs_since_last_run(mock_mailchimp
 def test_send_new_briefs_email_fails_with_empty_list_id(mock_mailchimp, app):
     client = MagicMock()
     mock_mailchimp.return_value = client
-    environ['MAILCHIMP_SELLER_EMAIL_LIST_ID'] = ''
+    environ['MAILCHIMP_SELLER_LIST_ID'] = ''
 
     with app.app_context():
         try:
             send_new_briefs_email()
             assert False
         except MailChimpConfigException as e:
-            assert str(e) == 'Failed to get MAILCHIMP_SELLER_EMAIL_LIST_ID from the environment variables.'
+            assert str(e) == 'Failed to get MAILCHIMP_SELLER_LIST_ID from the environment variables.'
 
 
-@mock.patch('app.tasks.mailchimp.Exception')
-@mock.patch('app.tasks.mailchimp.RequestException')
+@mock.patch('app.tasks.publish_tasks.mailchimp')
 @mock.patch('app.tasks.mailchimp.MailChimp')
 @pytest.mark.parametrize('briefs', [
     {
@@ -191,22 +183,16 @@ def test_send_new_briefs_email_fails_with_empty_list_id(mock_mailchimp, app):
         'framework_slug': 'digital-marketplace'
     }
 ], indirect=True)
-def test_send_new_briefs_email_fails_mailchimp_api_call_with_requests_error(mock_mailchimp, mock_request_exception,
-                                                                            mock_exception, app, briefs):
+def test_send_new_briefs_email_fails_mailchimp_api_call_with_requests_error(mock_mailchimp, mock_mailchimp_publish,
+                                                                            app, briefs):
     client = MagicMock()
     mock_mailchimp.return_value = client
-    environ['MAILCHIMP_SELLER_EMAIL_LIST_ID'] = '123456'
+    environ['MAILCHIMP_SELLER_LIST_ID'] = '123456'
 
-    client.campaigns.create.side_effect = RequestException
+    client.campaigns.create.side_effect = RequestException()
 
-    with app.app_context():
-        try:
-            send_new_briefs_email()
-            assert False
-        except RequestException as e:
-            assert True
-        except mock_exception as error:
-            assert False
+    with pytest.raises(RequestException) as e:
+        send_new_briefs_email()
 
 
 brief_response_data = {

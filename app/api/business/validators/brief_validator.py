@@ -4,13 +4,13 @@ from app.api.services import domain_service, suppliers
 
 whitelist_fields = [
     {'name': 'id', 'type': int},
-    {'name': 'title', 'type': basestring},
-    {'name': 'organisation', 'type': basestring},
+    {'name': 'title', 'type': str},
+    {'name': 'organisation', 'type': str},
     {'name': 'location', 'type': list},
-    {'name': 'summary', 'type': basestring},
-    {'name': 'industryBriefing', 'type': basestring},
-    {'name': 'internalReference', 'type': basestring},
-    {'name': 'sellerCategory', 'type': basestring},
+    {'name': 'summary', 'type': str},
+    {'name': 'industryBriefing', 'type': str},
+    {'name': 'internalReference', 'type': str},
+    {'name': 'sellerCategory', 'type': str},
     {'name': 'sellers', 'type': dict},
     {'name': 'attachments', 'type': list},
     {'name': 'requirementsDocument', 'type': list},
@@ -23,21 +23,21 @@ whitelist_fields = [
     {'name': 'proposalType', 'type': list},
     {'name': 'evaluationCriteria', 'type': list},
     {'name': 'includeWeightings', 'type': bool},
-    {'name': 'closedAt', 'type': basestring},
-    {'name': 'contactNumber', 'type': basestring},
-    {'name': 'startDate', 'type': basestring},
-    {'name': 'contractLength', 'type': basestring},
-    {'name': 'contractExtensions', 'type': basestring},
-    {'name': 'budgetRange', 'type': basestring},
-    {'name': 'workingArrangements', 'type': basestring},
-    {'name': 'securityClearance', 'type': basestring},
+    {'name': 'closedAt', 'type': str},
+    {'name': 'contactNumber', 'type': str},
+    {'name': 'startDate', 'type': str},
+    {'name': 'contractLength', 'type': str},
+    {'name': 'contractExtensions', 'type': str},
+    {'name': 'budgetRange', 'type': str},
+    {'name': 'workingArrangements', 'type': str},
+    {'name': 'securityClearance', 'type': str},
     {'name': 'publish', 'type': bool},
-    {'name': 'sellerSelector', 'type': basestring},
+    {'name': 'sellerSelector', 'type': str},
     {'name': 'comprehensiveTerms', 'type': bool},
-    {'name': 'areaOfExpertise', 'type': basestring},
-    {'name': 'originalClosedAt', 'type': basestring},
-    {'name': 'originalQuestionsClosedAt', 'type': basestring},
-    {'name': 'reasonToWithdraw', 'type': basestring}
+    {'name': 'areaOfExpertise', 'type': str},
+    {'name': 'originalClosedAt', 'type': str},
+    {'name': 'originalQuestionsClosedAt', 'type': str},
+    {'name': 'reasonToWithdraw', 'type': str}
 ]
 
 
@@ -135,7 +135,7 @@ class RFXDataValidator(object):
                 'Résumés'
             ]
             for val in self.data['proposalType']:
-                if val.encode('utf-8') not in whitelist:
+                if val not in whitelist:
                     return False
         return True
 
@@ -325,7 +325,7 @@ class RFXDataValidator(object):
             if publish:
                 errors = errors + self.validate_required()
 
-            request_keys = self.data.keys()
+            request_keys = list(self.data.keys())
             whitelisted_keys = [key['name'] for key in whitelist_fields]
             for key in request_keys:
                 if key not in whitelisted_keys:
@@ -336,6 +336,6 @@ class RFXDataValidator(object):
                     errors.append('Field "%s" is invalid, unexpected type' % key['name'])
 
         except Exception as e:
-            errors.append(e.message)
+            errors.append(str(e))
 
         return errors

@@ -200,7 +200,7 @@ class TestListServices(BaseApplicationTest):
         service = data['services'][0]
 
         assert_equal(service['supplierCode'], 0)
-        assert_equal(service['supplierName'], u'Supplier 0')
+        assert_equal(service['supplierName'], 'Supplier 0')
 
     def test_paginated_list_services_page_one(self):
         self.setup_dummy_services_including_unpublished(7)
@@ -273,7 +273,7 @@ class TestListServices(BaseApplicationTest):
 
         assert_equal(response.status_code, 200)
         assert_equal(
-            list(filter(lambda s: s['supplierCode'] == 1, data['services'])),
+            list([s for s in data['services'] if s['supplierCode'] == 1]),
             data['services']
         )
 
@@ -340,7 +340,7 @@ class TestListServices(BaseApplicationTest):
         data = json.loads(response.get_data())
 
         assert response.status_code == 400
-        assert data['error'] == 'Lot must be specified to filter by location'
+        assert data['error'] == 'ValidationError: Lot must be specified to filter by location'
 
     def test_can_only_filter_by_role_for_specialists_lot(self):
         self.setup_services()
@@ -348,7 +348,7 @@ class TestListServices(BaseApplicationTest):
         data = json.loads(response.get_data())
 
         assert response.status_code == 400
-        assert data['error'] == 'Role only applies to Digital Specialists lot'
+        assert data['error'] == 'ValidationError: Role only applies to Digital Specialists lot'
 
     def test_role_required_for_digital_specialists_location_query(self):
         self.setup_services()
@@ -356,4 +356,4 @@ class TestListServices(BaseApplicationTest):
         data = json.loads(response.get_data())
 
         assert response.status_code == 400
-        assert data['error'] == 'Role must be specified for Digital Specialists'
+        assert data['error'] == 'ValidationError: Role must be specified for Digital Specialists'

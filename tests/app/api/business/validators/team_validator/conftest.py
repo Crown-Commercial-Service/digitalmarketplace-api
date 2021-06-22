@@ -67,6 +67,17 @@ def teams(app):
 
 
 @pytest.fixture()
+def team_member(app, users):
+    yield (
+        db
+        .session
+        .query(User)
+        .filter(User.id == 5)
+        .first()
+    )
+
+
+@pytest.fixture()
 def team_members(app):
     with app.app_context():
         db.session.add(

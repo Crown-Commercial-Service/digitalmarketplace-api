@@ -1,5 +1,5 @@
 import json
-from pendulum import create as datetime
+import pendulum
 
 from tests.app.helpers import BaseApplicationTest
 from tests import example_listings
@@ -15,7 +15,7 @@ class BaseWorkOrderTest(BaseApplicationTest):
             self.setup_dummy_suppliers(2)
             brief = Brief(
                 data=example_listings.brief_data().example(),
-                published_at=datetime(2016, 1, 1), framework_id=5, lot=Lot.query.get(5)
+                published_at=pendulum.datetime(2016, 1, 1), framework_id=5, lot=Lot.query.get(5)
             )
 
             db.session.add(brief)
@@ -29,7 +29,7 @@ class BaseWorkOrderTest(BaseApplicationTest):
         with self.app.app_context():
             brief = Brief(
                 data=example_listings.brief_data().example(),
-                published_at=datetime(2016, 1, 1), framework_id=5, lot=Lot.query.get(5)
+                published_at=pendulum.datetime(2016, 1, 1), framework_id=5, lot=Lot.query.get(5)
             )
 
             db.session.add(brief)

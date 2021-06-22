@@ -8,16 +8,16 @@ import pendulum
 
 
 def csv_cell_sanitize(text):
-    return re.sub(r"^(;|=|\+|-|@|!|\|{|}|\[|\]|<|,)+", '', unicode(text).strip())
+    return re.sub(r"^(;|=|\+|-|@|!|\|{|}|\[|\]|<|,)+", '', str(text).strip())
 
 
 def convert_to_csv(data, convertor_function, transpose=False):
     # convert the responses to a list - each row is a dict representing a brief response
     rows = [convertor_function(d) for d in data]
     # add the keys of a dict as the first element in the rows list, to be used as headers
-    first = rows[0].keys() if data else []
+    first = list(rows[0].keys()) if data else []
     first = [f.replace('_', ' ').capitalize() if '_' in f else f for f in first]
-    rows = [first] + [r.values() for r in rows]
+    rows = [first] + [list(r.values()) for r in rows]
 
     csvdata = StringIO()
     with csvx.Writer(csvdata) as csv_out:
@@ -49,7 +49,7 @@ def format_response_criteria(criteria):
     if not criteria:
         return ''
     result = []
-    for k, v in criteria.iteritems():
+    for k, v in criteria.items():
         result.append(k + ': ' + v)
     return ', '.join(result)
 
@@ -139,8 +139,8 @@ def generate_brief_responses_csv(brief, responses):
                 if i < len(r.data.get('niceToHaveRequirements', []))
                 else '' for i in range(len(nth_req_names))
             ]
-            answers.update(zip(ess_req_names, ess_responses))
-            answers.update(zip(nth_req_names, nth_responses))
+            answers.update(list(zip(ess_req_names, ess_responses)))
+            answers.update(list(zip(nth_req_names, nth_responses)))
 
         if brief.lot.slug == 'specialist':
             for essential_requirement in brief.data['essentialRequirements']:
@@ -173,7 +173,7 @@ def generate_brief_responses_csv(brief, responses):
 
             labourHire = r.supplier.data.get('labourHire', {})
 
-            for state in states:
+            for state in sorted(states):
                 licence_number = ''
                 licence_expiry = ''
                 if state in labourHire:
@@ -183,7 +183,7 @@ def generate_brief_responses_csv(brief, responses):
                         licence_expiry = (
                             pendulum.parse(
                                 labourHire[state]['expiry']
-                            ).format('DD MMMM YYYY', formatter='alternative')
+                            ).format('DD MMMM YYYY')
                         )
                 answers.update({'%s Labour hire licence' % (states[state]): licence_number})
                 answers.update({'%s Labour hire licence expiry' % (states[state]): licence_expiry})
@@ -203,7 +203,7 @@ def generate_brief_responses_csv(brief, responses):
                 for criteria, response in criteriaResponses.items():
                     answers.update({criteria: response})
 
-        for k, v in answers.items():
+        for k, v in list(answers.items()):
             answers[k] = csv_cell_sanitize(v) if k not in ['essential_criteria'] else v
 
         return answers
@@ -224,7 +224,7 @@ def generate_seller_catalogue_csv(seller_catalogue):
         state = r.get('address', {}).get('state', '')
         postcode = r.get('address', {}).get('postal_code', '')
         country = r.get('address', {}).get('country', '')
-        full_address = ', '.join(filter(None, [address, suburb, state, postcode, country]))
+        full_address = ', '.join([_f for _f in [address, suburb, state, postcode, country] if _f])
         answers.update({'Location': full_address if full_address else empty_cell_value})
 
         answers.update({'Email': r['contact_email']})
@@ -285,7 +285,7 @@ def generate_seller_catalogue_csv(seller_catalogue):
         answers.update({'ACT labour hire licence': licence_act_number})
         answers.update({'ACT licence expiry': licence_act_expiry})
 
-        for k, v in answers.items():
+        for k, v in list(answers.items()):
             answers[k] = csv_cell_sanitize(v)
 
         return answers
@@ -313,19 +313,19 @@ def generate_seller_responses_csv(seller_responses):
             ess_req_names = r.get('essentialRequirementsCriteria', [])
             ess_responses = r.get('essentialRequirements', [])
             ess_dict = dict(
-                zip(
+                list(zip(
                     [er for er in ess_req_names],
                     [er for er in ess_responses or []]
-                )
+                ))
             )
             answers.update({'Response criteria': ess_dict})
             nth_req_names = r.get('niceToHaveRequirementsCriteria', [])
             nth_responses = r.get('niceToHaveRequirements', [])
             nth_dict = dict(
-                zip(
+                list(zip(
                     [er for er in nth_req_names],
                     [er for er in nth_responses or []]
-                )
+                ))
             )
             answers.update({'Optional response criteria': nth_dict or {}})
             answers.update({'Work eligibility': ''})
@@ -367,20 +367,20 @@ def generate_seller_responses_csv(seller_responses):
             ess_req_names = r.get('essentialRequirementsCriteria', [])
             ess_responses = r.get('essentialRequirements', [])
             ess_dict = dict(
-                zip(
+                list(zip(
                     [er for er in ess_req_names],
                     [er for er in ess_responses]
-                )
+                ))
             )
             answers.update({'Response criteria': ess_dict})
 
             nth_req_names = r.get('niceToHaveRequirementsCriteria') or []
             nth_responses = r.get('niceToHaveRequirements') or []
             nth_dict = dict(
-                zip(
+                list(zip(
                     [er for er in nth_req_names],
                     [er for er in nth_responses]
-                )
+                ))
             )
             answers.update({'Optional response criteria': nth_dict})
             answers.update({'Work eligibility': ''})
@@ -432,7 +432,7 @@ def generate_seller_responses_csv(seller_responses):
             'Optional response criteria': format_response_criteria(answers['Optional response criteria'])
         })
 
-        for k, v in answers.items():
+        for k, v in list(answers.items()):
             answers[k] = csv_cell_sanitize(v)
 
         return answers
@@ -470,7 +470,7 @@ def generate_specialist_opportunities_csv(specialist_opportunities):
         answers.update({'time_closed': r['closed_at']})
         answers.update({'time_awarded': r['time_awarded']})
 
-        for k, v in answers.items():
+        for k, v in list(answers.items()):
             answers[k] = csv_cell_sanitize(v)
 
         return answers
@@ -498,7 +498,7 @@ def generate_atm_opportunities_csv(atmOpportunities):
         answers.update({'time_published': r['published_at']})
         answers.update({'time_closed': r['closed_at']})
         answers.update({'time_awarded': r['time_awarded']})
-        for k, v in answers.items():
+        for k, v in list(answers.items()):
             answers[k] = csv_cell_sanitize(v)
 
         return answers
@@ -536,7 +536,7 @@ def generate_rfx_opportunities_csv(rfx_opportunities):
         answers.update({'time_published': r['published_at']})
         answers.update({'time_closed': r['closed_at']})
         answers.update({'time_awarded': r['time_awarded']})
-        for k, v in answers.items():
+        for k, v in list(answers.items()):
             answers[k] = csv_cell_sanitize(v)
 
         return answers
@@ -576,7 +576,7 @@ def generate_training_opportunities_csv(training_opportunities):
         answers.update({'time_published': r['published_at']})
         answers.update({'time_closed': r['closed_at']})
         answers.update({'time_awarded': r['time_awarded']})
-        for k, v in answers.items():
+        for k, v in list(answers.items()):
             answers[k] = csv_cell_sanitize(v)
 
         return answers

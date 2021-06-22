@@ -28,6 +28,9 @@ class TestModelbase(BaseApplicationTest):
                 assert 'brief_responses' not in s.serializable
                 assert set(s._relationships + s._fields) == set(s._props)
 
+                s.creation_time = s.creation_time.in_tz('utc')
+                s.last_update_time = s.last_update_time.in_tz('utc')
+
                 # testing a round trip update of fields
                 before_update = json.loads(s.json)
                 for_update = before_update.copy()

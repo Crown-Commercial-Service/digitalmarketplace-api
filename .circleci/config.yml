@@ -15,7 +15,7 @@ references:
         cf -v
   deploy_docker: &deploy_docker
     docker:
-      - image: circleci/python:2.7.17-stretch
+      - image: circleci/python:3.7.9-stretch
         environment:
           TZ: "/usr/share/zoneinfo/Australia/Sydney"
   update_libs: &update_libs
@@ -94,7 +94,7 @@ jobs:
       - run: 
           name: Pip Install
           command: |
-            virtualenv venv
+            python -m venv venv
             source venv/bin/activate
             pip install -r requirements.txt
             pip uninstall -y pytest-sugar

@@ -167,7 +167,7 @@ class TestSuppliersService(BaseApplicationTest):
             {
                 'labourHire': {
                     'vic': {
-                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d'),
+                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('YYYY-MM-DD'),
                         'licenceNumber': 'V123456'
                     }
                 }
@@ -175,7 +175,7 @@ class TestSuppliersService(BaseApplicationTest):
         ], indirect=True
     )
     def test_get_expired_licences_returns_vic_only(self, supplier, users):
-        expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d')
+        expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('YYYY-MM-DD')
 
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
         assert suppliers_with_expired_licences[0]['labour_hire_licences'] == [
@@ -191,15 +191,15 @@ class TestSuppliersService(BaseApplicationTest):
             {
                 'labourHire': {
                     'sa': {
-                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d'),
+                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('YYYY-MM-DD'),
                         'licenceNumber': 'S123456'
                     },
                     'vic': {
-                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d'),
+                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('YYYY-MM-DD'),
                         'licenceNumber': 'V123456'
                     },
                     'act': {
-                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d'),
+                        'expiry': pendulum.today(tz='Australia/Sydney').add(days=10).format('YYYY-MM-DD'),
                         'licenceNumber': 'A123456'
                     }
                 }
@@ -207,7 +207,7 @@ class TestSuppliersService(BaseApplicationTest):
         ], indirect=True
     )
     def test_ignore_sa_expired_licences_and_return_vic_and_act(self, supplier, users):
-        expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('%Y-%m-%d')
+        expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('YYYY-MM-DD')
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
 
         assert suppliers_with_expired_licences[0]['labour_hire_licences'] == [
