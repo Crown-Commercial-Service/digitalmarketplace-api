@@ -7,7 +7,7 @@ from .utils import index_object
 
 
 def validate_brief_data(brief, enforce_required=True, required_fields=None):
-    errs = get_validation_errors(
+    errors = get_validation_errors(
         'briefs-{}-{}'.format(brief.framework.slug, brief.lot.slug),
         brief.data,
         enforce_required=enforce_required,
@@ -19,14 +19,14 @@ def validate_brief_data(brief, enforce_required=True, required_fields=None):
     if 'socialWeighting' in brief.data and brief.data['socialWeighting'] >= 10:
         criteria_weighting_keys.append('socialWeighting')
     # Only check total if all weightings are set
-    if not errs and all(key in brief.data for key in criteria_weighting_keys):
+    if not errors and all(key in brief.data for key in criteria_weighting_keys):
         criteria_weightings = sum(brief.data[key] for key in criteria_weighting_keys)
         if criteria_weightings != 100:
             for key in criteria_weighting_keys:
-                errs[key] = 'total_should_be_100'
+                errors[key] = 'total_should_be_100'
 
-    if errs:
-        abort(400, errs)
+    if errors:
+        abort(400, errors)
 
 
 def get_supplier_service_eligible_for_brief(supplier, brief):
