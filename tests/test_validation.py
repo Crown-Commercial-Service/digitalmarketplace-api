@@ -817,7 +817,22 @@ def test_translate_oneof_errors():
     }]) == {'example': [{'error': 'answer_required', 'field': 'example-field', 'index': 0}]}
 
 
-def test_translate_unknown_oneoff_eerror():
+def test_translate_social_value_oneof_errors():
+    assert api_error([{
+        'validator': 'oneOf',
+        'message': "failed",
+        'path': ['socialValue'],
+        'validator_value': [{'maximum': 20, 'minimum': 10, 'type': 'integer'},
+                            {'maximum': 0, 'minimum': 0, 'type': 'integer'}],
+        'context': [
+            {'message': "failed",
+             'validator': 'oneOf'
+             }
+        ],
+    }]) == {'socialValue': 'not_a_number'}
+
+
+def test_translate_unknown_oneof_error():
     assert api_error([{
         'validator': 'oneOf',
         'message': "failed",
