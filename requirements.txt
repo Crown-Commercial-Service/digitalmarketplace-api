@@ -46,6 +46,18 @@ docopt==0.6.2
     # via notifications-python-client
 docutils==0.15.2
     # via botocore
+flask==1.1.4
+    # via
+    #   -r requirements.in
+    #   digitalmarketplace-utils
+    #   flask-bcrypt
+    #   flask-gzip
+    #   flask-login
+    #   flask-migrate
+    #   flask-session
+    #   flask-sqlalchemy
+    #   flask-wtf
+    #   gds-metrics
 flask-bcrypt==0.7.1
     # via -r requirements.in
 flask-gzip==0.2
@@ -62,18 +74,6 @@ flask-sqlalchemy==2.5.1
     #   flask-migrate
 flask-wtf==0.14.3
     # via digitalmarketplace-utils
-flask==1.1.4
-    # via
-    #   -r requirements.in
-    #   digitalmarketplace-utils
-    #   flask-bcrypt
-    #   flask-gzip
-    #   flask-login
-    #   flask-migrate
-    #   flask-session
-    #   flask-sqlalchemy
-    #   flask-wtf
-    #   gds-metrics
 fleep==1.0.1
     # via digitalmarketplace-utils
 future==0.18.2
@@ -158,17 +158,17 @@ six==1.14.0
     #   python-dateutil
     #   sqlalchemy-json
     #   sqlalchemy-utils
-sqlalchemy-json==0.4.0
-    # via -r requirements.in
-sqlalchemy-utils==0.37.7
-    # via -r requirements.in
-sqlalchemy==1.4.18
+sqlalchemy==1.4.19
     # via
     #   -r requirements.in
     #   alembic
     #   flask-sqlalchemy
     #   sqlalchemy-json
     #   sqlalchemy-utils
+sqlalchemy-json==0.4.0
+    # via -r requirements.in
+sqlalchemy-utils==0.37.7
+    # via -r requirements.in
 strict-rfc3339==0.7
     # via -r requirements.in
 unicodecsv==0.14.1
