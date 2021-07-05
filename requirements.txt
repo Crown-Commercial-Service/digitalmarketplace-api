@@ -158,7 +158,7 @@ six==1.14.0
     #   python-dateutil
     #   sqlalchemy-json
     #   sqlalchemy-utils
-sqlalchemy==1.4.19
+sqlalchemy==1.4.20
     # via
     #   -r requirements.in
     #   alembic
