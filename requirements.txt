@@ -167,7 +167,7 @@ sqlalchemy==1.4.20
     #   sqlalchemy-utils
 sqlalchemy-json==0.4.0
     # via -r requirements.in
-sqlalchemy-utils==0.37.7
+sqlalchemy-utils==0.37.8
     # via -r requirements.in
 strict-rfc3339==0.7
     # via -r requirements.in
