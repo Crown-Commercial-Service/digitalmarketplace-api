@@ -149,6 +149,30 @@
       "minLength": 1,
       "type": "string"
     },
+    "socialValueCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
+    },
+    "socialWeighting": {
+      "oneOf": [
+        {
+          "maximum": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "maximum": 20,
+          "minimum": 10,
+          "type": "integer"
+        }
+      ]
+    },
     "successCriteria": {
       "items": {
         "maxLength": 300,
@@ -188,6 +212,8 @@
     "researchDates",
     "researchFrequency",
     "researchRounds",
+    "socialValueCriteria",
+    "socialWeighting",
     "successCriteria",
     "summary",
     "technicalWeighting",

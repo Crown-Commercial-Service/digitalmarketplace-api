@@ -130,6 +130,30 @@
       "pattern": "^$|(^(?:\\S+\\s+){0,49}\\S+$)",
       "type": "string"
     },
+    "socialValueCriteria": {
+      "items": {
+        "maxLength": 300,
+        "pattern": "^(?:\\S+\\s+){0,29}\\S+$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "type": "array"
+    },
+    "socialWeighting": {
+      "oneOf": [
+        {
+          "maximum": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "maximum": 20,
+          "minimum": 10,
+          "type": "integer"
+        }
+      ]
+    },
     "specialistRole": {
       "enum": [
         "agileCoach",
@@ -200,6 +224,8 @@
     "organisation",
     "priceWeighting",
     "requirementsLength",
+    "socialValueCriteria",
+    "socialWeighting",
     "specialistRole",
     "specialistWork",
     "startDate",

@@ -169,13 +169,13 @@
     "socialWeighting": {
       "oneOf": [
         {
-          "maximum": 20,
-          "minimum": 10,
+          "maximum": 0,
+          "minimum": 0,
           "type": "integer"
         },
         {
-          "maximum": 0,
-          "minimum": 0,
+          "maximum": 20,
+          "minimum": 10,
           "type": "integer"
         }
       ]
@@ -240,6 +240,8 @@
     "phase",
     "priceCriteria",
     "priceWeighting",
+    "socialValueCriteria",
+    "socialWeighting",
     "startDate",
     "successCriteria",
     "summary",
