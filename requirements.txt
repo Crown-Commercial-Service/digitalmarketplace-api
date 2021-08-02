@@ -64,7 +64,7 @@ flask-gzip==0.2
     # via digitalmarketplace-utils
 flask-login==0.5.0
     # via digitalmarketplace-utils
-flask-migrate==3.0.1
+flask-migrate==3.1.0
     # via -r requirements.in
 flask-session==0.3.2
     # via digitalmarketplace-utils
