@@ -374,6 +374,8 @@ class ApplicationValidator(object):
 
         if recruiter == 'yes' or recruiter == 'both':
             for service in services.keys():
+                if service in ['Platforms integration', 'Service Integration and Management']:
+                    continue
                 if service not in recruiter_info:
                     errors.append({
                         'message': 'Recruiter info is required for {}'.format(service),
