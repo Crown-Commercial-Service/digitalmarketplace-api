@@ -22,7 +22,7 @@ defusedxml==0.5.0
 docopt==0.6.2
 docutils==0.14
 -e git+https://github.com/AusDTO/dto-digitalmarketplace-apiclient.git@bdc3015bb42a63611242e0573dd58160e9a3dfeb#egg=dto_digitalmarketplace_apiclient==whatever
--e git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@d1053d4fff79fedf865b2634d5e146853df86003#egg=dto_digitalmarketplace_utils==whatever
+-e git+https://github.com/AusDTO/dto-digitalmarketplace-utils.git@c64bc062ab257d50158c1d83d29ff2e5ea9ec1c4#egg=dto_digitalmarketplace_utils==whatever
 enum34==1.1.6
 execnet==1.4.1
 Faker==0.7.12

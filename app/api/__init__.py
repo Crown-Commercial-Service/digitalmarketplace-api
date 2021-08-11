@@ -2,7 +2,7 @@ import rollbar
 from dmutils.csrf import check_valid_csrf
 from dmutils.user import User as LoginUser
 from sqlalchemy.orm import noload
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request, current_app, session
 from flask_login import LoginManager
 from app.models import User
 from app.api.business import supplier_business, team_business
@@ -65,8 +65,14 @@ def check_csrf_token():
             new_csrf_valid = check_valid_csrf()
 
             if not (new_csrf_valid):
+                if '_csrf_token' in session:
+                    session.pop('_csrf_token')
+
+                if 'csrf' in session:
+                    session.pop('csrf')
+
                 rollbar.report_message('csrf.invalid_token: Aborting request check_csrf_token()', 'error', request)
-                abort('Invalid CSRF token. Please try again.')
+                abort('Invalid CSRF token. Please refresh the page and try again.')
 
 
 @api.after_request
