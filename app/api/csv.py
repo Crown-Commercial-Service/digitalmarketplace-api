@@ -240,7 +240,7 @@ def generate_seller_catalogue_csv(seller_catalogue):
         })
 
         answers.update({
-            'SME': 'Yes' if r.get('seller_type', {}).get('sme', '') is True else 'No'
+            'SME (self-reported)': 'Yes' if r.get('seller_type', {}).get('sme', '') is True else 'No'
         })
 
         answers.update({'Accreditations': r['certifications'] if r['certifications'] else empty_cell_value})
