@@ -975,7 +975,7 @@ def test_rfx_publish_success_3_days_and_under_correct_dates(brief, client, buyer
 @mock.patch('app.tasks.publish_tasks.brief')
 @pytest.mark.parametrize(
     'get_day_count',
-    [{'day_count': 4}, {'day_count': 5}, {'day_count': 10}, {'day_count': 22}, {'day_count': 36}], indirect=True
+    [{'day_count': 4}, {'day_count': 5}, {'day_count': 10}, {'day_count': 22}], indirect=True
 )
 def test_rfx_publish_success_over_3_days_correct_dates(brief, client, buyer_user,
                                                        supplier_domains, suppliers, rfx_brief,
@@ -1542,7 +1542,7 @@ def test_atm_publish_success_3_days_and_under_correct_dates(brief, client, buyer
 
 @pytest.mark.parametrize(
     'get_day_count',
-    [{'day_count': 4}, {'day_count': 5}, {'day_count': 10}, {'day_count': 22}, {'day_count': 36}], indirect=True
+    [{'day_count': 4}, {'day_count': 5}, {'day_count': 10}, {'day_count': 22}], indirect=True
 )
 @mock.patch('app.tasks.publish_tasks.brief')
 def test_atm_publish_success_over_3_days_correct_dates(brief, client, buyer_user, supplier_domains, suppliers,
