@@ -7,6 +7,7 @@ from app import encryption
 from app.models import Brief, Lot, db, utcnow, Supplier, SupplierFramework, Contact, SupplierDomain, User,\
     Framework, UserFramework, AuditEvent, FrameworkLot, Domain
 from app.api.business.validators import RFXDataValidator, ATMDataValidator
+from app.api.services import briefs
 from faker import Faker
 from dmapiclient.audit import AuditTypes
 from workdays import workday
@@ -1947,3 +1948,90 @@ def test_buyer_can_publish_specialist_opportunity_with_permission(brief, client,
     res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
 
     assert res.status_code == 200
+
+
+@pytest.mark.parametrize('criterion', [
+    'Ability to fix bugs\\problems',
+    'Write\ unit\\integration\\\system\\\\tests'
+])
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_back_slashes_are_replaced_in_evaluation_criteria(brief, client, buyer_user, atm_brief,
+                                                          atm_data, teams, team_members,
+                                                          publish_opportunities_permission, criterion):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    data = atm_data
+    data['includeWeightings'] = False
+    data['evaluationCriteria'] = [{
+        'criteria': criterion,
+        'weighting': ''
+    }]
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+
+    brief = briefs.get(1)
+    for requirement in brief.data.get('evaluationCriteria'):
+        assert '\\' not in requirement['criteria']
+
+
+@pytest.mark.parametrize('criterion', [
+    'Ability to fix bugs\\problems',
+    'Write unit\integration/system tests'
+])
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_back_slashes_are_replaced_in_essential_criteria(brief, client, buyer_user, specialist_brief,
+                                                         specialist_data, teams, team_members,
+                                                         publish_opportunities_permission, criterion):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    data = specialist_data
+    data['includeWeightingsEssential'] = False
+    data['essentialRequirements'] = [{
+        'criteria': criterion,
+        'weighting': ''
+    }]
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+
+    brief = briefs.get(1)
+    for requirement in brief.data.get('essentialRequirements'):
+        assert '\\' not in requirement['criteria']
+
+
+@pytest.mark.parametrize('criterion', [
+    'Ability to fix bugs\\problems',
+    'Write unit\integration/system tests'
+])
+@mock.patch('app.tasks.publish_tasks.brief')
+def test_back_slashes_are_replaced_in_nice_to_have_criteria(brief, client, buyer_user, specialist_brief,
+                                                            specialist_data, teams, team_members,
+                                                            publish_opportunities_permission, criterion):
+    res = client.post('/2/login', data=json.dumps({
+        'emailAddress': 'me@digital.gov.au', 'password': 'test'
+    }), content_type='application/json')
+
+    data = specialist_data
+    data['includeWeightingsNiceToHave'] = False
+    data['niceToHaveRequirements'] = [{
+        'criteria': criterion,
+        'weighting': ''
+    }]
+    data['publish'] = True
+    data['closedAt'] = pendulum.today(tz='Australia/Sydney').add(days=14).format('YYYY-MM-DD')
+
+    res = client.patch('/2/brief/1', content_type='application/json', data=json.dumps(data))
+    assert res.status_code == 200
+
+    brief = briefs.get(1)
+    for requirement in brief.data.get('niceToHaveRequirements'):
+        assert '\\' not in requirement['criteria']

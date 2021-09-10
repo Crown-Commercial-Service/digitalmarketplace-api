@@ -568,6 +568,18 @@ def update_brief(brief_id):
         else:
             data['areaOfExpertise'] = ''
 
+    for requirement in data.get('evaluationCriteria', []):
+        if 'criteria' in requirement:
+            requirement['criteria'] = requirement['criteria'].replace('\\', '/')
+
+    for requirement in data.get('essentialRequirements', []):
+        if 'criteria' in requirement:
+            requirement['criteria'] = requirement['criteria'].replace('\\', '/')
+
+    for requirement in data.get('niceToHaveRequirements', []):
+        if 'criteria' in requirement:
+            requirement['criteria'] = requirement['criteria'].replace('\\', '/')
+
     previous_status = brief.status
     brief.data = data
     if publish:
