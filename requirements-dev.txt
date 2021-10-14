@@ -47,13 +47,6 @@ idna==2.9
     # via
     #   -c requirements.txt
     #   requests
-importlib-metadata==1.6.0
-    # via
-    #   -c requirements.txt
-    #   jsonschema
-    #   pluggy
-    #   pytest
-    #   sqlalchemy
 isodate==0.6.0
     # via alchemyjsonschema
 jsonschema==3.2.0
@@ -86,12 +79,12 @@ pyrsistent==0.15.7
     # via
     #   -c requirements.txt
     #   jsonschema
+pytest-cov==2.8.1
+    # via -r requirements-dev.in
 pytest==5.3.5
     # via
     #   -r requirements-dev.in
     #   pytest-cov
-pytest-cov==2.8.1
-    # via -r requirements-dev.in
 python-dateutil==2.8.1
     # via
     #   -c requirements.txt
@@ -102,12 +95,12 @@ pytz==2019.3
     # via
     #   -c requirements.txt
     #   alchemyjsonschema
+requests-mock==1.7.0
+    # via -r requirements-dev.in
 requests==2.23.0
     # via
     #   -c requirements.txt
     #   requests-mock
-requests-mock==1.7.0
-    # via -r requirements-dev.in
 six==1.14.0
     # via
     #   -c requirements.txt
@@ -133,10 +126,6 @@ urllib3==1.25.10
     #   requests
 wcwidth==0.1.8
     # via pytest
-zipp==3.1.0
-    # via
-    #   -c requirements.txt
-    #   importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

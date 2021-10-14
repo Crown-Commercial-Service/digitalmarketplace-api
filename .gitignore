@@ -8,3 +8,5 @@ version_label
 local.nix
 
 .envrc
+
+.idea/
