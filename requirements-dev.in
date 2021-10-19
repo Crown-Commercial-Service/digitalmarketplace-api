@@ -1,7 +1,5 @@
 -c requirements.txt
 
-pip-tools>=5.4.0
-
 # For schema generation
 alchemyjsonschema==0.7.1
 
