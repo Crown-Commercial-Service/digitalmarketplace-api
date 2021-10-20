@@ -8,7 +8,9 @@ updates:
   open-pull-requests-limit: 10
   allow:
   - dependency-type: production
-
+  ignore:
+  - dependency-name: "jsonschema"
+    update-types: ["version-update:semver-major"]
 - package-ecosystem: docker
   directory: "/"
   schedule:

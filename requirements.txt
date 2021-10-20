@@ -46,18 +46,6 @@ docopt==0.6.2
     # via notifications-python-client
 docutils==0.15.2
     # via botocore
-flask==1.1.4
-    # via
-    #   -r requirements.in
-    #   digitalmarketplace-utils
-    #   flask-bcrypt
-    #   flask-gzip
-    #   flask-login
-    #   flask-migrate
-    #   flask-session
-    #   flask-sqlalchemy
-    #   flask-wtf
-    #   gds-metrics
 flask-bcrypt==0.7.1
     # via -r requirements.in
 flask-gzip==0.2
@@ -74,6 +62,18 @@ flask-sqlalchemy==2.5.1
     #   flask-migrate
 flask-wtf==0.14.3
     # via digitalmarketplace-utils
+flask==1.1.4
+    # via
+    #   -r requirements.in
+    #   digitalmarketplace-utils
+    #   flask-bcrypt
+    #   flask-gzip
+    #   flask-login
+    #   flask-migrate
+    #   flask-session
+    #   flask-sqlalchemy
+    #   flask-wtf
+    #   gds-metrics
 fleep==1.0.1
     # via digitalmarketplace-utils
 future==0.18.2
@@ -97,7 +97,7 @@ jmespath==0.9.4
     # via
     #   boto3
     #   botocore
-jsonschema==4.1.0
+jsonschema==3.2.0
     # via -r requirements.in
 mailchimp3==3.0.15
     # via digitalmarketplace-utils
@@ -149,10 +149,15 @@ six==1.14.0
     # via
     #   bcrypt
     #   cryptography
+    #   jsonschema
     #   pyrsistent
     #   python-dateutil
     #   sqlalchemy-json
     #   sqlalchemy-utils
+sqlalchemy-json==0.4.0
+    # via -r requirements.in
+sqlalchemy-utils==0.37.8
+    # via -r requirements.in
 sqlalchemy==1.4.25
     # via
     #   -r requirements.in
@@ -160,10 +165,6 @@ sqlalchemy==1.4.25
     #   flask-sqlalchemy
     #   sqlalchemy-json
     #   sqlalchemy-utils
-sqlalchemy-json==0.4.0
-    # via -r requirements.in
-sqlalchemy-utils==0.37.8
-    # via -r requirements.in
 strict-rfc3339==0.7
     # via -r requirements.in
 unicodecsv==0.14.1
@@ -178,3 +179,6 @@ workdays==1.4
     # via digitalmarketplace-utils
 wtforms==2.2.1
     # via flask-wtf
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools
