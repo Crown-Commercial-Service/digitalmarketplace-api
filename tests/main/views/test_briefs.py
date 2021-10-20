@@ -1546,6 +1546,35 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
             }
         }
 
+    def test_can_supply_award_details_with_single_digit_dates(self, index_brief):
+        brief_response_id = self._setup_brief_response()
+
+        res = self._post_to_award_details_endpoint(
+            {
+                "awardDetails": {
+                    "awardedContractStartDate": "2020-1-1",
+                    "awardedContractValue": "99.95",
+                },
+                "updated_by": "user@email.com"
+            }, brief_response_id
+        )
+
+        assert res.status_code == 200
+        data = json.loads(res.get_data(as_text=True))
+        assert data['briefs']['awardedBriefResponseId'] == brief_response_id
+        assert index_brief.called is True
+
+        brief_response_audits = get_audit_events(self.client, AuditTypes.update_brief_response)
+        assert len(brief_response_audits) == 1
+        assert brief_response_audits[0]['data'] == {
+            'briefId': 1,
+            'briefResponseId': brief_response_id,
+            'briefResponseAwardDetails': {
+                "awardedContractStartDate": "2020-1-1",
+                "awardedContractValue": "99.95"
+            }
+        }
+
     def test_edit_award_details_for_awarded_brief(self, index_brief):
         brief_response_id = self._setup_brief_response()
 
