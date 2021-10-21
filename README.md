@@ -71,7 +71,7 @@ make test-bootstrap
 ```
 
 ### Updating test API model stubs
-The tests validate API responses against the model stubs in https://github.com/alphagov/digitalmarketplace-test-utils/tree/master/dmtestutils/api_model_stubs. To update these, point the API requirements-dev to a branch of `digitalmarketplace-test-utils`. Once your changes are approved in a PR you should make a new release of `digitalmarketplace-test-utils` and update the version in `digitalmarketplace-api` to use it.
+The tests validate API responses against the model stubs in https://github.com/Crown-Commercial-Service/digitalmarketplace-test-utils/tree/main/dmtestutils/api_model_stubs. To update these, point the API requirements-dev to a branch of `digitalmarketplace-test-utils`. Once your changes are approved in a PR you should make a new release of `digitalmarketplace-test-utils` and update the version in `digitalmarketplace-api` to use it.
 
 
 ### Updating Python dependencies
@@ -129,7 +129,7 @@ Note that the `alchemyjsonschema` library is a dev requirement only.
 
 ## Contributing
 
-This repository is maintained by the Digital Marketplace team at the [Government Digital Service](https://github.com/alphagov).
+This repository is maintained by the Digital Marketplace team at the [Crown Commercial Service](https://github.com/Crown-Commercial-Service).
 
 If you have a suggestion for improvement, please raise an issue on this repo.
 
@@ -138,7 +138,7 @@ If you have a suggestion for improvement, please raise an issue on this repo.
 If you have discovered a security vulnerability in this code, we appreciate your help in disclosing it to us in a
 responsible manner.
 
-Please follow the [GDS vulnerability reporting steps](https://github.com/alphagov/.github/blob/master/SECURITY.md),
+Please follow the [CCS vulnerability reporting steps](https://www.crowncommercial.gov.uk/about-ccs/vulnerability-disclosure-policy/),
 giving details of any issue you find. Appropriate credit will be given to those reporting confirmed issues.
 
 ## Licence
