@@ -488,8 +488,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
             result = raw_results[x]
         else:
             result = raw_results[x][0]
-            if raw_results[x][1] is not None and raw_results[x][1] != '':
-                result.summary = raw_results[x][1]
+
         results.append(result)
 
     sliced_results = results[offset:(offset + result_count)]
