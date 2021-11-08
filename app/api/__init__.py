@@ -65,11 +65,8 @@ def check_csrf_token():
             new_csrf_valid = check_valid_csrf()
 
             if not (new_csrf_valid):
-                if '_csrf_token' in session:
-                    session.pop('_csrf_token')
-
-                if 'csrf' in session:
-                    session.pop('csrf')
+                if current_app.config.get('REDIS_SESSIONS'):
+                    session.destroy()
 
                 rollbar.report_message('csrf.invalid_token: Aborting request check_csrf_token()', 'error', request)
                 abort('Invalid CSRF token. Please refresh the page and try again.')
