@@ -1,6 +1,7 @@
 import pendulum
 from app.api.services import (
     briefs,
+    domain_service,
     suppliers
 )
 from app.api.csv import (
@@ -9,8 +10,40 @@ from app.api.csv import (
     generate_specialist_opportunities_csv,
     generate_atm_opportunities_csv,
     generate_rfx_opportunities_csv,
-    generate_training_opportunities_csv
+    generate_training_opportunities_csv,
+    generate_seller_pricing_csv,
+    generate_approved_sellers_csv
 )
+
+
+def generate_pricing_csv():
+    categories = [category.name for category in domain_service.get_active_domains()]
+    data = suppliers.get_consultant_and_hybrid_pricing()
+    return generate_seller_pricing_csv(data, categories)
+
+
+def generate_categories_csv():
+    categories = [category.name for category in domain_service.get_active_domains()]
+    data = suppliers.get_approved_sellers()
+    return generate_approved_sellers_csv(data, categories)
+
+
+def get_admin_report(report_type):
+    csv_data = None
+    report_file_name = None
+
+    if report_type == 'rates':
+        csv_data = generate_pricing_csv()
+        report_file_name = 'seller-rates-{}.csv'.format(
+            pendulum.now('utc').in_tz('Australia/Sydney').format('YYYY-MM-DD-HHmmssSSS')
+        )
+    elif report_type == 'categories':
+        csv_data = generate_categories_csv()
+        report_file_name = 'seller-categories-{}.csv'.format(
+            pendulum.now('utc').in_tz('Australia/Sydney').format('YYYY-MM-DD-HHmmssSSS')
+        )
+
+    return report_file_name, csv_data
 
 
 def get_result(current_user, report_type, start_date, end_date):

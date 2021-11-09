@@ -17,5 +17,5 @@ def add_cache_control(response):
 # FIXME: refactor out circular import
 from .views import suppliers, services, users, drafts, audits, frameworks, briefs, \
     brief_responses, work_orders, case_studies, metrics, applications, assessments, projects, \
-    evidence, teams, agencies  # noqa
+    evidence, teams, agencies, admin_download_reports  # noqa
 from . import errors  # noqa

@@ -582,3 +582,64 @@ def generate_training_opportunities_csv(training_opportunities):
         return answers
 
     return convert_to_csv(training_opportunities, row)
+
+
+def generate_seller_pricing_csv(sellers, categories):
+    def row(r):
+        csv_row = od()
+        csv_row.update({'Code': r['code']})
+        csv_row.update({'Name': r['name']})
+        csv_row.update({'ABN': r['abn']})
+
+        for category in categories:
+            if r['pricing'] is None:
+                rate = ''
+            else:
+                category_price = r['pricing'].get(category, None)
+                rate = '$' + category_price['maxPrice'] if category_price is not None else ''
+
+            csv_row.update({category: rate})
+
+        for k, v in list(csv_row.items()):
+            csv_row[k] = csv_cell_sanitize(v)
+
+        return csv_row
+
+    return convert_to_csv(sellers, row)
+
+
+def generate_approved_sellers_csv(sellers, categories):
+    def row(r):
+        empty_cell_value = 'N/A'
+        csv_row = od()
+        csv_row.update({'ABN': r['abn']})
+        csv_row.update({'Seller name': r['name']})
+        csv_row.update({'Code': r['code']})
+
+        address = r.get('address', {}).get('address_line', '')
+        suburb = r.get('address', {}).get('suburb', '')
+        state = r.get('address', {}).get('state', '')
+        postcode = r.get('address', {}).get('postal_code', '')
+        country = r.get('address', {}).get('country', '')
+        full_address = ', '.join([_f for _f in [address, suburb, state, postcode, country] if _f])
+        csv_row.update({'Location': full_address if full_address else empty_cell_value})
+
+        csv_row.update({'Seller type': r['recruiter_status']})
+
+        csv_row.update({
+            'Indigenous business': 'Yes' if r.get('seller_type', {}).get('indigenous', '') is True else 'No'
+        })
+
+        csv_row.update({
+            'SME': 'Yes' if r.get('seller_type', {}).get('sme', '') is True else 'No'
+        })
+
+        for category in categories:
+            csv_row.update({category: 'Yes' if category in r['domains'] else 'No'})
+
+        for k, v in list(csv_row.items()):
+            csv_row[k] = csv_cell_sanitize(v)
+
+        return csv_row
+
+    return convert_to_csv(sellers, row)

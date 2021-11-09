@@ -424,3 +424,67 @@ class SuppliersService(Service):
         )
 
         return [r._asdict() for r in results]
+
+    def get_consultant_and_hybrid_pricing(self):
+        results = (
+            db
+            .session
+            .query(
+                Supplier.name,
+                Supplier.code,
+                Supplier.abn,
+                Supplier.data['pricing'].label('pricing')
+            )
+            .filter(
+                Supplier.status != 'deleted',
+                Supplier.data['recruiter'].astext.in_(['no', 'both'])
+            )
+            .order_by(Supplier.name)
+            .all()
+        )
+
+        return [r._asdict() for r in results]
+
+    def get_approved_sellers(self):
+        results = (
+            db
+            .session
+            .query(
+                Supplier.name,
+                Supplier.abn,
+                Supplier.code,
+                Supplier.creation_time,
+                case(
+                    whens=[
+                        (Supplier.data['address'].is_(None), '{}')
+                    ],
+                    else_=Supplier.data['address']
+                ).label('address'),
+                case(
+                    whens=[
+                        (Supplier.data['recruiter'].astext == 'yes', 'recruiter'),
+                        (Supplier.data['recruiter'].astext == 'both', 'recruiter and consultant'),
+                        (Supplier.data['recruiter'].astext == 'no', 'consultant')
+                    ],
+                    else_=None,
+                ).label('recruiter_status'),
+                case(
+                    whens=[
+                        (Supplier.data['seller_type'].is_(None), '{}')
+                    ],
+                    else_=Supplier.data['seller_type']
+                ).label('seller_type'),
+                func.array_agg(Domain.name).label('domains')
+            )
+            .join(SupplierDomain, Domain)
+            .filter(
+                Supplier.status != 'deleted',
+                SupplierDomain.status == 'assessed',
+                SupplierDomain.price_status == 'approved'
+            )
+            .group_by(Supplier.id, Supplier.name, Supplier.abn)
+            .order_by(Supplier.name)
+            .all()
+        )
+
+        return [r._asdict() for r in results]
