@@ -30,7 +30,7 @@ cffi==1.14.0
     #   cryptography
 charset-normalizer==2.0.7
     # via requests
-click==7.0
+click==8.0.3
     # via flask
 contextlib2==0.6.0.post1
     # via digitalmarketplace-utils
@@ -44,7 +44,7 @@ digitalmarketplace-utils==60.1.0
     # via -r requirements.in
 docopt==0.6.2
     # via notifications-python-client
-flask==1.1.4
+flask==2.0.2
     # via
     #   -r requirements.in
     #   digitalmarketplace-utils
@@ -84,12 +84,12 @@ greenlet==1.0.0
     # via sqlalchemy
 idna==2.9
     # via requests
-itsdangerous==1.1.0
+itsdangerous==2.0.1
     # via
     #   -r requirements.in
     #   flask
     #   flask-wtf
-jinja2==2.11.3
+jinja2==3.0.3
     # via flask
 jmespath==0.9.4
     # via
@@ -101,7 +101,7 @@ mailchimp3==3.0.15
     # via digitalmarketplace-utils
 mako==1.1.1
     # via alembic
-markupsafe==1.1.1
+markupsafe==2.0.1
     # via
     #   jinja2
     #   mako
@@ -171,7 +171,7 @@ urllib3==1.26.5
     # via
     #   botocore
     #   requests
-werkzeug==1.0.0
+werkzeug==2.0.2
     # via flask
 workdays==1.4
     # via digitalmarketplace-utils
