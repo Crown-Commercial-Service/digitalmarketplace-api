@@ -281,10 +281,9 @@ workflows:
             branches:
               ignore: /.*/
       - deploy_to_production_clone:
-          requires:
-            - approval
+          <<: *required_for_deploy
           filters:
             tags:
-              only: /release-.*/
-            branches:
               ignore: /.*/
+            branches:
+              only: pc
