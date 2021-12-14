@@ -156,6 +156,10 @@ def list_users():
     if user_research_opted_in is not None:
         user_query = user_query.filter(User.user_research_opted_in == convert_to_boolean(user_research_opted_in))
 
+    active = request.args.get('active')
+    if active is not None:
+        user_query = user_query.filter(User.active == convert_to_boolean(active))
+
     return paginated_result_response(
         result_name=RESOURCE_NAME,
         results_query=user_query,
