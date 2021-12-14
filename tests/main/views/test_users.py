@@ -1,3 +1,4 @@
+import itertools
 from datetime import datetime
 from logging import Logger
 import mock
@@ -1537,11 +1538,9 @@ class TestUsersBooleanFilters(BaseUserTest):
 
     def setup(self):
         super(TestUsersBooleanFilters, self).setup()
+        self.app.config['DM_API_SERVICES_PAGE_SIZE'] = 10
         now = datetime.utcnow()
-        for personal_data_removed, user_research_opted_in in zip(
-            (True, True, False, False, False,),
-            (False, True, False, False, True,),
-        ):
+        for personal_data_removed, user_research_opted_in, active in itertools.product((True, False), repeat=3):
             from uuid import uuid4
             user = User(
                 email_address=f'{uuid4()}@digital.cabinet-office.gov.uk',
@@ -1549,7 +1548,7 @@ class TestUsersBooleanFilters(BaseUserTest):
                 phone_number='555-555-555',
                 role='admin',
                 password='password',
-                active=True,
+                active=active,
                 failed_login_count=0,
                 created_at=now,
                 updated_at=now,
@@ -1565,35 +1564,44 @@ class TestUsersBooleanFilters(BaseUserTest):
         response = self.client.get('/users?personal_data_removed=true')
         assert response.status_code == 200
         data = json.loads(response.get_data())["users"]
-        assert len(data) == 2
+        assert len(data) == 4
         assert all(user["personalDataRemoved"] is True for user in data)
 
     def test_can_list_users_by_personal_data_removed_false(self):
         response = self.client.get('/users?personal_data_removed=false')
         assert response.status_code == 200
         data = json.loads(response.get_data())["users"]
-        assert len(data) == 3
+        assert len(data) == 4
         assert all(user["personalDataRemoved"] is False for user in data)
 
     def test_default_list_users_unfiltered(self):
         response = self.client.get('/users')
         assert response.status_code == 200
         data = json.loads(response.get_data())["users"]
-        assert len(data) == 5
+        assert len(data) == 8
 
     def test_can_list_users_by_user_research_opted_in_true(self):
         response = self.client.get('/users?user_research_opted_in=true')
         assert response.status_code == 200
         data = json.loads(response.get_data())["users"]
-        assert len(data) == 1  # because remove_personal_data() *also* sets this flag to false
+        assert len(data) == 2  # because remove_personal_data() *also* sets this flag to false
         assert all(user["userResearchOptedIn"] is True for user in data)
 
     def test_can_list_users_by_user_research_opted_in_false(self):
         response = self.client.get('/users?user_research_opted_in=false')
         assert response.status_code == 200
         data = json.loads(response.get_data())["users"]
-        assert len(data) == 4  # because remove_personal_data() *also* sets this flag to false
+        assert len(data) == 6  # because remove_personal_data() *also* sets this flag to false
         assert all(user["userResearchOptedIn"] is False for user in data)
+
+    # remove_personal_data() sets active to false
+    @pytest.mark.parametrize('active,expected_users', [(True, 2), (False, 6)])
+    def test_can_list_users_by_active(self, active, expected_users):
+        response = self.client.get(f'/users?active={str(active).lower()}')
+        assert response.status_code == 200
+        data = json.loads(response.get_data())["users"]
+        assert len(data) == expected_users
+        assert all(user["active"] is active for user in data)
 
 
 class TestUsersRemovePersonalData(BaseUserTest):
