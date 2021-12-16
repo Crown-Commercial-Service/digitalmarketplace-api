@@ -29,7 +29,14 @@ references:
     run:
       name: Installing PostgresSql
       command: |
-        sudo apt install postgresql-9.6
+        sudo apt-get update
+        sudo apt-get install lsb-release
+
+        sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+        curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+        sudo apt-get update
+        sudo apt-get -y install postgresql-10
+
         sudo service postgresql start
         sudo su - postgres -c "echo \"create user circleci with password 'circleci';\" | psql"
         sudo su - postgres -c "echo \"alter user circleci with superuser;\" | psql"

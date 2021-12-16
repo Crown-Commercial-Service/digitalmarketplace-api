@@ -210,18 +210,20 @@ class TestSuppliersService(BaseApplicationTest):
         expiry = pendulum.today(tz='Australia/Sydney').add(days=10).format('YYYY-MM-DD')
         suppliers_with_expired_licences = suppliers.get_suppliers_with_expiring_labour_hire_licences(days=10)
 
-        assert suppliers_with_expired_licences[0]['labour_hire_licences'] == [
-            {
-                'expiry': expiry,
-                'state': 'vic',
-                'licenceNumber': 'V123456'
-            },
-            {
-                'expiry': expiry,
-                'state': 'act',
-                'licenceNumber': 'A123456'
-            }
-        ]
+        expected_act_licence = {
+            'expiry': expiry,
+            'state': 'act',
+            'licenceNumber': 'A123456'
+        }
+
+        expected_vic_licence = {
+            'expiry': expiry,
+            'state': 'vic',
+            'licenceNumber': 'V123456'
+        }
+
+        assert expected_act_licence in suppliers_with_expired_licences[0]['labour_hire_licences']
+        assert expected_vic_licence in suppliers_with_expired_licences[0]['labour_hire_licences']
 
     def test_get_expired_licences_returns_all_supplier_email_addresses(self, supplier, users):
         expiry_date = date.today() + timedelta(days=10)
