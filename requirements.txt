@@ -113,7 +113,7 @@ odfpy==1.4.1
     # via digitalmarketplace-utils
 prometheus-client==0.2.0
     # via gds-metrics
-psycopg2==2.9.2
+psycopg2==2.9.3
     # via -r requirements.in
 pycparser==2.19
     # via cffi
