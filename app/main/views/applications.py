@@ -90,6 +90,32 @@ def update_application(application_id):
             'reverted'
         )
 
+    candidates = application_json.get('candidates', {})
+    seller_type = application_json.get('seller_type', None)
+
+    if seller_type is None:
+        application_json['seller_type'] = {
+            'labourHire': False
+        }
+    else:
+        application_json['seller_type']['labourHire'] = False
+
+    if application_json.get('recruiter', '') in ['yes', 'both'] and candidates != {}:
+        active_candidates = candidates.get('active_candidates')
+        placed_candidates = candidates.get('placed_candidates')
+        database_size = candidates.get('database_size')
+        margin = candidates.get('margin')
+        markup = candidates.get('markup')
+
+        if (
+            active_candidates and
+            placed_candidates and
+            database_size and
+            margin and
+            markup
+        ):
+            application_json['seller_type']['labourHire'] = True
+
     application.update_from_json(application_json)
     save_application(application)
     errors = ApplicationValidator(application).validate_all()

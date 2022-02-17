@@ -33,7 +33,7 @@ from app.emails import send_assessment_approval_notification
 import json
 from itertools import groupby, chain
 from operator import itemgetter
-from app.api.business.validators import ApplicationValidator
+from app.api.business.validators import ApplicationValidator, SupplierValidator
 from app.tasks import publish_tasks
 
 
@@ -438,16 +438,37 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
             sr_agg = postgres.array_agg(cast(func.substring(ServiceRole.name, 8), TEXT))
             q = q.having(sr_agg.contains(array(roles_list)))
 
-    if seller_types_list is not None and 'recruiter' in seller_types_list:
-        q = q.filter(Supplier.data['recruiter'].astext == 'yes')
-        seller_types_list.remove('recruiter')
+    if seller_types_list is not None and 'labourHire' in seller_types_list:
+        q = q.filter(
+            or_(
+                Supplier.data['recruiter'].astext == 'yes',
+                Supplier.data['recruiter'].astext == 'both'
+            ),
+            Supplier.data['candidates'].isnot(None),
+            Supplier.data['candidates']['active_candidates'].isnot(None),
+            Supplier.data['candidates']['active_candidates'].astext != '',
+            Supplier.data['candidates']['placed_candidates'].isnot(None),
+            Supplier.data['candidates']['placed_candidates'].astext != '',
+            Supplier.data['candidates']['database_size'].isnot(None),
+            Supplier.data['candidates']['database_size'].astext != '',
+            Supplier.data['candidates']['margin'].isnot(None),
+            Supplier.data['candidates']['margin'].astext != '',
+            Supplier.data['candidates']['markup'].isnot(None),
+            Supplier.data['candidates']['markup'].astext != '',
+            Supplier.data['seller_type'].isnot(None),
+            Supplier.data['seller_type']['labourHire'].astext == 'true'
+        )
 
-    if seller_types_list is not None and 'consultant_and_recruiter' in seller_types_list:
-        q = q.filter(Supplier.data['recruiter'].astext == 'both')
-        seller_types_list.remove('consultant_and_recruiter')
+        seller_types_list.remove('labourHire')
 
     if seller_types_list is not None and 'consultant' in seller_types_list:
-        q = q.filter(Supplier.is_recruiter == 'false')
+        q = q.filter(
+            or_(
+                Supplier.data['recruiter'].astext == 'no',
+                Supplier.data['recruiter'].astext == 'both'
+            )
+        )
+
         seller_types_list.remove('consultant')
 
     if seller_types_list is not None and len(seller_types_list) == 0:

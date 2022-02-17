@@ -80,8 +80,11 @@ class SuppliersService(Service):
             query = query.outerjoin(SupplierFramework).outerjoin(Framework)
             query = query.filter(Framework.slug == framework_slug)
         if category:
-            query = query.outerjoin(SupplierDomain)
-            query = query.filter(SupplierDomain.domain_id == category).filter(SupplierDomain.status == 'assessed')
+            if category == 'labourHire':
+                query = query.filter(Supplier.data['seller_type']['labourHire'].astext == 'true')
+            else:
+                query = query.outerjoin(SupplierDomain)
+                query = query.filter(SupplierDomain.domain_id == category).filter(SupplierDomain.status == 'assessed')
         if exclude:
             query = query.filter(Supplier.code.notin_(exclude))
         if exclude_recruiters:
@@ -488,3 +491,20 @@ class SuppliersService(Service):
         )
 
         return [r._asdict() for r in results]
+
+    def count_labour_hire_sellers(self):
+        total = (
+            db
+            .session
+            .query(func.count(Supplier.id))
+            .outerjoin(SupplierFramework)
+            .outerjoin(Framework)
+            .filter(
+                Framework.slug == 'digital-marketplace',
+                Supplier.status != 'deleted',
+                Supplier.data['seller_type']['labourHire'].astext == 'true'
+            )
+            .scalar()
+        )
+
+        return total

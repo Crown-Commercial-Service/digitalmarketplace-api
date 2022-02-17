@@ -4,7 +4,7 @@ Closing date for submitting candidates: {{brief_close_date}}
    
 If you have questions on the opportunity, submit your question before {{question_close_date}}.  
   
-Read our guide on [responding to a specialist opportunity](https://marketplace1.zendesk.com/hc/en-gb/articles/360000634456-Responding-to-an-opportunity).  
+Read our guide on [responding to an ICT Labour Hire opportunity](https://marketplace1.zendesk.com/hc/en-gb/articles/360000634456-Responding-to-an-opportunity).  
   
 For other questions related to your account, please [contact the Marketplace]({{frontend_url}}/contact-us).  
   

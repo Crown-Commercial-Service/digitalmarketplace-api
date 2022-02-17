@@ -180,13 +180,13 @@ def get_suppliers():
 
         supplier_results = []
         for result in results:
-            if all_suppliers:
+            if all_suppliers or category == 'labourHire':
                 supplier = {}
                 supplier['name'] = result.name
                 supplier['code'] = result.code
                 supplier_results.append(supplier)
             elif len(result.assessed_domains) > 0:
-                if category:
+                if category and category != 'labourHire':
                     domain = domain_service.get_by_name_or_id(int(category))
                     if not domain or domain.name not in result.assessed_domains:
                         continue
@@ -198,3 +198,10 @@ def get_suppliers():
         return jsonify(sellers=supplier_results), 200
     else:
         return jsonify(message='You must provide a keyword param.'), 400
+
+
+@api.route('/suppliers/count/labour-hire', methods=['GET'])
+@login_required
+@role_required('buyer')
+def count_labour_hire_sellers():
+    return jsonify(suppliers.count_labour_hire_sellers()), 200

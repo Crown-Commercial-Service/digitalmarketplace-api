@@ -313,6 +313,7 @@ def get_brief(brief_id):
     has_signed_current_agreement = user_status.has_signed_current_agreement()
     last_edited_at = brief_history_service.get_last_edited_date(brief.id)
     only_sellers_edited = brief_edit_business.only_sellers_were_edited(brief.id)
+    is_consultant = user_status.is_consultant()
 
     # remove private data for non brief owners
     brief.data['contactEmail'] = ''
@@ -382,6 +383,7 @@ def get_brief(brief_id):
                    open_to_category=open_to_category,
                    is_brief_owner=is_brief_owner,
                    is_buyer=is_buyer,
+                   is_consultant=is_consultant,
                    is_applicant=is_applicant,
                    is_recruiter_only=is_recruiter_only,
                    is_invited=is_invited,

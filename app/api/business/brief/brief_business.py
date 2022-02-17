@@ -23,7 +23,7 @@ def can_submit_response_to_brief(brief, user, check_response_limit=True):
         return False, 'Supplier is invalid'
 
     if brief.lot.slug != 'atm' or brief.data.get('openTo', '') == 'category':
-        if not user_status.is_assessed_for_category():
+        if brief.lot.slug != 'specialist' and not user_status.is_assessed_for_category():
             return False, 'Supplier is not assessed for the category of the opportunity'
 
     if not user_status.is_invited():

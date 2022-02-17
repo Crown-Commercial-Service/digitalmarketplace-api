@@ -543,8 +543,7 @@ def send_specialist_brief_published_email(brief):
         for seller in sellers:
             invited_sellers += '* {}\n'.format(seller.name)
     else:
-        panel_category = domain_service.get(id=brief.data.get('sellerCategory'))
-        sellers_text = 'All sellers approved under {}'.format(panel_category.name)
+        sellers_text = 'All sellers that provide ICT Labour Hire services'
 
     # prepare copy
     email_body = render_email_template(

@@ -15,7 +15,6 @@ class ApplicationValidator(object):
                 self.validate_documents() +
                 self.validate_methods() +
                 self.validate_recruiter() +
-                self.validate_services() +
                 self.validate_candidates() +
                 self.validate_products())
 
@@ -289,20 +288,6 @@ class ApplicationValidator(object):
                         })
         return errors
 
-    def validate_services(self):
-        errors = []
-        recruiter = self.application.data.get('recruiter')
-        if recruiter == 'yes' or recruiter == 'both':
-            services = self.application.data.get('services', {})
-            if not services:
-                errors.append({
-                    'message': 'Services is required',
-                    'severity': 'error',
-                    'step': 'domains'
-                })
-
-        return errors
-
     def validate_pricing(self):
         errors = []
         pricing = self.application.data.get('pricing', {})
@@ -368,28 +353,9 @@ class ApplicationValidator(object):
 
     def validate_candidates(self):
         errors = []
-        recruiter_info = self.application.data.get('recruiter_info', {})
+        candidates = self.application.data.get('candidates', {})
         recruiter = self.application.data.get('recruiter')
-        services = self.application.data.get('services')
 
-        if recruiter == 'yes' or recruiter == 'both':
-            for service in services.keys():
-                if service in ['Platforms integration', 'Service Integration and Management']:
-                    continue
-                if service not in recruiter_info:
-                    errors.append({
-                        'message': 'Recruiter info is required for {}'.format(service),
-                        'severity': 'error',
-                        'step': 'candidates'
-                    })
-                else:
-                    for s, value in recruiter_info.items():
-                        errors = errors + self.__validate_candidate(value, s)
-
-        return errors
-
-    def __validate_candidate(self, candidate, service):
-        errors = []
         required_fields = {
             'database_size': 'Candidate database size',
             'active_candidates': 'Number of candidates looking',
@@ -397,11 +363,72 @@ class ApplicationValidator(object):
             'markup': 'Mark-up',
             'placed_candidates': 'Number of candidates successfully placed'
         }
-        for field, label in required_fields.items():
-            if not candidate.get(field):
+
+        if recruiter == 'yes' or recruiter == 'both':
+            if candidates == {} or candidates is None:
+                errors.append({
+                    'message': 'Candidate information is required',
+                    'severity': 'error',
+                    'step': 'candidates'
+                })
+            else:
+                for field, label in required_fields.items():
+                    value = candidates.get(field)
+                    if not value:
+                        errors.append({
+                            'field': field,
+                            'message': '{} is required'.format(label),
+                            'severity': 'error',
+                            'step': 'candidates'
+                        })
+                    else:
+                        errors = errors + self.__validate_candidate_value(field, value, label)
+
+        return errors
+
+    def __validate_candidate_value(self, field, value, label):
+        errors = []
+
+        fields_with_whole_numbers = {
+            'database_size': True,
+            'active_candidates': True,
+            'placed_candidates': True
+        }
+
+        fields_with_decimals = {
+            'margin': True,
+            'markup': True
+        }
+
+        if fields_with_whole_numbers.get(field):
+            try:
+                int(value)
+            except ValueError:
                 errors.append({
                     'field': field,
-                    'message': '{} is required for {}'.format(label, service),
+                    'message': '{} must be a whole number'.format(label),
+                    'severity': 'error',
+                    'step': 'candidates'
+                })
+
+        if fields_with_decimals.get(field):
+            whole_number = None
+            decimal = None
+
+            try:
+                whole_number = int(value)
+            except ValueError:
+                pass
+
+            try:
+                decimal = float(value)
+            except ValueError:
+                pass
+
+            if whole_number is None and decimal is None:
+                errors.append({
+                    'field': field,
+                    'message': '{} must be a whole number or a decimal'.format(label),
                     'severity': 'error',
                     'step': 'candidates'
                 })

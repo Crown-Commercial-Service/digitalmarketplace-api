@@ -158,6 +158,15 @@ class BriefUserStatus(object):
             return True
         return False
 
+    def has_candidate_information(self):
+        supplier_validator = SupplierValidator(self.supplier)
+        errors = supplier_validator.validate_candidates()
+
+        if len(errors) > 0:
+            return False
+
+        return True
+
     def can_respond_to_atm_opportunity(self):
         open_to = self.brief.data.get('openTo', '')
 
@@ -193,12 +202,12 @@ class BriefUserStatus(object):
         if (
             self.user_role == 'supplier' and
             self.brief.lot.slug == 'specialist' and
-            self.supplier.data.get('recruiter', '') in ['yes', 'both', 'no'] and (
+            self.supplier.data.get('recruiter', '') in ['yes', 'both'] and (
                 open_to == 'all' or (
                     open_to == 'selected' and
                     str(self.supplier_code) in self.invited_sellers.keys()
                 )
-            ) and self.is_assessed_for_category()
+            ) and self.has_candidate_information()
         ):
             return True
 
@@ -243,3 +252,9 @@ class BriefUserStatus(object):
             return True
 
         return has_signed_current_agreement(self.supplier)
+
+    def is_consultant(self):
+        if self.supplier and self.supplier.data.get('recruiter', '') == 'no':
+            return True
+
+        return False

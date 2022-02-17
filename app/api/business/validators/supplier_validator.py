@@ -16,7 +16,8 @@ class SupplierValidator(object):
             self.validate_basics() +
             self.validate_documents() +
             self.validate_representative() +
-            self.validate_recruiter()
+            self.validate_recruiter() +
+            self.validate_candidates()
         )
         warnings = [n for n in result if n.get('severity', 'error') == 'warning']
         errors = [n for n in result if n.get('severity', 'error') == 'error']
@@ -328,5 +329,93 @@ class SupplierValidator(object):
                 'step': step,
                 'id': 'S013-email'
             })
+
+        return errors
+
+    def validate_candidates(self):
+        errors = []
+        candidates = self.supplier.data.get('candidates', {})
+        recruiter = self.supplier.data.get('recruiter')
+
+        required_fields = {
+            'database_size': 'Candidate database size',
+            'active_candidates': 'Number of candidates looking',
+            'margin': 'Margin',
+            'markup': 'Mark-up',
+            'placed_candidates': 'Number of candidates successfully placed'
+        }
+
+        if recruiter == 'yes' or recruiter == 'both':
+            if candidates == {} or candidates is None:
+                errors.append({
+                    'message': 'Candidate information is required',
+                    'severity': 'error',
+                    'step': 'candidates',
+                    'id': 'S015'
+                })
+            else:
+                for field, label in required_fields.items():
+                    value = candidates.get(field)
+                    if not value:
+                        errors.append({
+                            'field': field,
+                            'message': '{} is required'.format(label),
+                            'severity': 'error',
+                            'step': 'candidates',
+                            'id': 'S015'
+                        })
+                    else:
+                        errors = errors + self.__validate_candidate_value(field, value, label)
+
+        return errors
+
+    def __validate_candidate_value(self, field, value, label):
+        errors = []
+
+        fields_with_whole_numbers = {
+            'database_size': True,
+            'active_candidates': True,
+            'placed_candidates': True
+        }
+
+        fields_with_decimals = {
+            'margin': True,
+            'markup': True
+        }
+
+        if fields_with_whole_numbers.get(field):
+            try:
+                int(value)
+            except ValueError:
+                errors.append({
+                    'field': field,
+                    'message': '{} must be a whole number'.format(label),
+                    'severity': 'error',
+                    'step': 'candidates',
+                    'id': 'S015'
+                })
+
+        if fields_with_decimals.get(field):
+            whole_number = None
+            decimal = None
+
+            try:
+                whole_number = int(value)
+            except ValueError:
+                pass
+
+            try:
+                decimal = float(value)
+            except ValueError:
+                pass
+
+            if whole_number is None and decimal is None:
+                errors.append({
+                    'field': field,
+                    'message': '{} must be a whole number or a decimal'.format(label),
+                    'severity': 'error',
+                    'step': 'candidates',
+                    'id': 'S015'
+                })
 
         return errors
