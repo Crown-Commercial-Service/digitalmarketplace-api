@@ -428,7 +428,12 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
     except KeyError:
         pass
 
-    if roles_list is not None:
+    filter_ict_labour_hire = False
+    if roles_list is not None and 'ICT Labour Hire' in roles_list:
+        filter_ict_labour_hire = True
+        roles_list.remove('ICT Labour Hire')
+
+    if roles_list is not None and len(roles_list) > 0:
         if new_domains:
             if EXCLUDE_LEGACY_ROLES:
                 d_agg = postgres.array_agg(cast(Domain.name, TEXT))
@@ -438,7 +443,7 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
             sr_agg = postgres.array_agg(cast(func.substring(ServiceRole.name, 8), TEXT))
             q = q.having(sr_agg.contains(array(roles_list)))
 
-    if seller_types_list is not None and 'labourHire' in seller_types_list:
+    if filter_ict_labour_hire:
         q = q.filter(
             or_(
                 Supplier.data['recruiter'].astext == 'yes',
@@ -458,8 +463,6 @@ def do_search(search_query, offset, result_count, new_domains, framework_slug):
             Supplier.data['seller_type'].isnot(None),
             Supplier.data['seller_type']['labourHire'].astext == 'true'
         )
-
-        seller_types_list.remove('labourHire')
 
     if seller_types_list is not None and 'consultant' in seller_types_list:
         q = q.filter(
