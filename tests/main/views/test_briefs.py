@@ -1687,3 +1687,85 @@ class TestBriefAwardDetails(FrameworkSetupAndTeardown):
                                                      'briefResponseAwardedValue': True,
                                                      'briefResponseId': brief_response_id,
                                                      'unAwardBriefDetails': True}
+
+
+class TestMovingUnsuccessfulBriefToClosed(FrameworkSetupAndTeardown):
+    move_unsuccessful_brief_to_closed_url = "/briefs/{}/move-unsuccessful-brief-to-closed"
+
+    def test_400_if_no_updated_by_in_payload(self):
+        res = self.client.post(
+            self.move_unsuccessful_brief_to_closed_url.format(1),
+            data=json.dumps({}),
+            content_type="application/json"
+        )
+
+        assert res.status_code == 400
+        error = json.loads(res.get_data(as_text=True))['error']
+        assert "'updated_by' is a required property" in error
+
+    def test_move_unsuccessful_brief_to_closed_returns_404_if_not_found(self):
+        assert self.client.post(
+            self.move_unsuccessful_brief_to_closed_url.format(1),
+            data=json.dumps({"updated_by": "user@email.com"}),
+            content_type="application/json",
+        ).status_code == 404
+
+    def test_400_if_brief_is_not_unsuccessful(self):
+        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        lot = Lot.query.filter(Lot.slug == 'digital-specialists').first()
+
+        brief = Brief(
+            data={},
+            framework=framework,
+            lot=lot,
+            published_at=datetime.utcnow(),
+        )
+
+        db.session.add(brief)
+        db.session.commit()
+
+        assert brief.status == 'live'
+
+        res = self.client.post(
+            self.move_unsuccessful_brief_to_closed_url.format(brief.id),
+            data=json.dumps({"updated_by": "user@email.com"}),
+            content_type="application/json"
+        )
+
+        assert res.status_code == 400
+        error = json.loads(res.get_data(as_text=True))['error']
+        assert "Can only move an unsuccessful brief to close" in error
+
+    def test_can_move_unsuccessful_brief_to_closed(self):
+        # Create the brief and make it unsuccessful
+        framework = Framework.query.filter(Framework.slug == 'digital-outcomes-and-specialists').first()
+        lot = Lot.query.filter(Lot.slug == 'digital-specialists').first()
+        today = datetime.utcnow()
+
+        with freeze_time('2017-01-01 23:59:59.999999'):
+            brief = Brief(
+                data={},
+                framework=framework,
+                lot=lot,
+                published_at=datetime.utcnow(),
+                unsuccessful_at=today
+            )
+
+            db.session.add(brief)
+            db.session.commit()
+
+        assert brief.status == 'unsuccessful'
+
+        # Send request to move unsuccessful brief to closed
+        assert self.client.post(
+            self.move_unsuccessful_brief_to_closed_url.format(brief.id),
+            data=json.dumps({"updated_by": "user@email.com"}),
+            content_type="application/json",
+        ).status_code == 200
+
+        # Check the brief status is now closed
+        assert Brief.query.get(brief.id).status == 'closed'
+
+        # Check the action has been audited
+        briefs_audits = get_audit_events(self.client, AuditTypes.update_brief)
+        assert briefs_audits[-1]['data'] == {'briefId': brief.id, 'unsuccessfulAt': None}

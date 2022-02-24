@@ -546,3 +546,37 @@ def list_brief_services(brief_id):
 
     services = services.filter(Service.supplier_id == supplier.supplier_id)
     return list_result_response("services", services), 200
+
+
+@main.route('/briefs/<int:brief_id>/move-unsuccessful-brief-to-closed', methods=['POST'])
+def move_unsuccessful_brief_to_closed(brief_id):
+    """
+    Status changes:
+        Brief: unsuccessful -> closed
+    """
+    updater_json = validate_and_return_updater_request()
+
+    brief = Brief.query.filter(
+        Brief.id == brief_id
+    ).first_or_404()
+
+    if brief.status != 'unsuccessful':
+        abort(400, "Can only move an unsuccessful brief to close")
+
+    # Set status back to pending-awarded
+    brief.unsuccessful_at = None
+
+    audit_event = AuditEvent(
+        audit_type=AuditTypes.update_brief,
+        user=updater_json['updated_by'],
+        data={
+            'briefId': brief_id,
+            'unsuccessfulAt': None
+        },
+        db_object=brief
+    )
+
+    db.session.add_all([brief, audit_event])
+    db.session.commit()
+
+    return single_result_response(RESOURCE_NAME, brief), 200
