@@ -1,7 +1,7 @@
 version: 2
 references:
   venv_cache_key: &venv_cache_key
-    key: venv-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements_for_test.txt" }}
+    key: v1-venv-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements_for_test.txt" }}
   npm_cache_key: &npm_cache_key
     key: npm-cache-{{ checksum "package.json" }}
   cf_install: &cf_install
@@ -15,7 +15,7 @@ references:
         cf -v
   deploy_docker: &deploy_docker
     docker:
-      - image: circleci/python:3.7.9-stretch
+      - image: cimg/python:3.7.9
         environment:
           TZ: "/usr/share/zoneinfo/Australia/Sydney"
   update_libs: &update_libs
@@ -23,8 +23,8 @@ references:
       name: Update Python dependency libraries
       command: |
         sudo apt update
-        sudo apt purge -y libssl-dev
-        sudo apt install -y libssl1.0-dev
+        sudo apt purge -y libssl-dev libcurl4-openssl-dev
+        sudo apt install -y libssl-dev libcurl4-openssl-dev
   postgres_install: &postgres_install
     run:
       name: Installing PostgresSql
@@ -98,6 +98,7 @@ jobs:
       - checkout
       - restore_cache:
           <<: *venv_cache_key
+      - *update_libs
       - run: 
           name: Pip Install
           command: |
