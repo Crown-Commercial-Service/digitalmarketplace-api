@@ -586,6 +586,10 @@ def update_brief(brief_id):
     brief.data = data
     if publish:
         brief.publish(closed_at=data['closedAt'])
+
+        if 'sellers' in brief.data and data['sellerSelector'] == 'allSellers':
+            brief.data['sellers'] = {}
+
     briefs.save_brief(brief)
 
     if publish:
