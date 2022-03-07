@@ -40,7 +40,7 @@ defusedxml==0.6.0
     # via odfpy
 digitalmarketplace-apiclient==23.1.0
     # via -r requirements.in
-digitalmarketplace-utils==60.6.0
+digitalmarketplace-utils==60.7.1
     # via -r requirements.in
 docopt==0.6.2
     # via notifications-python-client
@@ -97,7 +97,7 @@ jmespath==0.9.4
     #   botocore
 jsonschema==3.2.0
     # via -r requirements.in
-mailchimp3==3.0.15
+mailchimp3==3.0.17
     # via digitalmarketplace-utils
 mako==1.1.1
     # via alembic
