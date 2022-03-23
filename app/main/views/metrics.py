@@ -10,6 +10,7 @@ import csv
 from collections import defaultdict
 from flask import jsonify, make_response
 from app.api.services import key_values_service
+from app.api.services import insight_service
 
 
 @main.route('/metrics', methods=['GET'])
@@ -35,6 +36,14 @@ def get_metrics():
             metrics['brief_response_count'] = {"value": kv['data']['total'], "ts": updated_at}
         elif kv['key'] == 'supplier_metrics':
             metrics['supplier_count'] = {"value": kv['data']['total'], "ts": updated_at}
+
+    metrics['month_ending'] = {"value": ""}
+    insight = insight_service.get_insight(now=None)
+    if insight:
+        try:
+            metrics['month_ending'] = {"value": insight['data']['thisMonth']}
+        except KeyError:
+            pass
 
     return jsonify(metrics)
 
