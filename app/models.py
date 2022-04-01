@@ -3036,10 +3036,11 @@ class Application(db.Model):
         self.status = 'submitted'
 
     def create_approval_task(self, closing_date=None):
-        if current_app.config['JIRA_FEATURES']:
-            domains = db.session.query(Domain).all()
-            mj = get_marketplace_jira()
-            mj.create_application_approval_task(self, domains, closing_date)
+        # if current_app.config['JIRA_FEATURES']:
+        #    domains = db.session.query(Domain).all()
+        #    mj = get_marketplace_jira()
+        #    mj.create_application_approval_task(self, domains, closing_date)
+        pass
 
     def signed_agreements(self):
         query = db.session.query(

@@ -236,8 +236,8 @@ def update_evidence(evidence_id):
 
     if publish:
         evidence.submit()
-        if current_app.config['JIRA_FEATURES']:
-            create_evidence_assessment_in_jira.delay(evidence_id)
+        # if current_app.config['JIRA_FEATURES']:
+        #    create_evidence_assessment_in_jira.delay(evidence_id)
         try:
             send_evidence_assessment_requested_notification(evidence_id, evidence.domain_id, current_user.email_address)
         except Exception as e:

@@ -57,15 +57,15 @@ def create_assessment():
         db_object=assessment
     ))
 
-    if current_app.config['JIRA_FEATURES']:
-        application = db.session.query(Application).filter(
-            Application.supplier_code == supplier_code,
-            Application.type == 'edit',
-            Application.status == 'submitted'
-        ).one_or_none()
-
-        mj = get_marketplace_jira()
-        mj.create_domain_approval_task(assessment, application)
+    # if current_app.config['JIRA_FEATURES']:
+    #    application = db.session.query(Application).filter(
+    #        Application.supplier_code == supplier_code,
+    #        Application.type == 'edit',
+    #        Application.status == 'submitted'
+    #    ).one_or_none()
+    #
+    #    mj = get_marketplace_jira()
+    #    mj.create_domain_approval_task(assessment, application)
 
     send_assessment_requested_notification(assessment, updater_json['updated_by'])
 
