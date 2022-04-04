@@ -56,7 +56,7 @@ flask==1.1.4
     #   flask-sqlalchemy
     #   flask-wtf
     #   gds-metrics
-flask-bcrypt==0.7.1
+flask-bcrypt==1.0.0
     # via -r requirements.in
 flask-gzip==0.2
     # via digitalmarketplace-utils

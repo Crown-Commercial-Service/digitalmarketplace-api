@@ -5,7 +5,7 @@ digitalmarketplace-apiclient
 digitalmarketplace-utils
 
 Flask>=1.1,<2
-Flask-Bcrypt==0.7.1
+Flask-Bcrypt==1.0.0
 Flask-Migrate==3.1.0
 Flask-SQLAlchemy>=2.4.1,<2.6.0
 itsdangerous
