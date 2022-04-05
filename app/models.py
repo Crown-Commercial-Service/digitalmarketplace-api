@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
+import rollbar
 from datetime import datetime
 from decimal import InvalidOperation
 from workdays import workday
@@ -30,6 +31,7 @@ from sqlalchemy_utils import generic_relationship
 from sqlalchemy.schema import Sequence, CheckConstraint
 from dmutils.data_tools import ValidationError, normalise_acn, parse_money
 from dmapiclient.audit import AuditTypes
+from jira import JIRAError
 
 from . import db
 
@@ -3036,11 +3038,17 @@ class Application(db.Model):
         self.status = 'submitted'
 
     def create_approval_task(self, closing_date=None):
-        # if current_app.config['JIRA_FEATURES']:
-        #    domains = db.session.query(Domain).all()
-        #    mj = get_marketplace_jira()
-        #    mj.create_application_approval_task(self, domains, closing_date)
-        pass
+        if current_app.config['JIRA_FEATURES']:
+            domains = db.session.query(Domain).all()
+            try:
+                mj = get_marketplace_jira()
+                mj.create_application_approval_task(self, domains, closing_date)
+            except JIRAError as e:
+                current_app.logger.error(
+                    'A Jira API error occurred while creating an application approval task: {} {}'
+                    .format(e.status_code, e.text)
+                )
+                rollbar.report_exc_info()
 
     def signed_agreements(self):
         query = db.session.query(

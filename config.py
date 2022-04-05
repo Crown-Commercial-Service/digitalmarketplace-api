@@ -104,6 +104,8 @@ class Config:
     JIRA_URL = 'https://govausites.atlassian.net'
     JIRA_CREDS = ''
     JIRA_CREDS_OAUTH = ''
+    JIRA_MAX_RETRIES = 1
+    JIRA_TIMEOUT = 15
 
     JIRA_FIELD_CODES = {
         'ASSESSOR_RESULT_CODES': {

@@ -1,4 +1,6 @@
 import pendulum
+import rollbar
+from jira import JIRAError
 from flask import abort, current_app, jsonify, request
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
@@ -396,18 +398,24 @@ def format_applications(applications, with_task_status):
 
     apps_results = [_.serializable for _ in applications.items]
 
-    # if with_task_status and current_app.config['JIRA_FEATURES']:
-    #    jira = get_marketplace_jira()
-    #    tasks_by_id = jira.assessment_tasks_by_application_id()
-    #
-    #    def annotate_app(app):
-    #        try:
-    #            app['tasks'] = tasks_by_id.get(str(app['id']), None)
-    #        except KeyError:
-    #            pass
-    #        return app
-    #
-    #    apps_results = [annotate_app(_) for _ in apps_results]
+    if with_task_status and current_app.config['JIRA_FEATURES']:
+        try:
+            jira = get_marketplace_jira()
+            tasks_by_id = jira.assessment_tasks_by_application_id()
+
+            def annotate_app(app):
+                try:
+                    app['tasks'] = tasks_by_id.get(str(app['id']), None)
+                except KeyError:
+                    pass
+                return app
+
+            apps_results = [annotate_app(_) for _ in apps_results]
+        except JIRAError as e:
+            current_app.logger.error(
+                'A Jira API error occurred while creating an assessment task: {} {}'
+                .format(e.status_code, e.text))
+            rollbar.report_exc_info()
 
     return jsonify(
         applications=apps_results,

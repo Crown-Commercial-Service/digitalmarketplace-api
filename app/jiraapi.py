@@ -659,14 +659,18 @@ class GenericJIRA(object):
 def get_api():
     JIRA_URL = current_app.config['JIRA_URL']
     JIRA_CREDS = current_app.config['JIRA_CREDS']
+    JIRA_MAX_RETRIES = current_app.config.get('JIRA_MAX_RETRIES', 1)
+    JIRA_TIMEOUT = current_app.config.get('JIRA_TIMEOUT', 10)
     creds = JIRA_CREDS.split(':', 1)
 
-    return JIRA(JIRA_URL, basic_auth=creds)
+    return JIRA(JIRA_URL, basic_auth=creds, max_retries=JIRA_MAX_RETRIES, timeout=JIRA_TIMEOUT)
 
 
 def get_api_oauth():
     JIRA_URL = current_app.config['JIRA_URL']
     JIRA_CREDS_OAUTH = current_app.config['JIRA_CREDS_OAUTH']
+    JIRA_MAX_RETRIES = current_app.config.get('JIRA_MAX_RETRIES', 1)
+    JIRA_TIMEOUT = current_app.config.get('JIRA_TIMEOUT', 10)
 
     at, ats, ck, kc = JIRA_CREDS_OAUTH.split(',', 3)
 
@@ -677,7 +681,7 @@ def get_api_oauth():
         'key_cert': kc
     }
 
-    return JIRA(JIRA_URL, oauth=oauth_dict)
+    return JIRA(JIRA_URL, oauth=oauth_dict, max_retries=JIRA_MAX_RETRIES, timeout=JIRA_TIMEOUT)
 
 
 def get_marketplace_jira(oauth=True):

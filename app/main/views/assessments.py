@@ -1,3 +1,5 @@
+import rollbar
+from jira import JIRAError
 from flask import jsonify, abort, current_app, request
 from app.main import main
 from app.models import db, Application, Assessment, AuditEvent, SupplierDomain, Supplier, Domain
@@ -57,15 +59,21 @@ def create_assessment():
         db_object=assessment
     ))
 
-    # if current_app.config['JIRA_FEATURES']:
-    #    application = db.session.query(Application).filter(
-    #        Application.supplier_code == supplier_code,
-    #        Application.type == 'edit',
-    #        Application.status == 'submitted'
-    #    ).one_or_none()
-    #
-    #    mj = get_marketplace_jira()
-    #    mj.create_domain_approval_task(assessment, application)
+    if current_app.config['JIRA_FEATURES']:
+        application = db.session.query(Application).filter(
+            Application.supplier_code == supplier_code,
+            Application.type == 'edit',
+            Application.status == 'submitted'
+        ).one_or_none()
+
+        try:
+            mj = get_marketplace_jira()
+            mj.create_domain_approval_task(assessment, application)
+        except JIRAError as e:
+            current_app.logger.error(
+                'A Jira API error occurred while creating a domain approval task: {} {}'
+                .format(e.status_code, e.text))
+            rollbar.report_exc_info()
 
     send_assessment_requested_notification(assessment, updater_json['updated_by'])
 
