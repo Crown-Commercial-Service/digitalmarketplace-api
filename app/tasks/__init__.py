@@ -14,8 +14,16 @@ def get_flask_app():
     app.config.from_object(configs[config_name])
     jira_creds_oauth = getenv('JIRA_CREDS_OAUTH')
     app.config['JIRA_CREDS_OAUTH'] = jira_creds_oauth if jira_creds_oauth else ''
-    app.config['JIRA_MAX_RETRIES'] = getenv('JIRA_MAX_RETRIES', 1)
-    app.config['JIRA_TIMEOUT'] = getenv('JIRA_TIMEOUT', 10)
+    jira_max_retries = getenv('JIRA_MAX_RETRIES', 1)
+    try:
+        app.config['JIRA_MAX_RETRIES'] = int(jira_max_retries)
+    except ValueError:
+        app.config['JIRA_MAX_RETRIES'] = 1
+    jira_timeout = getenv('JIRA_TIMEOUT', 15)
+    try:
+        app.config['JIRA_TIMEOUT'] = int(jira_timeout)
+    except ValueError:
+        app.config['JIRA_TIMEOUT'] = 15
     app.config['DM_SEND_EMAIL_TO_STDERR'] = getenv('DM_SEND_EMAIL_TO_STDERR', app.config['DM_SEND_EMAIL_TO_STDERR'])
     # FIXME: The service broker adds a 'reconnect' parameter that's rejected by Postgres and
     # doesn't seem to be in the Postgres documentation anyway.  We need to patch the broker to fix
