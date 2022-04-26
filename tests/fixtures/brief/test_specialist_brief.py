@@ -5,7 +5,7 @@ import mock
 
 from app import encryption
 from app.models import Brief, Lot, db, utcnow, Supplier, SupplierFramework, Contact, SupplierDomain, User,\
-    Framework, UserFramework, AuditEvent, FrameworkLot
+    Framework, UserFramework, AuditEvent, FrameworkLot, KeyValue
 from app.api.business.validators import SpecialistDataValidator
 from faker import Faker
 from dmapiclient.audit import AuditTypes
@@ -120,6 +120,22 @@ def supplier_user(app, request, suppliers):
         yield User.query.first()
 
 
+@pytest.fixture()
+def lockout_dates(app, request):
+    with app.app_context():
+        db.session.add(KeyValue(
+            key='lockout_dates',
+            data={
+                'startDate': '2022-05-01T00:00:00',
+                'endDate': '2022-05-30T00:00:00'
+            }
+        ))
+
+        db.session.flush()
+        db.session.commit()
+        yield KeyValue.query.first()
+
+
 def test_validate_closed_at():
     assert SpecialistDataValidator({
         'closedAt': pendulum.today(tz='Australia/Sydney').add(days=21).format('YYYY-MM-DD')
@@ -140,6 +156,28 @@ def test_validate_closed_at():
     assert not SpecialistDataValidator({
         'closedAt': ''
     }).validate_closed_at()
+
+
+def test_validate_closed_at_lockout(lockout_dates):
+    assert SpecialistDataValidator({
+        'closedAt': '2022-04-30'
+    }).validate_closed_at_lockout()
+
+    assert SpecialistDataValidator({
+        'closedAt': '2022-06-01'
+    }).validate_closed_at_lockout()
+
+    assert not SpecialistDataValidator({
+        'closedAt': '2022-05-01'
+    }).validate_closed_at_lockout()
+
+    assert not SpecialistDataValidator({
+        'closedAt': '2022-05-30'
+    }).validate_closed_at_lockout()
+
+    assert not SpecialistDataValidator({
+        'closedAt': ''
+    }).validate_closed_at_lockout()
 
 
 def test_validate_security_clearance_obtain():
@@ -435,8 +473,8 @@ def test_validate_sellers(supplier_domains, suppliers):
     }).validate_sellers()
 
 
-def test_validate_required():
+def test_validate_required(lockout_dates):
     assert len(
         SpecialistDataValidator({})
         .validate_required()
-    ) == 15
+    ) == 16

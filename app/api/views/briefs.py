@@ -392,7 +392,8 @@ def get_brief(brief_id):
                    has_signed_current_agreement=has_signed_current_agreement,
                    last_edited_at=last_edited_at,
                    only_sellers_edited=only_sellers_edited,
-                   domains=domains)
+                   domains=domains,
+                   lockout_period=brief_business.get_lockout_dates(formatted=True))
 
 
 @api.route('/brief/<int:brief_id>', methods=['PATCH'])
@@ -1001,7 +1002,8 @@ def get_brief_responses(brief_id):
                    oldWorkOrderCreator=old_work_order_creator,
                    questionsAsked=questions_asked,
                    briefResponseDownloaded=brief_response_downloaded,
-                   supplierContact=supplier_contact)
+                   supplierContact=supplier_contact,
+                   lockoutPeriod=brief_business.get_lockout_dates(formatted=True))
 
 
 @api.route('/brief/<int:brief_id>/respond/documents/<string:supplier_code>/<slug>', methods=['POST'])

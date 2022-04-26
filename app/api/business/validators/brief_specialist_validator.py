@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import pendulum
 from app.api.services import domain_service, suppliers
+from app.api.business.validators import brief_lockout_validator
+from app.api.business.brief.brief_business import get_lockout_dates
+
 
 whitelist_fields = [
     {'name': 'id', 'type': int},
@@ -55,6 +58,12 @@ class SpecialistDataValidator(object):
         if parsed > pendulum.now('Australia/Canberra').add(days=364).start_of('day'):
             return False
         return True
+
+    def validate_closed_at_lockout(self):
+        if 'closedAt' not in self.data or not self.data.get('closedAt'):
+            return False
+        closing_date = self.data.get('closedAt')
+        return brief_lockout_validator.validate_closed_at_lockout(closing_date)
 
     def validate_title(self):
         return True if self.data.get('title', '').replace(' ', '') else False
@@ -355,6 +364,11 @@ class SpecialistDataValidator(object):
             )
         if not self.validate_closed_at():
             errors.append('The closing date must be at least 2 days into the future or not more than one year long')
+        if not self.validate_closed_at_lockout():
+            lockout_dates = get_lockout_dates()
+            errors.append('The closing date cannot be between ' + lockout_dates['startDate'].strftime('%d %B') +
+                          ' and ' + lockout_dates['endDate'].strftime('%d %B %Y') +
+                          ', as Digital Marketplace is moving to BuyICT.')
         if not self.validate_contact_number():
             errors.append('Contact number must be a valid phone number, including an area code')
         return errors

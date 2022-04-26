@@ -1,6 +1,7 @@
 from app.api import api
 from flask import request, jsonify
 from app.api.services import briefs
+from app.api.business.brief.brief_business import get_lockout_dates
 
 
 @api.route('/opportunities', methods=['GET'])
@@ -72,4 +73,6 @@ def get_opportunities():
         location=location_filters.split(',')
     )
 
-    return jsonify({'opportunities': opportunities})
+    lockout_period = get_lockout_dates(formatted=True)
+
+    return jsonify({'opportunities': opportunities, 'lockoutPeriod': lockout_period})

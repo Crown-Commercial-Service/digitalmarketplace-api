@@ -15,7 +15,7 @@ from app.api.services import suppliers as supplier_service
 from app.api.services import users as user_service
 from app.api.business.validators import (ATMDataValidator, RFXDataValidator,
                                          SpecialistDataValidator,
-                                         TrainingDataValidator)
+                                         TrainingDataValidator, brief_lockout_validator)
 from app.datetime_utils import combine_date_and_time, parse_time_of_day
 from app.emails import (send_opportunity_edited_email_to_buyers,
                         send_opportunity_edited_email_to_seller,
@@ -47,11 +47,13 @@ def get_opportunity_to_edit(user_id, brief_id):
     return {
         'brief': brief.serialize(with_users=False),
         'domains': domains,
-        'isOpenToAll': brief_business.is_open_to_all(brief)
+        'isOpenToAll': brief_business.is_open_to_all(brief),
+        'lockout_period': brief_business.get_lockout_dates(formatted=True)
     }
 
 
 def calculate_new_questions_closed_at(brief):
+    from app.api.business.brief.brief_business import get_lockout_dates, get_lockout_question_close_date
     # Logic taken from publish function on the Brief class
     DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
     DEADLINES_TZ_NAME = current_app.config['DEADLINES_TZ_NAME']
@@ -69,6 +71,14 @@ def calculate_new_questions_closed_at(brief):
         questions_closed_at = workday(closed_at_parsed, -1)
     else:
         questions_closed_at = workday(closed_at_parsed, -2)
+
+    lockout_period = get_lockout_dates()
+    if lockout_period['startDate'] and lockout_period['endDate']:
+        questions_closed_at = get_lockout_question_close_date(
+            questions_closed_at,
+            closed_at_parsed.date(),
+            lockout_period
+        )
 
     if questions_closed_at > closed_at_parsed:
         questions_closed_at = closed_at_parsed
@@ -211,6 +221,21 @@ def edit_opportunity(user_id, brief_id, edits):
             if brief.lot.slug == 'specialist' else
             'The closing date must be at least 1 day into the future'
         )
+
+        errors.append(message)
+
+    if (
+        closing_date_was_edited(brief.closed_at.to_iso8601_string(), previous_data['closed_at']) and
+        not brief_lockout_validator.validate_closed_at_lockout(brief.closed_at.to_iso8601_string())
+    ):
+        lockout_dates = brief_business.get_lockout_dates()
+        if lockout_dates['startDate'] and lockout_dates['endDate']:
+            message = (
+                'The closing date cannot be between ' + lockout_dates['startDate'].strftime('%d %B') + ' and ' +
+                lockout_dates['endDate'].strftime('%d %B %Y') + ', as Digital Marketplace is moving to BuyICT.'
+            )
+        else:
+            message = ('The blockout period dates are not valid')
 
         errors.append(message)
 

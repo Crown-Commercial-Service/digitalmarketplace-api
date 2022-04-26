@@ -2032,6 +2032,7 @@ class Brief(db.Model):
         return Domain.get_by_name_or_id(name)
 
     def publish(self, closed_at=None):
+        from app.api.business.brief.brief_business import get_lockout_dates, get_lockout_question_close_date
         if not self.published_at:
             self.published_at = pendulum.now('UTC')
         DEADLINES_TIME_OF_DAY = current_app.config['DEADLINES_TIME_OF_DAY']
@@ -2051,6 +2052,14 @@ class Brief(db.Model):
                     questions_closed_at = self.published_day
             else:
                 questions_closed_at = workday(closed_at_parsed, -2)
+
+            lockout_period = get_lockout_dates()
+            if lockout_period['startDate'] and lockout_period['endDate']:
+                questions_closed_at = get_lockout_question_close_date(
+                    questions_closed_at,
+                    closed_at_parsed.date(),
+                    lockout_period
+                )
 
             if questions_closed_at > closed_at_parsed:
                 questions_closed_at = closed_at_parsed
