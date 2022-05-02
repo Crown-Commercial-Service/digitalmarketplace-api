@@ -104,7 +104,7 @@ six==1.14.0
     #   packaging
     #   python-dateutil
     #   requests-mock
-sqlalchemy==1.4.35
+sqlalchemy==1.4.36
     # via
     #   -c requirements.txt
     #   alchemyjsonschema
