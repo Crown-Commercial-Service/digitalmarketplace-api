@@ -191,14 +191,9 @@ def signup():
         return jsonify(message='Invalid email address format'), 400
 
     if user_type == 'seller' or user_type == 'applicant':
-        if not abn:
-            return jsonify(message='You must provide an ABN value'), 400
-        if supplier_business.abn_is_used(abn):
-            return jsonify(
-                email_address=email_address,
-                abn=abn,
-                message='There is already a seller account with ABN %s' % (abn)
-            ), 409
+        return jsonify(
+            message='New seller accounts can\'t be created as Digital Marketplace is moving to BuyICT.'
+        ), 409
 
     if user is not None:
         send_user_existing_password_reset_email(user.name, email_address)

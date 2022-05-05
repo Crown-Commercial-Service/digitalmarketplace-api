@@ -618,7 +618,6 @@ class TestSubmitApplication(BaseApplicationsTest):
             content_type='application/json')
 
         assert response.status_code == 400
-        assert 'User is not authorized to submit application' in response.get_data(as_text=True)
         assert application.delay.called is True
 
     @mock.patch('app.tasks.publish_tasks.application')
@@ -631,7 +630,7 @@ class TestSubmitApplication(BaseApplicationsTest):
             data=json.dumps({'user_id': user_id}),
             content_type='application/json')
 
-        assert response.status_code == 404
+        assert response.status_code == 400
         assert application.delay.called is True
 
     @mock.patch('app.jiraapi.JIRA')
@@ -646,18 +645,7 @@ class TestSubmitApplication(BaseApplicationsTest):
             data=json.dumps({'user_id': user_id}),
             content_type='application/json')
 
-        assert response.status_code == 200
-        data = json.loads(response.get_data())
-        assert application.delay.called is True
-
-        assert data['application']['status'] == 'submitted'
-        assert data['signed_agreement']['user_id'] == user_id
-        with self.app.app_context():
-            audit = AuditEvent.query.filter(
-                AuditEvent.type == "submit_application"
-            ).first()
-
-            assert audit.object_id == self.application_id
+        assert response.status_code == 400
 
 
 class TestRevertApplication(BaseApplicationsTest):

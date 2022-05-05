@@ -22,6 +22,3 @@ def test_existing_application_same_abn_as_applicant_at_signup(client, applicatio
         content_type='application/json')
 
     assert response.status_code == 409
-    data = json.loads(response.data)
-    assert data['message'] == (
-        "There is already a seller account with ABN 123456")

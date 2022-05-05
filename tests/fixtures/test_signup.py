@@ -93,9 +93,7 @@ def test_send_seller_type_signup_invite_email(user_claim, mock_send_email, clien
         '/2/signup',
         data=json.dumps(test_seller),
         content_type='application/json')
-    assert response.status_code == 200
-
-    mock_send_email.assert_called()
+    assert response.status_code == 409
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
@@ -106,7 +104,7 @@ def test_seller_signup_fail_missing_abn(user_claim, client):
         '/2/signup',
         data=json.dumps(test_seller_no_abn),
         content_type='application/json')
-    assert response.status_code == 400
+    assert response.status_code == 409
 
 
 @mock.patch('app.api.views.users.send_account_activation_email')
@@ -203,7 +201,7 @@ def test_supplier_with_same_domain(user_claim, client, supplier_user):
             'abn': '56789'
         }),
         content_type='application/json')
-    assert response.status_code == 200
+    assert response.status_code == 409
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
@@ -218,8 +216,6 @@ def test_duplicate_supplier_with_same_abn(user_claim, client, suppliers, supplie
         }),
         content_type='application/json')
     assert response.status_code == 409
-    data = json.loads(response.data)
-    assert_equal(data['message'], 'There is already a seller account with ABN 1')
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
@@ -234,8 +230,6 @@ def test_duplicate_application_with_same_abn(user_claim, client, application_use
         }),
         content_type='application/json')
     assert response.status_code == 409
-    data = json.loads(response.data)
-    assert_equal(data['message'], 'There is already a seller account with ABN 123456')
 
 
 @mock.patch('app.tasks.publish_tasks.user_claim')
@@ -250,10 +244,7 @@ def test_generic_domain(user_claim, client):
             'abn': '56789'
         }),
         content_type='application/json')
-    assert response._status_code == 200
-
-    data = json.loads(response.data)
-    assert_equal(data['message'], 'Email invite sent successfully')
+    assert response._status_code == 409
 
 
 @mock.patch('app.api.views.users.send_account_activation_email')
