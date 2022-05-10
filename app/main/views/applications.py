@@ -453,8 +453,6 @@ def submit_application(application_id):
     user = User.query.get(user_id)
 
     if application.type != 'edit':
-        abort(400, 'Applications can\'t be submitted as Digital Marketplace is moving to BuyICT.')
-    else:
         if user.supplier_code != application.supplier_code:
             abort(400, 'User supplier code does not match application supplier code')
 
