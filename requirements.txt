@@ -113,7 +113,7 @@ psycopg2==2.9.3
     # via -r requirements.in
 pycparser==2.19
     # via cffi
-pyjwt==1.7.1
+pyjwt==2.4.0
     # via notifications-python-client
 pyrsistent==0.15.7
     # via jsonschema
