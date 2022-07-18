@@ -147,7 +147,6 @@ six==1.14.0
     #   pyrsistent
     #   python-dateutil
     #   sqlalchemy-json
-    #   sqlalchemy-utils
 sqlalchemy==1.4.39
     # via
     #   -r requirements.in
@@ -157,7 +156,7 @@ sqlalchemy==1.4.39
     #   sqlalchemy-utils
 sqlalchemy-json==0.5.0
     # via -r requirements.in
-sqlalchemy-utils==0.38.2
+sqlalchemy-utils==0.38.3
     # via -r requirements.in
 strict-rfc3339==0.7
     # via -r requirements.in
