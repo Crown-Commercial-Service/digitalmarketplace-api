@@ -6,7 +6,7 @@
 #
 --no-binary psycopg2
 
-alembic==1.4.0
+alembic==1.9.2
     # via flask-migrate
 attrs==19.3.0
     # via jsonschema
@@ -62,7 +62,7 @@ flask-gzip==0.2
     # via digitalmarketplace-utils
 flask-login==0.5.0
     # via digitalmarketplace-utils
-flask-migrate==4.0.1
+flask-migrate==4.0.3
     # via -r requirements.in
 flask-session==0.3.2
     # via digitalmarketplace-utils
@@ -118,11 +118,7 @@ pyjwt==2.4.0
 pyrsistent==0.15.7
     # via jsonschema
 python-dateutil==2.8.1
-    # via
-    #   alembic
-    #   botocore
-python-editor==1.0.4
-    # via alembic
+    # via botocore
 python-json-logger==0.1.11
     # via digitalmarketplace-utils
 pytz==2019.3
