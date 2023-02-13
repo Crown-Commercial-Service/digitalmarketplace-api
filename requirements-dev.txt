@@ -104,7 +104,7 @@ six==1.14.0
     #   packaging
     #   python-dateutil
     #   requests-mock
-sqlalchemy==1.4.46
+sqlalchemy==2.0.3
     # via
     #   -c requirements.txt
     #   alchemyjsonschema
@@ -114,6 +114,10 @@ strict-rfc3339==0.7
     #   alchemyjsonschema
 testfixtures==6.13.0
     # via -r requirements-dev.in
+typing-extensions==4.4.0
+    # via
+    #   -c requirements.txt
+    #   sqlalchemy
 urllib3==1.26.5
     # via
     #   -c requirements.txt
