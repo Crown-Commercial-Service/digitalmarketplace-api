@@ -147,7 +147,7 @@ six==1.14.0
     #   pyrsistent
     #   python-dateutil
     #   sqlalchemy-json
-sqlalchemy==1.4.46
+sqlalchemy==2.0.4
     # via
     #   -r requirements.in
     #   alembic
@@ -160,6 +160,8 @@ sqlalchemy-utils==0.39.0
     # via -r requirements.in
 strict-rfc3339==0.7
     # via -r requirements.in
+typing-extensions==4.5.0
+    # via sqlalchemy
 unicodecsv==0.14.1
     # via digitalmarketplace-utils
 urllib3==1.26.5
