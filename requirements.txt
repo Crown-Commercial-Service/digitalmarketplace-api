@@ -142,7 +142,7 @@ six==1.14.0
     #   pyrsistent
     #   python-dateutil
     #   sqlalchemy-json
-sqlalchemy==1.4.46
+sqlalchemy==1.4.47
     # via
     #   -r requirements.in
     #   alembic
