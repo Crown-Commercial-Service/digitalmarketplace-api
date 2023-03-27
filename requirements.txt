@@ -8,6 +8,8 @@
 
 alembic==1.9.2
     # via flask-migrate
+async-timeout==4.0.2
+    # via redis
 attrs==19.3.0
     # via jsonschema
 bcrypt==3.1.7
@@ -123,7 +125,7 @@ python-json-logger==0.1.11
     # via digitalmarketplace-utils
 pytz==2019.3
     # via digitalmarketplace-utils
-redis==3.5.3
+redis==4.5.3
     # via digitalmarketplace-utils
 requests==2.26.0
     # via
