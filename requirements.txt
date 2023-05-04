@@ -44,7 +44,7 @@ digitalmarketplace-utils==60.11.0
     # via -r requirements.in
 docopt==0.6.2
     # via notifications-python-client
-flask==1.1.4
+flask==2.2.5
     # via
     #   -r requirements.in
     #   digitalmarketplace-utils
