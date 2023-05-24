@@ -89,7 +89,7 @@ pytz==2019.3
     # via
     #   -c requirements.txt
     #   alchemyjsonschema
-requests==2.26.0
+requests==2.31.0
     # via
     #   -c requirements.txt
     #   requests-mock
