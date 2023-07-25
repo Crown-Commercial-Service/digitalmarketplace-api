@@ -13,7 +13,7 @@ attrs==19.3.0
     #   -c requirements.txt
     #   jsonschema
     #   pytest
-certifi==2019.11.28
+certifi==2023.7.22
     # via
     #   -c requirements.txt
     #   requests
