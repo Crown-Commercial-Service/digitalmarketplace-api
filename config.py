@@ -99,6 +99,11 @@ class Development(Config):
     DM_SEARCH_API_URL = f"http://localhost:{os.getenv('DM_SEARCH_API_PORT', 5009)}"
 
 
+class NativeAWS(Config):
+    DEBUG = False
+    DM_APP_NAME = 'data-api'
+    DM_HTTP_PROTO = 'https'
+
 class Live(Config):
     """Base config for deployed environments"""
     DEBUG = False
@@ -120,6 +125,7 @@ class Production(Live):
 
 configs = {
     'development': Development,
+    'native-aws': NativeAWS,
     'test': Test,
 
     'preview': Preview,
