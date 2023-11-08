@@ -45,11 +45,13 @@ def create_app(config_name):
     from .main import main as main_blueprint
     from .status import status as status_blueprint
     from .callbacks import callbacks as callbacks_blueprint
+    from .healthcheck import healthcheck as healthcheck_blueprint
 
     application.register_blueprint(metrics_blueprint)
     application.register_blueprint(main_blueprint)
     application.register_blueprint(callbacks_blueprint, url_prefix='/callbacks')
     application.register_blueprint(status_blueprint)
+    application.register_blueprint(healthcheck_blueprint, url_prefix='/healthcheck')
 
     gds_metrics.init_app(application)
 

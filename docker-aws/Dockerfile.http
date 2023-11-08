@@ -1,0 +1,2 @@
+# Base builds are defined in https://github.com/Crown-Commercial-Service/ccs-digitalmarketplace-aws-docker-base
+FROM digitalmarketplace/dmp-http-headless:1.0.0
