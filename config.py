@@ -104,6 +104,7 @@ class NativeAWS(Config):
     DM_APP_NAME = 'data-api'
     DM_HTTP_PROTO = 'https'
 
+
 class Live(Config):
     """Base config for deployed environments"""
     DEBUG = False
