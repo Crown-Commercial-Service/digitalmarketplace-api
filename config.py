@@ -99,16 +99,18 @@ class Development(Config):
     DM_SEARCH_API_URL = f"http://localhost:{os.getenv('DM_SEARCH_API_PORT', 5009)}"
 
 
-class NativeAWS(Config):
+class SharedLive(Config):
+    """Base config for deployed environments shared between GPaaS and AWS"""
     DEBUG = False
+    DM_HTTP_PROTO = 'https'
+
+
+class NativeAWS(SharedLive):
     DM_APP_NAME = 'data-api'
-    DM_HTTP_PROTO = 'https'
 
 
-class Live(Config):
+class Live(SharedLive):
     """Base config for deployed environments"""
-    DEBUG = False
-    DM_HTTP_PROTO = 'https'
     DM_LOG_PATH = '/var/log/digitalmarketplace/application.log'
 
 
