@@ -102,9 +102,10 @@ six==1.14.0
     #   isodate
     #   jsonschema
     #   packaging
+    #   pyrsistent
     #   python-dateutil
     #   requests-mock
-sqlalchemy==1.4.46
+sqlalchemy==1.4.51
     # via
     #   -c requirements.txt
     #   alchemyjsonschema
