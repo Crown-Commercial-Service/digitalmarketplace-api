@@ -125,7 +125,7 @@ pytz==2019.3
     # via digitalmarketplace-utils
 redis==3.5.3
     # via digitalmarketplace-utils
-requests==2.26.0
+requests==2.32.0
     # via
     #   digitalmarketplace-apiclient
     #   digitalmarketplace-utils
