@@ -157,7 +157,7 @@ strict-rfc3339==0.7
     # via -r requirements.in
 unicodecsv==0.14.1
     # via digitalmarketplace-utils
-urllib3==1.26.5
+urllib3==1.26.19
     # via
     #   botocore
     #   requests
