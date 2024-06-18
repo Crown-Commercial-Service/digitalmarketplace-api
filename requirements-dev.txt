@@ -114,7 +114,7 @@ strict-rfc3339==0.7
     #   alchemyjsonschema
 testfixtures==6.13.0
     # via -r requirements-dev.in
-urllib3==1.26.5
+urllib3==1.26.19
     # via
     #   -c requirements.txt
     #   requests
