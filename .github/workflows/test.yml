@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Read Ubuntu version
         run: echo ::set-output name=UBUNTU_VERSION::$(lsb_release -r -s)
