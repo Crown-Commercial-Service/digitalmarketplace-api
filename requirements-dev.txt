@@ -83,7 +83,7 @@ python-dateutil==2.8.1
     # via
     #   -c requirements.txt
     #   freezegun
-python-dotenv==0.11.0
+python-dotenv==1.2.2
     # via -r requirements-dev.in
 pytz==2019.3
     # via
